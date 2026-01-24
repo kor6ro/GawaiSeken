@@ -1,5 +1,6 @@
 import defaultTheme from 'tailwindcss/defaultTheme';
 import forms from '@tailwindcss/forms';
+import colors from 'tailwindcss/colors';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -13,6 +14,24 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+            },
+            colors: {
+                // Kita override 'gray' menjadi 'slate' agar nuansa teknologinya lebih terasa
+                gray: colors.slate,
+                
+                // Warna Utama (Indigo) kita namakan 'primary' agar semantik
+                primary: {
+                    50: '#eef2ff',
+                    100: '#e0e7ff',
+                    200: '#c7d2fe',
+                    300: '#a5b4fc',
+                    400: '#818cf8',
+                    500: '#6366f1', // Warna tombol utama
+                    600: '#4f46e5', // Warna hover
+                    700: '#4338ca',
+                    800: '#3730a3',
+                    900: '#312e81',
+                },
             },
         },
     },

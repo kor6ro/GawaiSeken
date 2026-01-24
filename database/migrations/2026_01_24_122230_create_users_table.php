@@ -7,26 +7,30 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Jalankan migrasi untuk tabel users, password_reset_tokens, dan sessions.
      */
     public function up(): void
     {
+        // Tabel utama users sesuai ERD GawaiBekas
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
+            $table->id(); // bigint [cite: 38]
+            $table->string('name'); // varchar [cite: 46]
+            $table->string('email')->unique(); // varchar [cite: 52]
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('password'); // varchar [cite: 58]
+            $table->string('role')->default('buyer'); // varchar [cite: 64] - Menentukan akses user
             $table->rememberToken();
-            $table->timestamps();
+            $table->timestamps(); // created_at & updated_at [cite: 70, 76]
         });
 
+        // Tabel untuk fitur Reset Password (Standar Laravel)
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
 
+        // Tabel untuk fitur Session (Standar Laravel)
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->foreignId('user_id')->nullable()->index();
@@ -38,7 +42,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Batalkan migrasi (Hapus tabel).
      */
     public function down(): void
     {
