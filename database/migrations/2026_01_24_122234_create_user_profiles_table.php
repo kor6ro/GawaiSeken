@@ -11,15 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-    Schema::create('user_profiles', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // [cite: 43, 172]
-        $table->string('avatar')->nullable(); // varchar [cite: 50, 179]
-        $table->string('phone'); // varchar [cite: 56, 185]
-        $table->text('address'); // text [cite: 62, 191]
-        $table->text('bio')->nullable(); // text [cite: 68, 196]
-        $table->timestamps();
-    });
+        Schema::create('user_profiles', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            
+            // Data spesifik Toko/Publik
+            $table->string('store_name')->nullable(); // Nama Toko (beda dengan nama User)
+            $table->string('avatar')->nullable();
+            $table->string('phone')->nullable();
+            $table->text('address')->nullable();
+            $table->text('bio')->nullable();
+            
+            $table->timestamps();
+        });
     }
 
     /**

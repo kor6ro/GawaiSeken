@@ -1,11 +1,14 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100 sticky top-0 z-50">
+<nav x-data="{ open: false }"
+    class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0 z-50 transition-colors duration-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('home') }}" class="text-2xl font-black text-primary-600 tracking-tighter">
-                        GAWAI<span class="text-gray-900">SEKEN</span>
-                    </a>
+                    <div>
+                        <a href="/">
+                            <x-application-logo class="w-32 h-auto" />
+                        </a>
+                    </div>
                 </div>
 
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
@@ -19,16 +22,31 @@
                                 {{ __('Seller Dashboard') }}
                             </x-nav-link>
                         @endif
+                        <x-nav-link :href="route('chat.index')" :active="request()->routeIs('chat.*')">
+                            {{ __('Pesan') }}
+                        </x-nav-link>
                     @endauth
                 </div>
             </div>
 
             <div class="hidden sm:flex sm:items-center sm:ms-6">
+                <button @click="darkMode = !darkMode" type="button"
+                    class="mr-4 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 transition">
+                    <svg x-show="darkMode" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                            d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z"
+                            fill-rule="evenodd" clip-rule="evenodd"></path>
+                    </svg>
+                    <svg x-show="!darkMode" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                    </svg>
+                </button>
+
                 @auth
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
                             <button
-                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-primary-600 focus:outline-none transition ease-in-out duration-150">
+                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400 focus:outline-none transition ease-in-out duration-150">
                                 <div>{{ Auth::user()->name }}</div>
                                 <div class="ms-1 italic text-xs text-gray-400">({{ Auth::user()->role }})</div>
                                 <div class="ms-1">
@@ -50,8 +68,7 @@
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                this.closest('form').submit();">
+                                    onclick="event.preventDefault(); this.closest('form').submit();">
                                     {{ __('Log Out') }}
                                 </x-dropdown-link>
                             </form>
@@ -60,7 +77,7 @@
                 @else
                     <div class="space-x-4">
                         <a href="{{ route('login') }}"
-                            class="text-sm text-gray-600 hover:text-primary-600 font-semibold transition">Login</a>
+                            class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 font-semibold transition">Login</a>
                         <a href="{{ route('register') }}"
                             class="inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-xl font-bold text-xs text-white uppercase tracking-widest hover:bg-primary-700 transition duration-150">
                             Daftar
