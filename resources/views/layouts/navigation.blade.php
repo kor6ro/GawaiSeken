@@ -38,8 +38,8 @@
                 <button @click="$store.theme.toggle()" type="button"
                     class="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring rounded-lg text-sm p-2.5 transition">
                     <div class="relative w-5 h-5">
-                        <i x-show="$store.theme.isDark" x-cloak data-lucide="sun" class="w-5 h-5"></i>
-                        <i x-show="!$store.theme.isDark" x-cloak data-lucide="moon" class="w-5 h-5"></i>
+                        <span x-show="$store.theme.isDark" x-cloak><i data-lucide="sun" class="w-5 h-5"></i></span>
+                        <span x-show="!$store.theme.isDark" x-cloak><i data-lucide="moon" class="w-5 h-5"></i></span>
                     </div>
                 </button>
 
@@ -90,14 +90,14 @@
                 <button @click="$store.theme.toggle()" type="button"
                     class="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring rounded-lg text-sm p-2.5 transition">
                     <div class="relative w-5 h-5">
-                        <i x-show="$store.theme.isDark" x-cloak data-lucide="sun" class="w-5 h-5"></i>
-                        <i x-show="!$store.theme.isDark" x-cloak data-lucide="moon" class="w-5 h-5"></i>
+                        <span x-show="$store.theme.isDark" x-cloak><i data-lucide="sun" class="w-5 h-5"></i></span>
+                        <span x-show="!$store.theme.isDark" x-cloak><i data-lucide="moon" class="w-5 h-5"></i></span>
                     </div>
                 </button>
                 <button @click="open = ! open"
                     class="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none transition duration-150 ease-in-out">
-                    <i x-show="!open" data-lucide="menu" class="w-6 h-6"></i>
-                    <i x-show="open" data-lucide="x" class="w-6 h-6"></i>
+                    <span x-show="!open" x-cloak><i data-lucide="menu" class="w-6 h-6"></i></span>
+                    <span x-show="open" x-cloak><i data-lucide="x" class="w-6 h-6"></i></span>
                 </button>
             </div>
         </div>
