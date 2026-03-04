@@ -5,41 +5,53 @@ namespace App\Http\Controllers;
 use App\Models\Chat;
 use App\Models\ChatMessage;
 use App\Models\Product;
-use App\Events\MessageSent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ChatController extends Controller
 {
+    // =========================================================
+    // INDEX – List all chats for the authenticated user
+    // =========================================================
     public function index()
     {
         $userId = Auth::id();
-        
+
         $chats = Chat::where('buyer_id', $userId)
             ->orWhere('seller_id', $userId)
-            ->with(['product', 'buyer', 'seller', 'messages' => function($query) {
-                $query->latest();
-            }])
-            ->get()
-            ->sortByDesc(function($chat) {
-                return $chat->messages->first()?->created_at ?? $chat->created_at;
-            });
+            ->with([
+                'product',
+                'buyer.profile',
+                'seller.profile',
+                'messages' => fn($q) => $q->latest()->limit(1),
+            ])
+            ->withCount([
+                'messages as unread_count' => fn($q) => $q
+                    ->where('sender_id', '!=', $userId)
+                    ->whereNull('read_at'),
+            ])
+            ->orderByRaw('COALESCE(last_message_at, created_at) DESC')
+            ->get();
 
         return view('chat.index', compact('chats'));
     }
 
+    // =========================================================
+    // SHOW – View a single chat thread
+    // =========================================================
     public function show(Chat $chat)
     {
-        // 1. Validasi Akses
-        if (Auth::id() !== $chat->buyer_id && Auth::id() !== $chat->seller_id) {
-            abort(403);
-        }
+        $this->authorizeChat($chat);
 
-        // 2. Load Relasi
-        // Kita load user pada message untuk avatar kecil di sebelah chat (opsional)
-        $chat->load(['messages.sender.profile', 'product', 'seller.profile', 'buyer.profile']);
-        
-        // 3. Mark as Read (Tandai pesan dari lawan sebagai terbaca)
+        $chat->load([
+            'messages.sender.profile',
+            'product.images',
+            'seller.profile',
+            'buyer.profile',
+        ]);
+
+        // Mark opponent messages as read
         ChatMessage::where('chat_id', $chat->id)
             ->where('sender_id', '!=', Auth::id())
             ->whereNull('read_at')
@@ -48,38 +60,80 @@ class ChatController extends Controller
         return view('chat.show', compact('chat'));
     }
 
+    // =========================================================
+    // STORE – Send a text message
+    // =========================================================
     public function store(Request $request, Chat $chat)
     {
+        $this->authorizeChat($chat);
         $request->validate(['message' => 'required|string|max:2000']);
 
         $message = $chat->messages()->create([
             'sender_id' => Auth::id(),
+            'type' => 'text',
             'message' => $request->message,
         ]);
 
-        // Pastikan Event MessageSent sudah dibuat dan dikonfigurasi dengan benar
-        // broadcast(new MessageSent($message))->toOthers();
-
-        // Load sender profile untuk dikirim balik sebagai JSON (jika butuh avatar di JS)
         $message->load('sender.profile');
 
-        return response()->json($message);
+        return response()->json($this->formatMessage($message));
     }
 
+    // =========================================================
+    // STORE IMAGE – Upload & send an image message
+    // =========================================================
+    public function storeImage(Request $request, Chat $chat)
+    {
+        $this->authorizeChat($chat);
+        $request->validate([
+            'image' => 'required|image|mimes:jpg,jpeg,png,gif,webp|max:5120',
+        ]);
+
+        $path = $request->file('image')->store('chat_images', 'public');
+
+        $message = $chat->messages()->create([
+            'sender_id' => Auth::id(),
+            'type' => 'image',
+            'image_path' => $path,
+        ]);
+
+        $message->load('sender.profile');
+
+        return response()->json($this->formatMessage($message));
+    }
+
+    // =========================================================
+    // INITIATE – Start a new chat from a product page
+    // =========================================================
     public function initiate(Product $product)
     {
         if (Auth::id() === $product->user_id) {
-            return redirect()->back()->with('error', 'Anda tidak bisa chat produk sendiri.');
+            return redirect()->back()->with('error', 'Anda tidak bisa chat dengan produk sendiri.');
         }
 
-        $chat = Chat::firstOrCreate(
-            [
-                'product_id' => $product->id,
-                'buyer_id' => Auth::id(),
-                'seller_id' => $product->user_id,
-            ]
-        );
+        $chat = Chat::firstOrCreate([
+            'product_id' => $product->id,
+            'buyer_id' => Auth::id(),
+            'seller_id' => $product->user_id,
+        ]);
 
         return redirect()->route('chat.show', $chat);
+    }
+
+    // =========================================================
+    // HELPERS
+    // =========================================================
+    private function authorizeChat(Chat $chat): void
+    {
+        if (Auth::id() !== $chat->buyer_id && Auth::id() !== $chat->seller_id) {
+            abort(403);
+        }
+    }
+
+    private function formatMessage(ChatMessage $message): array
+    {
+        return array_merge($message->toArray(), [
+            'image_url' => $message->image_path ? Storage::url($message->image_path) : null,
+        ]);
     }
 }

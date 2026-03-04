@@ -9,27 +9,23 @@ class Chat extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['product_id', 'buyer_id', 'seller_id'];
+    protected $fillable = ['product_id', 'buyer_id', 'seller_id', 'last_message_at'];
 
-    // Relasi ke Produk
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
 
-    // Relasi Buyer
     public function buyer()
     {
         return $this->belongsTo(User::class, 'buyer_id');
     }
 
-    // Relasi Seller
     public function seller()
     {
         return $this->belongsTo(User::class, 'seller_id');
     }
 
-    // Relasi ke Pesan
     public function messages()
     {
         return $this->hasMany(ChatMessage::class);

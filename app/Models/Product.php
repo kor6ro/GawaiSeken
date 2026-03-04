@@ -16,6 +16,11 @@ class Product extends Model
         'category_id',
         'title',
         'slug',
+        'brand',
+        'type',
+        'variant',
+        'condition',
+        'reference_url',
         'description',
         'price',
         'status',
@@ -27,35 +32,40 @@ class Product extends Model
         'specifications' => 'array',
     ];
 
-    public function category(): BelongsTo 
-    { 
-        return $this->belongsTo(Category::class); 
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
     }
 
     /**
      * PERBAIKAN: Menambahkan relasi 'user'
      * Ini dibutuhkan karena controller memanggil $product->load('user')
      */
-    public function user(): BelongsTo 
-    { 
-        return $this->belongsTo(User::class); 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**
      * Alias 'seller' tetap dipertahankan jaga-jaga jika ada fitur lain yang memakainya
      */
-    public function seller(): BelongsTo 
-    { 
-        return $this->belongsTo(User::class, 'user_id'); 
+    public function seller(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function images(): HasMany 
-    { 
-        return $this->hasMany(ProductImage::class); 
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class);
     }
-    
-    public function chats(): HasMany 
-    { 
-        return $this->hasMany(Chat::class); 
+
+    public function chats(): HasMany
+    {
+        return $this->hasMany(Chat::class);
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'slug';
     }
 }

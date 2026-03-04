@@ -10,22 +10,50 @@ class ChatMessage extends Model
 {
     use HasFactory;
 
-    // Pastikan fillable menggunakan sender_id
-    protected $fillable = ['chat_id', 'sender_id', 'message', 'read_at'];
+    protected $fillable = [
+        'chat_id',
+        'sender_id',
+        'type',       // 'text' | 'image'
+        'message',
+        'image_path',
+        'read_at',
+    ];
 
+    protected $casts = [
+        'read_at' => 'datetime',
+    ];
+
+    protected static function booted()
+    {
+        static::created(function ($message) {
+            $message->chat->update([
+                'last_message_at' => $message->created_at,
+            ]);
+        });
+    }
+
+    // Helpers
+    public function isText(): bool
+    {
+        return $this->type === 'text';
+    }
+    public function isImage(): bool
+    {
+        return $this->type === 'image';
+    }
+
+    // Relations
     public function chat(): BelongsTo
     {
         return $this->belongsTo(Chat::class);
     }
 
-    // Relasi ke User (Pengirim)
-    public function user(): BelongsTo
+    public function sender(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sender_id');
     }
-    
-    // Alias agar bisa dipanggil sebagai sender juga
-    public function sender(): BelongsTo
+
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sender_id');
     }

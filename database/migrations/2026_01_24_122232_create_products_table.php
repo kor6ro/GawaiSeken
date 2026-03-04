@@ -5,8 +5,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         Schema::create('products', function (Blueprint $table) {
@@ -15,11 +14,16 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained('categories');
             $table->string('title');
             $table->string('slug')->unique();
+            $table->string('brand')->nullable();
+            $table->string('type')->nullable();
+            $table->string('variant')->nullable();
+            $table->string('condition')->nullable();
+            $table->string('reference_url')->nullable();
             $table->text('description');
             $table->decimal('price', 15, 2);
             $table->string('status')->default('available');
             $table->json('specifications')->nullable();
-            
+
             $table->softDeletes();
             $table->timestamps();
         });

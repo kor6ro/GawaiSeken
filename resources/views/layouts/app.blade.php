@@ -1,12 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{
-    darkMode: localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
-}" x-init="$watch('darkMode', val => {
-    localStorage.setItem('theme', val ? 'dark' : 'light');
-    if (val) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-})"
-    :class="{ 'dark': darkMode }">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data :class="{ 'dark': $store.theme.isDark }">
 
 <head>
     <meta charset="utf-8">
@@ -17,21 +10,22 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     <script>
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia(
-                '(prefers-color-scheme: dark)').matches)) {
+            '(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
         }
     </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="font-sans antialiased bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+<body class="font-sans antialiased bg-background text-foreground">
     <div class="min-h-screen">
         @include('layouts.navigation')
 
         @isset($header)
-            <header class="bg-white dark:bg-gray-800 shadow">
+            <header class="bg-background border-b border-border shadow-sm">
                 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                     {{ $header }}
                 </div>
@@ -42,6 +36,9 @@
             {{ $slot }}
         </main>
     </div>
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
 
 </html>

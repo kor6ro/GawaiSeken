@@ -6,7 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends Model
 {
-    protected $fillable = ['reference_number', 'product_id', 'buyer_id', 'seller_id', 'price', 'status'];
+    protected $fillable = [
+        'reference_number',
+        'product_id',
+        'buyer_id',
+        'seller_id',
+        'price',
+        'status',
+    ];
 
     public function product()
     {
@@ -21,5 +28,11 @@ class Transaction extends Model
     public function seller()
     {
         return $this->belongsTo(User::class, 'seller_id');
+    }
+
+    // A transaction may be linked back to a single chat
+    public function chat()
+    {
+        return $this->hasOne(Chat::class, 'transaction_id');
     }
 }

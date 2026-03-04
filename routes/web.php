@@ -18,7 +18,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::middleware('auth')->group(function () {
     // --- FITUR AKUN (User Personal) ---
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update'); // Hanya update Nama Asli & Email
+    // Hanya update Nama Asli & Email
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::patch('/profile/upgrade', [ProfileController::class, 'upgradeToSeller'])->name('profile.upgrade');
 
@@ -28,12 +29,17 @@ Route::middleware('auth')->group(function () {
     Route::patch('/store/settings', [StoreController::class, 'update'])->name('store.update');
 
     // --- FITUR PRODUK & CHAT ---
-    Route::resource('products', ProductController::class)->except(['index']);
-    
+    Route::get('/gsmarena/search', [ProductController::class, 'searchGsmArena'])->name('gsmarena.search');
+    Route::resource('products', ProductController::class)->except(['index', 'show']);
+
     Route::get('/chats', [ChatController::class, 'index'])->name('chat.index');
     Route::get('/chats/{chat}', [ChatController::class, 'show'])->name('chat.show');
     Route::post('/chats/{chat}/message', [ChatController::class, 'store'])->name('chat.store');
+    Route::post('/chats/{chat}/image', [ChatController::class, 'storeImage'])->name('chat.image');
     Route::post('/chat/initiate/{product}', [ChatController::class, 'initiate'])->name('chat.initiate');
 });
 
-require __DIR__.'/auth.php';
+// --- PUBLIC PRODUCT DETAIL (Moved here to avoid conflict with /products/create) ---
+Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
+
+require __DIR__ . '/auth.php';
