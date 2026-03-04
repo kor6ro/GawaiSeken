@@ -110,13 +110,13 @@
 
                             <div class="relative flex-grow group">
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                                    <template x-if="!loading">
+                                    <div x-show="!loading" x-cloak>
                                         <i data-lucide="search"
                                             class="h-6 w-6 text-gray-400 group-focus-within:text-primary-500 transition-colors"></i>
-                                    </template>
-                                    <template x-if="loading">
+                                    </div>
+                                    <div x-show="loading" x-cloak>
                                         <div class="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                    </template>
+                                    </div>
                                 </div>
 
                                 <input type="text" name="search" value="{{ request('search') }}"

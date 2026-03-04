@@ -53,21 +53,21 @@
                                     <span class="italic text-xs text-gray-400">({{ Auth::user()->role }})</span>
                                 </div>
                                 <div class="ms-1">
-                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                    <span><i data-lucide="chevron-down" class="w-4 h-4"></i></span>
                                 </div>
                             </button>
                         </x-slot>
 
                         <x-slot name="content">
                             <x-dropdown-link :href="route('profile.edit')">
-                                <i data-lucide="user" class="w-4 h-4 inline mr-2"></i> {{ __('Profile') }}
+                                <span><i data-lucide="user" class="w-4 h-4 inline mr-2"></i></span> {{ __('Profile') }}
                             </x-dropdown-link>
 
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <x-dropdown-link :href="route('logout')"
                                     onclick="event.preventDefault(); this.closest('form').submit();">
-                                    <i data-lucide="log-out" class="w-4 h-4 inline mr-2 text-red-500"></i>
+                                    <span><i data-lucide="log-out" class="w-4 h-4 inline mr-2 text-red-500"></i></span>
                                     {{ __('Log Out') }}
                                 </x-dropdown-link>
                             </form>
@@ -134,7 +134,7 @@
                 @endif
                 <x-responsive-nav-link :href="route('chat.index')" :active="request()->routeIs('chat.*')">
                     <div class="flex items-center gap-2">
-                        <i data-lucide="message-square" class="w-4 h-4"></i>
+                        <span><i data-lucide="message-square" class="w-4 h-4"></i></span>
                         {{ __('Pesan') }}
                     </div>
                 </x-responsive-nav-link>

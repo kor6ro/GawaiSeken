@@ -22,3 +22,6 @@ Alpine.store('theme', {
 });
 
 Alpine.start();
+
+// Initial icon generation
+createIcons({ icons });
