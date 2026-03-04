@@ -37,8 +37,10 @@
             <div class="hidden sm:flex sm:items-center sm:ms-6 gap-3">
                 <button @click="$store.theme.toggle()" type="button"
                     class="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring rounded-lg text-sm p-2.5 transition">
-                    <i x-show="$store.theme.isDark" data-lucide="sun" class="w-5 h-5"></i>
-                    <i x-show="!$store.theme.isDark" data-lucide="moon" class="w-5 h-5"></i>
+                    <div class="relative w-5 h-5">
+                        <i x-show="$store.theme.isDark" x-cloak data-lucide="sun" class="w-5 h-5"></i>
+                        <i x-show="!$store.theme.isDark" x-cloak data-lucide="moon" class="w-5 h-5"></i>
+                    </div>
                 </button>
 
                 @auth
@@ -87,8 +89,10 @@
             <div class="-me-2 flex items-center sm:hidden gap-1">
                 <button @click="$store.theme.toggle()" type="button"
                     class="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring rounded-lg text-sm p-2.5 transition">
-                    <i x-show="$store.theme.isDark" data-lucide="sun" class="w-5 h-5"></i>
-                    <i x-show="!$store.theme.isDark" data-lucide="moon" class="w-5 h-5"></i>
+                    <div class="relative w-5 h-5">
+                        <i x-show="$store.theme.isDark" x-cloak data-lucide="sun" class="w-5 h-5"></i>
+                        <i x-show="!$store.theme.isDark" x-cloak data-lucide="moon" class="w-5 h-5"></i>
+                    </div>
                 </button>
                 <button @click="open = ! open"
                     class="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none transition duration-150 ease-in-out">
@@ -120,7 +124,8 @@
                             {{ __('Seller Dashboard') }}
                         </div>
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('products.create')" :active="request()->routeIs('products.create')" class="text-primary font-bold">
+                    <x-responsive-nav-link :href="route('products.create')" :active="request()->routeIs('products.create')"
+                        class="text-primary font-bold">
                         <div class="flex items-center gap-2">
                             <i data-lucide="plus-circle" class="w-4 h-4"></i>
                             {{ __('Jual Produk') }}
@@ -137,15 +142,15 @@
         </div>
 
         <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
+        <div class="pt-4 pb-1 border-t border-border">
             @auth
                 <div class="px-4 flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                        <i data-lucide="user" class="w-6 h-6 text-gray-400"></i>
+                    <div class="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                        <i data-lucide="user" class="w-6 h-6 text-muted-foreground"></i>
                     </div>
                     <div>
-                        <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
-                        <div class="font-medium text-sm text-gray-500">{{ Auth::user()->role }} |
+                        <div class="font-medium text-base text-foreground">{{ Auth::user()->name }}</div>
+                        <div class="font-medium text-sm text-muted-foreground">{{ Auth::user()->role }} |
                             {{ Auth::user()->email }}
                         </div>
                     </div>
