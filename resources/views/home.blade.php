@@ -36,14 +36,8 @@
                 
                 // Refresh Lucide icons ONLY in the updated container to avoid duplication
                 this.$nextTick(() => {
-                    if (window.lucide) {
-                        window.lucide.createIcons({
-                            attrs: {
-                                'stroke-width': 2
-                            },
-                            nameAttr: 'data-lucide',
-                            root: container
-                        });
+                    if (window.renderIcons) {
+                        window.renderIcons(container);
                     }
                 });
             } catch (e) {

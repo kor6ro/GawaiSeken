@@ -16,7 +16,6 @@ return new class extends Migration {
             $table->string('slug')->unique();
             $table->string('brand')->nullable();
             $table->string('type')->nullable();
-            $table->string('variant')->nullable();
             $table->string('condition')->nullable();
             $table->string('reference_url')->nullable();
             $table->text('description');

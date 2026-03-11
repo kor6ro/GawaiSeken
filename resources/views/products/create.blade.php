@@ -5,17 +5,56 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-12" x-data="{
+        searching: false,
+        categoryId: '{{ old('category_id') }}',
+        brandMapping: {
+            '1': ['Apple', 'Samsung', 'Xiaomi', 'Oppo', 'Vivo', 'Realme', 'Infinix', 'Poco', 'Asus', 'Sony', 'Huawei', 'Google', 'OnePlus', 'Advan', 'Evercoss', 'Luna'], // Smartphone
+            '2': ['Apple', 'Asus', 'Lenovo', 'HP', 'Dell', 'Acer', 'MSI', 'Microsoft', 'Huawei', 'Xiaomi', 'Razer', 'Gigabyte', 'Axioo', 'Zyrex', 'Advan'], // Laptop
+            '3': ['Apple', 'Samsung', 'Xiaomi', 'Huawei', 'Lenovo', 'Microsoft', 'Oppo', 'Realme', 'Advan', 'Axioo', 'Evercoss'], // Tablet
+            'default': ['Apple', 'Samsung', 'Xiaomi', 'Sony', 'Logitech', 'Razer', 'Anker', 'Baseus'] // Aksesoris/Lainnya
+        },
+        get filteredBrands() {
+            return this.brandMapping[this.categoryId] || this.brandMapping['default'];
+        },
+        openGsmSearch() {
+            const brand = document.getElementById('brand').value;
+            const type = document.getElementById('type').value;
+            if (!brand || !type) {
+                alert('Pilih Merek dan isi Tipe terlebih dahulu.');
+                return;
+            }
+            const query = encodeURIComponent(brand + ' ' + type);
+            
+            // Logic based on category (assuming 1=Smartphone, 3=Tablet for GSMArena)
+            if (this.categoryId === '1' || this.categoryId === '3') {
+                window.open(`https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=${query}`, '_blank');
+            } else {
+                // Laptop or Accessories use Google Search with specs intent
+                const suffix = this.categoryId === '2' ? ' specs laptopmedia' : ' specs';
+                window.open(`https://www.google.com/search?q=${query}${suffix}`, '_blank');
+            }
+        }
+    }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="p-4 sm:p-8 bg-card text-card-foreground shadow sm:rounded-lg border border-border transition-colors">
                 <div class="max-w-2xl mx-auto">
                     <header>
-                        <h2 class="text-lg font-medium text-card-foreground">
-                            {{ __('Informasi Produk') }}
-                        </h2>
-                        <p class="mt-1 text-sm text-muted-foreground mb-6">
-                            {{ __('Lengkapi detail gawai yang ingin Anda jual.') }}
-                        </p>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                            <div>
+                                <h2 class="text-2xl font-bold text-foreground">
+                                    {{ __('Informasi Produk') }}
+                                </h2>
+                                <p class="mt-1 text-sm text-muted-foreground">
+                                    {{ __('Lengkapi detail gawai yang ingin Anda jual.') }}
+                                </p>
+                            </div>
+                            <button type="button" @click="openGsmSearch()" 
+                                class="inline-flex items-center px-3 py-2 bg-accent/50 text-accent-foreground rounded-xl font-semibold text-xs hover:bg-accent focus:outline-none transition-all gap-2 border border-border shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                <span x-text="(categoryId === '1' || categoryId === '3') ? 'Cari di GSM Arena' : 'Cari Spesifikasi'"></span>
+                            </button>
+                        </div>
                     </header>
 
                     <form method="POST" action="{{ route('products.store') }}" enctype="multipart/form-data"
@@ -23,14 +62,17 @@
                         @csrf
 
                         <!-- SECTION 1: IDENTITAS PRODUK -->
-                        <div class="bg-card text-card-foreground p-6 rounded-lg border border-border shadow-sm mb-6">
-                            <h3 class="text-lg font-bold text-foreground mb-4 border-b border-border pb-2">1. Identitas Produk</h3>
+                        <div class="bg-card text-card-foreground p-6 sm:p-8 rounded-2xl border border-border shadow-md mb-8">
+                            <h3 class="text-lg font-bold text-foreground mb-6 border-b border-border pb-3 flex items-center gap-2">
+                                <span class="flex items-center justify-center w-7 h-7 bg-primary/10 text-primary rounded-full text-xs">1</span>
+                                1. Identitas Produk
+                            </h3>
                             
-                            <div class="space-y-4">
+                            <div class="space-y-6">
                                 <div>
                                     <x-input-label for="category_id" :value="__('Kategori')" />
-                                    <select id="category_id" name="category_id"
-                                        class="mt-1 block w-full border-border bg-background text-foreground focus:ring-ring focus:border-ring rounded-md shadow-sm"
+                                    <select id="category_id" name="category_id" x-model="categoryId"
+                                        class="mt-1 block w-full h-11 border-border bg-background text-foreground focus:ring-primary focus:border-primary rounded-xl shadow-sm transition-all"
                                         required>
                                         <option value="">-- Pilih Kategori --</option>
                                         @foreach ($categories as $category)
@@ -47,13 +89,12 @@
                                     <div>
                                         <x-input-label for="brand" :value="__('Merek / Brand')" />
                                         <select id="brand" name="brand"
-                                            class="mt-1 block w-full border-border bg-background text-foreground focus:ring-ring focus:border-ring rounded-md shadow-sm"
+                                            class="mt-1 block w-full h-11 border-border bg-background text-foreground focus:ring-primary focus:border-primary rounded-xl shadow-sm transition-all"
                                             required>
                                             <option value="">-- Pilih Merek --</option>
-                                            @foreach (['Apple', 'Samsung', 'Xiaomi', 'Oppo', 'Vivo', 'Realme', 'Infinix', 'Asus', 'Lenovo', 'HP', 'Dell', 'Acer', 'Huawei', 'Sony', 'Google'] as $brand)
-                                                <option value="{{ $brand }}" {{ old('brand') == $brand ? 'selected' : '' }}>
-                                                    {{ $brand }}</option>
-                                            @endforeach
+                                            <template x-for="brandName in filteredBrands" :key="brandName">
+                                                <option :value="brandName" x-text="brandName" :selected="brandName == '{{ old('brand') }}'"></option>
+                                            </template>
                                             <option value="Lainnya" {{ old('brand') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
                                         </select>
                                         <x-input-error class="mt-2" :messages="$errors->get('brand')" />
@@ -61,30 +102,25 @@
 
                                     <div>
                                         <x-input-label for="type" :value="__('Tipe / Model')" />
-                                        <x-text-input id="type" name="type" type="text" class="mt-1 block w-full"
+                                        <x-text-input id="type" name="type" type="text" class="mt-1 block w-full h-11 rounded-xl"
                                             :value="old('type')" required placeholder="Misal: iPhone 13" autocomplete="off" />
                                         <x-input-error class="mt-2" :messages="$errors->get('type')" />
                                     </div>
-                                </div>
-
-                                <div>
-                                    <x-input-label for="variant" :value="__('Varian (RAM/Storage/Warna)')" />
-                                    <x-text-input id="variant" name="variant" type="text" class="mt-1 block w-full"
-                                        :value="old('variant')" placeholder="Misal: 128GB Midnight (Opsional)" autocomplete="off" />
-                                    <p class="text-xs text-muted-foreground mt-1">Dibiarkan kosong jika tidak ada varian.</p>
-                                    <x-input-error class="mt-2" :messages="$errors->get('variant')" />
                                 </div>
                             </div>
                         </div>
 
                         <!-- SECTION 2: INFORMASI PENJUALAN -->
-                        <div class="bg-card text-card-foreground p-6 rounded-lg border border-border shadow-sm mb-6">
-                            <h3 class="text-lg font-bold text-foreground mb-4 border-b border-border pb-2">2. Informasi Penjualan</h3>
+                        <div class="bg-card text-card-foreground p-6 sm:p-8 rounded-2xl border border-border shadow-md mb-8">
+                            <h3 class="text-lg font-bold text-foreground mb-6 border-b border-border pb-3 flex items-center gap-2">
+                                <span class="flex items-center justify-center w-7 h-7 bg-primary/10 text-primary rounded-full text-xs">2</span>
+                                2. Informasi Penjualan
+                            </h3>
                             
-                            <div class="space-y-4">
+                            <div class="space-y-6">
                                 <div>
                                     <x-input-label for="price" :value="__('Harga (Rp)')" />
-                                    <x-text-input id="price" name="price" type="number" class="mt-1 block w-full"
+                                    <x-text-input id="price" name="price" type="number" class="mt-1 block w-full h-11 rounded-xl"
                                         :value="old('price')" required placeholder="0" min="1000" />
                                     <x-input-error class="mt-2" :messages="$errors->get('price')" />
                                 </div>
@@ -92,7 +128,7 @@
                                 <div>
                                     <x-input-label for="condition" :value="__('Kondisi Barang')" />
                                     <select id="condition" name="condition"
-                                        class="mt-1 block w-full border-border bg-background text-foreground focus:ring-ring focus:border-ring rounded-md shadow-sm"
+                                        class="mt-1 block w-full h-11 border-border bg-background text-foreground focus:ring-primary focus:border-primary rounded-xl shadow-sm transition-all text-sm"
                                         required>
                                         <option value="">-- Pilih Kondisi --</option>
                                         @foreach (['Baru', 'Bekas Like New', 'Bekas Normal', 'Rusak Ringan'] as $kondisi)
@@ -105,8 +141,8 @@
 
                                 <div>
                                     <x-input-label for="description" :value="__('Deskripsi')" />
-                                    <textarea id="description" name="description" rows="4"
-                                        class="mt-1 block w-full border-border bg-background text-foreground focus:ring-ring focus:border-ring rounded-md shadow-sm"
+                                    <textarea id="description" name="description" rows="5"
+                                        class="mt-1 block w-full border-border bg-background text-foreground focus:ring-primary focus:border-primary rounded-xl shadow-sm transition-all text-sm p-3"
                                         required placeholder="Jelaskan minus, kelengkapan, dan kondisi fisik secara detail...">{{ old('description') }}</textarea>
                                     <x-input-error class="mt-2" :messages="$errors->get('description')" />
                                 </div>
@@ -114,9 +150,12 @@
                         </div>
 
                         <!-- SECTION 3: SPESIFIKASI TAMBAHAN -->
-                        <div id="specs-container" class="hidden bg-muted text-card-foreground p-6 rounded-lg border border-border shadow-sm mb-6 transition-all duration-300">
-                            <h3 class="text-lg font-bold text-foreground mb-4 border-b border-border pb-2">3. Spesifikasi Tambahan</h3>
-                            <p class="text-sm text-muted-foreground mb-4">Informasi ini menyesuaikan dengan kategori produk yang dipilih.</p>
+                        <div id="specs-container" class="hidden bg-muted/30 text-card-foreground p-6 sm:p-8 rounded-2xl border border-border shadow-md mb-8 transition-all duration-300">
+                            <h3 class="text-lg font-bold text-foreground mb-6 border-b border-border pb-3 flex items-center gap-2">
+                                <span class="flex items-center justify-center w-7 h-7 bg-primary/10 text-primary rounded-full text-xs">3</span>
+                                3. Spesifikasi Tambahan
+                            </h3>
+                            <p class="text-sm text-muted-foreground mb-6">Informasi ini menyesuaikan dengan kategori produk yang dipilih.</p>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="spec-field hidden" data-categories="smartphone,laptop,tablet">
@@ -184,15 +223,76 @@
                         </div>
 
                         <!-- SECTION 4: MEDIA -->
-                        <div class="bg-card text-card-foreground p-6 rounded-lg border border-border shadow-sm mb-6">
-                            <h3 class="text-lg font-bold text-foreground mb-4 border-b border-border pb-2">4. Media Foto</h3>
+                        <div class="bg-card text-card-foreground p-6 sm:p-8 rounded-2xl border border-border shadow-md mb-8"
+                            x-data="{ 
+                                files: [],
+                                previews: [],
+                                handleFiles(event) {
+                                    const newFiles = Array.from(event.target.files);
+                                    newFiles.forEach(file => {
+                                        this.files.push(file);
+                                        const reader = new FileReader();
+                                        reader.onload = (e) => {
+                                            this.previews.push({
+                                                url: e.target.result,
+                                                name: file.name
+                                            });
+                                        };
+                                        reader.readAsDataURL(file);
+                                    });
+                                    this.syncFiles();
+                                },
+                                removeFile(index) {
+                                    this.files.splice(index, 1);
+                                    this.previews.splice(index, 1);
+                                    this.syncFiles();
+                                },
+                                syncFiles() {
+                                    const dataTransfer = new DataTransfer();
+                                    this.files.forEach(file => dataTransfer.items.add(file));
+                                    this.$refs.fileInput.files = dataTransfer.files;
+                                }
+                            }">
+                            <h3 class="text-lg font-bold text-foreground mb-6 border-b border-border pb-3 flex items-center gap-2">
+                                <span class="flex items-center justify-center w-7 h-7 bg-primary/10 text-primary rounded-full text-xs">4</span>
+                                4. Media Foto
+                            </h3>
                             
                             <div>
-                                <x-input-label for="images" :value="__('Upload Foto Produk (Bisa Pilih Banyak)')" />
-                                <input id="images" name="images[]" type="file"
-                                    class="mt-1 block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 transition"
-                                    multiple required accept="image/jpeg,image/png,image/jpg" />
-                                <p class="text-xs text-muted-foreground mt-2">Format: JPG, JPEG, PNG. Maksimal ukuran total menyesuaikan server (rekomendasi &lt; 2MB per foto).</p>
+                                <x-input-label for="images" :value="__('Upload Foto Produk')" />
+                                <div class="mt-2 flex items-center justify-center w-full">
+                                    <label for="images" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer bg-muted/30 hover:bg-muted/50 transition-all">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <i data-lucide="image-plus" class="w-8 h-8 text-muted-foreground mb-2"></i>
+                                            <p class="text-xs text-muted-foreground"><span class="font-bold text-primary">Klik untuk tambah</span> atau seret ke sini</p>
+                                        </div>
+                                        <input id="images" x-ref="fileInput" name="images[]" type="file" @change="handleFiles($event)"
+                                            class="hidden" multiple accept="image/jpeg,image/png,image/jpg" 
+                                            :required="files.length === 0" />
+                                    </label>
+                                </div>
+                                
+                                {{-- Preview Gallery --}}
+                                <template x-if="previews.length > 0">
+                                    <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 mt-4 p-3 bg-muted/50 rounded-xl border border-border">
+                                        <template x-for="(preview, index) in previews" :key="index">
+                                            <div class="relative aspect-square rounded-lg overflow-hidden border border-border shadow-sm bg-card group">
+                                                <img :src="preview.url" class="w-full h-full object-cover">
+                                                {{-- Remove button (Top Right) --}}
+                                                <button type="button" @click="removeFile(index)" 
+                                                    class="absolute top-1.5 right-1.5 p-1 bg-white/90 dark:bg-black/80 text-foreground rounded-full flex items-center justify-center shadow-md border border-border hover:bg-red-500 hover:text-white transition-all z-10">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                <div class="flex items-center gap-2 mt-3">
+                                    <i data-lucide="info" class="w-3 h-3 text-muted-foreground"></i>
+                                    <p class="text-[10px] text-muted-foreground italic">JPG, PNG. Rekomendasi 1:1, max 2MB per foto.</p>
+                                </div>
+
                                 <x-input-error class="mt-2" :messages="$errors->get('images')" />
                                 @foreach ($errors->get('images.*') as $errorMessages)
                                     <x-input-error class="mt-2" :messages="$errorMessages" />

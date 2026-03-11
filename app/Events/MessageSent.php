@@ -16,17 +16,19 @@ class MessageSent implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $message;
+    public $chatId;
 
-    public function __construct(ChatMessage $message)
+    public function __construct(array $message, $chatId)
     {
         $this->message = $message;
+        $this->chatId = $chatId;
     }
 
     public function broadcastOn(): array
     {
         // Pastikan nama channel ini sama dengan yang di JS: `chat.{id}`
         return [
-            new PrivateChannel('chat.' . $this->message->chat_id),
+            new PrivateChannel('chat.' . $this->chatId),
         ];
     }
 }

@@ -27,7 +27,6 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'brand' => 'required|string|max:255',
             'type' => 'required|string|max:255',
-            'variant' => 'nullable|string|max:255',
             'condition' => 'required|string|max:255',
             'price' => 'required|numeric|min:1000',
             'description' => 'required|string',
@@ -50,7 +49,7 @@ class ProductController extends Controller
             }
 
             // Auto-generate title
-            $title = trim($request->brand . ' ' . $request->type . ' ' . $request->variant);
+            $title = trim($request->brand . ' ' . $request->type);
 
             // 1. Simpan Data Produk
             $product = Product::create([
@@ -60,7 +59,6 @@ class ProductController extends Controller
                 'slug' => Str::slug($title) . '-' . uniqid(),
                 'brand' => $request->brand,
                 'type' => $request->type,
-                'variant' => $request->variant,
                 'condition' => $request->condition,
                 'reference_url' => $reference_url,
                 'description' => $request->description,
@@ -119,7 +117,6 @@ class ProductController extends Controller
         $request->validate([
             'brand' => 'required|string|max:255',
             'type' => 'required|string|max:255',
-            'variant' => 'nullable|string|max:255',
             'condition' => 'required|string|max:255',
             'price' => 'required|numeric',
             'description' => 'required|string',
@@ -142,14 +139,13 @@ class ProductController extends Controller
             }
 
             // Auto-generate title
-            $title = trim($request->brand . ' ' . $request->type . ' ' . $request->variant);
+            $title = trim($request->brand . ' ' . $request->type);
 
             // 1. Update Data Teks
             $product->update([
                 'title' => $title,
                 'brand' => $request->brand,
                 'type' => $request->type,
-                'variant' => $request->variant,
                 'condition' => $request->condition,
                 'reference_url' => $reference_url,
                 'price' => $request->price,
@@ -265,5 +261,46 @@ class ProductController extends Controller
         }
 
         return response()->json([]);
+    }
+
+    public function getGsmArenaDetails(Request $request)
+    {
+        $slug = $request->query('slug');
+        if (!$slug) {
+            return response()->json(['error' => 'Slug is required'], 400);
+        }
+
+        // We use the same endpoints but with a different path usually
+        // Most of these unofficial APIs use /detail?id=slug or /product?id=slug
+        $endpoints = [
+            "https://gsm-arena-api.vercel.app/product/", // usually /product/:id
+            "https://gsmarena-api-six.vercel.app/api/product/",
+            "https://azharimm-gsmarena-api.vercel.app/product/"
+        ];
+
+        foreach ($endpoints as $url) {
+            try {
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+                ])->timeout(5)->get($url . $slug);
+
+                if ($response->successful()) {
+                    $data = $response->json();
+
+                    // Normalize the response (extract RAM, Storage, etc.)
+                    // Usually returned in 'specifications' or 'data'
+                    $rawSpecs = $data['data'] ?? $data['specifications'] ?? $data;
+
+                    return response()->json([
+                        'success' => true,
+                        'data' => $rawSpecs
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Continue
+            }
+        }
+
+        return response()->json(['error' => 'Device details not found'], 404);
     }
 }

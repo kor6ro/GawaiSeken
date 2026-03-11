@@ -30,9 +30,11 @@ Route::middleware('auth')->group(function () {
 
     // --- FITUR PRODUK & CHAT ---
     Route::get('/gsmarena/search', [ProductController::class, 'searchGsmArena'])->name('gsmarena.search');
+    Route::get('/gsmarena/details', [ProductController::class, 'getGsmArenaDetails'])->name('gsmarena.details');
     Route::resource('products', ProductController::class)->except(['index', 'show']);
 
     Route::get('/chats', [ChatController::class, 'index'])->name('chat.index');
+    Route::get('/chats/new/{product}', [ChatController::class, 'initiate'])->name('chat.new');
     Route::get('/chats/{chat}', [ChatController::class, 'show'])->name('chat.show');
     Route::post('/chats/{chat}/message', [ChatController::class, 'store'])->name('chat.store');
     Route::post('/chats/{chat}/image', [ChatController::class, 'storeImage'])->name('chat.image');

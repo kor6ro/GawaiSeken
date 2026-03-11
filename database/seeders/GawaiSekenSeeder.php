@@ -47,7 +47,7 @@ class GawaiSekenSeeder extends Seeder
                     'battery_health' => '100%',
                     'condition' => 'Seperti Baru'
                 ],
-                'images' => ['products/iphone15pro.png', 'products/iphone15pro.png'] // Duplicated for demo multiple photo
+                'images' => ['products/placeholder.png']
             ],
             [
                 'category_id' => $catLaptop->id,
@@ -63,7 +63,7 @@ class GawaiSekenSeeder extends Seeder
                     'screen' => '14.2-inch Liquid Retina XDR',
                     'condition' => 'Mulus 99%'
                 ],
-                'images' => ['products/macbookm3.png', 'products/macbookm3.png']
+                'images' => ['products/placeholder.png']
             ],
             [
                 'category_id' => $catSmartphone->id,
@@ -78,7 +78,7 @@ class GawaiSekenSeeder extends Seeder
                     'color' => 'Titanium Gray',
                     'condition' => 'Lengkap/Fullset'
                 ],
-                'images' => ['products/s24ultra.png', 'products/s24ultra.png']
+                'images' => ['products/placeholder.png']
             ]
         ];
 

@@ -18,7 +18,6 @@ class Product extends Model
         'slug',
         'brand',
         'type',
-        'variant',
         'condition',
         'reference_url',
         'description',

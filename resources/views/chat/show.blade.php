@@ -16,11 +16,12 @@
     {{-- ALPINE COMPONENT ROOT --}}
     {{-- ============================================================= --}}
     <div class="flex flex-col h-[calc(100vh-65px)] bg-background text-foreground" x-data="chatSystem({
-            chatId:        {{ $chat->id }},
+            chatId:        '{{ $isNewChat ? 'product-' . $chat->product_id : $chat->id }}',
             currentUserId: {{ $me->id }},
             initialMessages: {{ Js::from($chat->messages->map(fn($m) => array_merge($m->toArray(), ['image_url' => $m->image_path ? Storage::url($m->image_path) : null]))) }},
-            sendUrl:  '{{ route('chat.store', $chat) }}',
-            imageUrl: '{{ route('chat.image', $chat) }}',
+            sendUrl:  '{{ route('chat.store', $isNewChat ? 'product-' . $chat->product_id : $chat->id) }}',
+            imageUrl: '{{ route('chat.image', $isNewChat ? 'product-' . $chat->product_id : $chat->id) }}',
+            isNewChat: {{ $isNewChat ? 'true' : 'false' }},
         })">
 
         {{-- ============================================================= --}}
@@ -55,8 +56,12 @@
                     </div>
                     <div class="min-w-0">
                         <h3 class="font-bold text-foreground text-sm leading-tight truncate">{{ $oppName }}</h3>
-                        <p class="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
+                        <p x-show="!isTyping"
+                            class="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
                             {{ $isBuyer ? 'Penjual' : 'Pembeli' }}
+                        </p>
+                        <p x-show="isTyping" x-cloak class="text-[10px] font-bold text-primary animate-pulse">
+                            Sedang mengetik...
                         </p>
                     </div>
                 </a>
@@ -215,7 +220,7 @@
                 {{-- Text area --}}
                 <div class="flex-1">
                     <textarea x-model="newMessage" x-ref="messageInput"
-                        @keydown.enter.prevent="if(!$event.shiftKey) sendMessage()" @input="resizeTextarea"
+                        @keydown.enter.prevent="if(!$event.shiftKey) sendMessage()" @input="handleTyping"
                         class="w-full bg-muted border-none rounded-[24px] px-5 py-3 text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary-500/20 transition-all resize-none max-h-40 min-h-[48px] overflow-hidden text-sm"
                         placeholder="Tulis pesan…" rows="1"></textarea>
                 </div>
@@ -260,19 +265,70 @@
                 messages: config.initialMessages,
                 newMessage: '',
                 lightboxUrl: null,
+                isTyping: false,
+                typingTimeout: null,
+                isNewChat: config.isNewChat,
+                sendUrl: config.sendUrl,
+                imageUrl: config.imageUrl,
+                lastTypingWhisper: 0,
 
                 // ---------- lifecycle ----------
                 init() {
                     this.scrollToBottom();
 
-                    if (typeof Echo !== 'undefined') {
-                        Echo.private(`chat.${this.chatId}`)
-                            .listen('MessageSent', (e) => {
-                                if (e.message.sender_id !== this.currentUserId) {
-                                    this.messages.push(e.message);
-                                    this.scrollToBottom();
-                                }
-                            });
+                    if (!this.isNewChat) {
+                        this.waitForEcho();
+                    }
+                },
+
+                waitForEcho() {
+                    if (window.Echo) {
+                        this.setupEcho();
+                        return;
+                    }
+
+                    // Check every 100ms for Echo availability (up to 5 seconds)
+                    let attempts = 0;
+                    const timer = setInterval(() => {
+                        attempts++;
+                        if (window.Echo) {
+                            clearInterval(timer);
+                            this.setupEcho();
+                        } else if (attempts > 50) {
+                            clearInterval(timer);
+                            console.error('Echo failed to load after 5 seconds');
+                        }
+                    }, 100);
+                },
+
+                setupEcho() {
+                    Echo.private(`chat.${this.chatId}`)
+                        .listen('MessageSent', (e) => {
+                            if (e.message.sender_id !== this.currentUserId) {
+                                this.messages.push(e.message);
+                                this.scrollToBottom();
+                            }
+                        })
+                        .listenForWhisper('typing', (e) => {
+                            this.isTyping = true;
+                            if (this.typingTimeout) clearTimeout(this.typingTimeout);
+                            this.typingTimeout = setTimeout(() => {
+                                this.isTyping = false;
+                            }, 3000);
+                        });
+                },
+
+                handleTyping() {
+                    this.resizeTextarea();
+                    if (window.Echo && !this.isNewChat) {
+                        const now = Date.now();
+                        if (now - this.lastTypingWhisper > 2000) {
+                            this.lastTypingWhisper = now;
+                            Echo.private(`chat.${this.chatId}`)
+                                .whisper('typing', {
+                                    name: '{{ $me->name }}'
+                                });
+                        }
                     }
                 },
 
@@ -331,7 +387,19 @@
                     this.scrollToBottom();
 
                     try {
-                        const { data } = await axios.post(config.sendUrl, { message: text });
+                        const { data } = await axios.post(this.sendUrl, { message: text });
+
+                        // If it was a new chat, update the state and setup Echo
+                        if (this.isNewChat) {
+                            this.isNewChat = false;
+                            this.chatId = data.chat_id;
+                            this.sendUrl = `{{ url('/chats') }}/${this.chatId}/message`;
+                            this.imageUrl = `{{ url('/chats') }}/${this.chatId}/image`;
+                            this.setupEcho();
+                            // Optional: update URL without refresh
+                            window.history.replaceState(null, '', `{{ url('/chats') }}/${this.chatId}`);
+                        }
+
                         const idx = this.messages.findIndex(m => m.temp_id === tempId);
                         if (idx !== -1) this.messages[idx] = { ...data, is_sending: false };
                     } catch (e) { console.error('Send failed:', e); }
@@ -360,9 +428,20 @@
                     this.$refs.imageInput.value = '';
 
                     try {
-                        const { data } = await axios.post(config.imageUrl, fd, {
+                        const { data } = await axios.post(this.imageUrl, fd, {
                             headers: { 'Content-Type': 'multipart/form-data' },
                         });
+
+                        // If it was a new chat, update the state
+                        if (this.isNewChat) {
+                            this.isNewChat = false;
+                            this.chatId = data.chat_id;
+                            this.sendUrl = `{{ url('/chats') }}/${this.chatId}/message`;
+                            this.imageUrl = `{{ url('/chats') }}/${this.chatId}/image`;
+                            this.setupEcho();
+                            window.history.replaceState(null, '', `{{ url('/chats') }}/${this.chatId}`);
+                        }
+
                         const idx = this.messages.findIndex(m => m.temp_id === tempId);
                         if (idx !== -1) this.messages[idx] = { ...data, is_sending: false };
                     } catch (e) { console.error('Image upload failed:', e); }
