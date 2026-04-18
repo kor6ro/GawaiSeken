@@ -21,7 +21,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role', 
+        'role',
+        'favorites',
     ];
 
     /**
@@ -40,7 +41,16 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'favorites' => 'array',
         ];
+    }
+
+    /**
+     * Helper to check if a product is favorited.
+     */
+    public function isFavorite($productId): bool
+    {
+        return in_array($productId, $this->favorites ?? []);
     }
 
     /**
@@ -73,5 +83,25 @@ class User extends Authenticatable
     public function transactionsAsSeller(): HasMany
     {
         return $this->hasMany(Transaction::class, 'seller_id');
+    }
+
+    /**
+     * Relasi ke ulasan sebagai penjual (melalui produk).
+     */
+    public function reviewsAsSeller()
+    {
+        return $this->hasManyThrough(Review::class, Product::class, 'user_id', 'product_id');
+    }
+
+    /**
+     * Scope untuk Premium Seller.
+     */
+    public function getIsPremiumAttribute(): bool
+    {
+        if (!$this->profile?->is_ktp_verified) {
+            return false;
+        }
+
+        return $this->transactionsAsSeller()->where('status', 'completed')->count() >= 5;
     }
 }

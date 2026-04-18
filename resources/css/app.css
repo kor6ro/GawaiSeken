@@ -4,71 +4,75 @@
 
 @layer base {
   :root {
-    /* LIGHT MODE – Soft Blue Neutral */
-    --background: 210 40% 98%;
-    --foreground: 222 47% 15%;
+    /* LIGHT MODE – Ultra Soft Azure */
+    /* Menurunkan saturasi background agar teks lebih stand out tanpa kontras yang 'menusuk' */
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
 
-    --muted: 210 40% 94%;
-    --muted-foreground: 215 20% 40%;
+    --muted: 210 30% 94%;
+    --muted-foreground: 215 16% 47%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 15%;
+    --popover-foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 15%;
+    --card-foreground: 222 47% 11%;
 
-    --border: 214 32% 88%;
-    --input: 214 32% 88%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
 
-    /* Primary – Calm Blue */
-    --primary: 221 83% 53%;
+    /* Primary – Deep Professional Blue */
+    /* Saturasi dikurangi sedikit (83% -> 72%) agar tidak terlalu neon di layar LCD murah */
+    --primary: 221 72% 50%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 94%;
+    --secondary: 210 40% 96%;
     --secondary-foreground: 222 47% 20%;
 
-    --accent: 210 40% 92%;
+    --accent: 210 40% 94%;
     --accent-foreground: 222 47% 20%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --ring: 221 83% 60%;
-
-    --radius: 0.75rem;
+    --ring: 221 72% 50%;
+    --radius: 0.5rem;
+    /* Lebih standar untuk tampilan profesional */
   }
 
   .dark {
-    /* DARK MODE – Deep Navy Soft */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 96%;
+    /* DARK MODE – Deep Navy Midnight */
+    /* Menaikkan sedikit lightness agar tidak 'tenggelam' di layar dengan brightness rendah */
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
 
-    --muted: 217 33% 18%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 217 33% 14%;
+    --muted-foreground: 215 20% 70%;
 
-    --popover: 222 47% 13%;
-    --popover-foreground: 210 40% 96%;
+    --popover: 222 47% 9%;
+    --popover-foreground: 210 40% 98%;
 
-    --card: 222 47% 13%;
-    --card-foreground: 210 40% 96%;
+    --card: 222 47% 9%;
+    --card-foreground: 210 40% 98%;
 
-    --border: 217 33% 22%;
-    --input: 217 33% 22%;
+    --border: 217 33% 18%;
+    --input: 217 33% 18%;
 
-    /* Primary – Soft Light Blue */
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
+    /* Primary – Soft Electric Blue */
+    /* Dibuat lebih terang sedikit (60% -> 70%) agar kontras terhadap background gelap tetap aman (WCAG) */
+    --primary: 213 94% 70%;
+    --primary-foreground: 222 47% 6%;
 
-    --secondary: 217 33% 18%;
-    --secondary-foreground: 210 40% 96%;
+    --secondary: 217 33% 14%;
+    --secondary-foreground: 210 40% 98%;
 
-    --accent: 217 33% 20%;
-    --accent-foreground: 210 40% 96%;
+    --accent: 217 33% 16%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 63% 40%;
+    --destructive: 0 63% 45%;
     --destructive-foreground: 210 40% 98%;
 
-    --ring: 217 91% 60%;
+    --ring: 213 94% 70%;
   }
 }
 
@@ -76,6 +80,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }

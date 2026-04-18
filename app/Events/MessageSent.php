@@ -28,7 +28,7 @@ class MessageSent implements ShouldBroadcastNow
     {
         // Pastikan nama channel ini sama dengan yang di JS: `chat.{id}`
         return [
-            new PrivateChannel('chat.' . $this->chatId),
+            new PresenceChannel('chat.' . $this->chatId),
         ];
     }
 }

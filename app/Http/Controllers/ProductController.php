@@ -11,24 +11,34 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
+use Inertia\Inertia;
+use Inertia\Response;
+
 class ProductController extends Controller
 {
     // Menampilkan form tambah produk
-    public function create()
+    public function create(): Response
     {
         $categories = Category::all();
-        return view('products.create', compact('categories'));
+        return Inertia::render('Products/Create', compact('categories'));
     }
 
     // Menyimpan produk ke database
     public function store(Request $request)
     {
+        // Sanitize price: remove any non-numeric characters (like dots or Rp prefix)
+        if ($request->has('price')) {
+            $request->merge(['price' => preg_replace('/[^0-9]/', '', $request->price)]);
+        }
+
         $request->validate([
             'category_id' => 'required|exists:categories,id',
             'brand' => 'required|string|max:255',
             'type' => 'required|string|max:255',
             'condition' => 'required|string|max:255',
-            'price' => 'required|numeric|min:1000',
+            'is_cod' => 'nullable|boolean',
+            'is_negotiable' => 'nullable|boolean',
+            'price' => 'required|numeric|min:1000|max:99999999999',
             'description' => 'required|string',
             'specifications' => 'nullable|array',
             'specifications.battery_health' => 'nullable|numeric|min:0|max:100',
@@ -60,6 +70,8 @@ class ProductController extends Controller
                 'brand' => $request->brand,
                 'type' => $request->type,
                 'condition' => $request->condition,
+                'is_cod' => $request->boolean('is_cod'),
+                'is_negotiable' => $request->boolean('is_negotiable', true),
                 'reference_url' => $reference_url,
                 'description' => $request->description,
                 'price' => $request->price,
@@ -94,7 +106,7 @@ class ProductController extends Controller
         return redirect()->route('dashboard')->with('status', 'Produk berhasil ditambahkan!');
     }
 
-    public function edit(Product $product)
+    public function edit(Product $product): Response
     {
         // Keamanan: Pastikan hanya pemilik yang bisa edit
         if ($product->user_id !== Auth::id()) {
@@ -105,7 +117,7 @@ class ProductController extends Controller
         // Load relasi category dan images agar tidak error di view
         $product->load('category', 'images');
 
-        return view('products.edit', compact('product', 'categories'));
+        return Inertia::render('Products/Edit', compact('product', 'categories'));
     }
 
     public function update(Request $request, Product $product)
@@ -114,11 +126,18 @@ class ProductController extends Controller
             abort(403);
         }
 
+        // Sanitize price
+        if ($request->has('price')) {
+            $request->merge(['price' => preg_replace('/[^0-9]/', '', $request->price)]);
+        }
+
         $request->validate([
             'brand' => 'required|string|max:255',
             'type' => 'required|string|max:255',
             'condition' => 'required|string|max:255',
-            'price' => 'required|numeric',
+            'is_cod' => 'nullable|boolean',
+            'is_negotiable' => 'nullable|boolean',
+            'price' => 'required|numeric|min:1000|max:99999999999',
             'description' => 'required|string',
             'status' => 'required|in:available,sold',
             'specifications' => 'nullable|array',
@@ -147,6 +166,8 @@ class ProductController extends Controller
                 'brand' => $request->brand,
                 'type' => $request->type,
                 'condition' => $request->condition,
+                'is_cod' => $request->boolean('is_cod'),
+                'is_negotiable' => $request->boolean('is_negotiable'),
                 'reference_url' => $reference_url,
                 'price' => $request->price,
                 'description' => $request->description,
@@ -192,12 +213,12 @@ class ProductController extends Controller
         return redirect()->route('dashboard')->with('status', 'Produk berhasil diperbarui!');
     }
 
-    public function show(Product $product)
+    public function show(Product $product): Response
     {
         // Pastikan load relasi user/toko agar bisa menampilkan info penjual
-        $product->load(['user.profile', 'images']);
+        $product->load(['user.profile', 'images', 'category']);
 
-        return view('products.show', compact('product'));
+        return Inertia::render('Products/Show', compact('product'));
     }
 
     public function destroy(Product $product)
@@ -240,6 +261,7 @@ class ProductController extends Controller
 
         foreach ($endpoints as $url) {
             try {
+                /** @var \Illuminate\Http\Client\Response $response */
                 $response = \Illuminate\Support\Facades\Http::withHeaders([
                     'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
                 ])->timeout(5)->get($url . urlencode($query));
@@ -280,6 +302,7 @@ class ProductController extends Controller
 
         foreach ($endpoints as $url) {
             try {
+                /** @var \Illuminate\Http\Client\Response $response */
                 $response = \Illuminate\Support\Facades\Http::withHeaders([
                     'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
                 ])->timeout(5)->get($url . $slug);
@@ -302,5 +325,58 @@ class ProductController extends Controller
         }
 
         return response()->json(['error' => 'Device details not found'], 404);
+    }
+    public function favorites(): Response
+    {
+        $user = Auth::user();
+        $favoriteIds = $user->favorites ?? [];
+        
+        $isMobile = preg_match('/Mobile|Android|iPhone/i', request()->userAgent());
+        $perPage = $isMobile ? 8 : 15;
+
+        $products = Product::whereIn('id', $favoriteIds)
+            ->with(['images', 'category', 'seller.profile'])
+            ->latest()
+            ->paginate($perPage);
+
+        return Inertia::render('Products/Favorites', [
+            'products' => $products
+        ]);
+    }
+
+    public function toggleFavorite(Product $product)
+    {
+        $user = Auth::user();
+        $favorites = $user->favorites ?? [];
+
+        if (in_array($product->id, $favorites)) {
+            $favorites = array_values(array_filter($favorites, fn($id) => $id !== $product->id));
+            $status = 'removed';
+        } else {
+            $favorites[] = $product->id;
+            $status = 'added';
+        }
+
+        $user->update(['favorites' => $favorites]);
+
+        return back()->with('status', $status === 'added' ? 'Produk ditambahkan ke favorit' : 'Produk dihapus dari favorit');
+    }
+
+    public function report(Request $request, Product $product)
+    {
+        $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
+        $reports = $product->reports ?? [];
+        $reports[] = [
+            'user_id' => Auth::id(),
+            'reason' => $request->reason,
+            'date' => now()->toDateTimeString(),
+        ];
+
+        $product->update(['reports' => $reports]);
+
+        return back()->with('status', 'Laporan Anda telah terkirim. Terima kasih.');
     }
 }

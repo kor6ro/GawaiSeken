@@ -7,22 +7,46 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redirect;
 
+use Inertia\Inertia;
+use Inertia\Response;
+
 class StoreController extends Controller
 {
     /**
      * Menampilkan Halaman Toko Publik
      */
-    public function show(User $user)
+    public function show(User $user): Response
     {
-        $products = $user->products()->where('status', 'available')->latest()->get(); 
+        $user->load('profile');
         
+        $isMobile = preg_match('/Mobile|Android|iPhone/i', request()->userAgent());
+        $perPage = $isMobile ? 8 : 15;
+
+        $products = $user->products()
+            ->with(['images', 'category', 'seller.profile'])
+            ->where('status', 'available')
+            ->latest()
+            ->paginate($perPage); 
+        
+        $reviews = \App\Models\Review::whereHas('product', function ($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })->with(['buyer', 'product'])->latest()->get();
+
+        $rating = $reviews->count() > 0 ? $reviews->avg('rating') : 0;
+
         $stats = [
-            'sold' => $user->transactionsAsSeller()->count(), // Menggunakan data real dari relasi
-            'rating' => 4.8, // Nanti bisa diganti logic rating real
+            'sold' => $user->transactionsAsSeller()->where('status', 'completed')->count(),
+            'rating' => (float)$rating,
             'joined' => $user->created_at->translatedFormat('d F Y'),
+            'is_premium' => $user->is_premium,
         ];
 
-        return view('store.show', compact('user', 'products', 'stats'));
+        return Inertia::render('Store/Show', [
+            'seller' => $user,
+            'products' => $products,
+            'stats' => $stats,
+            'reviews' => $reviews,
+        ]);
     }
 
     /**
@@ -34,6 +58,7 @@ class StoreController extends Controller
             'store_name' => ['required', 'string', 'max:255'],
             'bio' => ['nullable', 'string', 'max:1000'],
             'address' => ['nullable', 'string', 'max:500'],
+            'city' => ['nullable', 'string', 'max:100'],
             'avatar' => ['nullable', 'image', 'max:2048'], // Max 2MB
         ]);
 
@@ -42,12 +67,24 @@ class StoreController extends Controller
         // Handle Avatar Upload
         $avatarPath = $user->profile ? $user->profile->avatar : null;
         if ($request->hasFile('avatar')) {
-            // Hapus avatar lama jika ada
-            if ($avatarPath && Storage::exists('public/' . $avatarPath)) {
-                Storage::delete('public/' . $avatarPath);
+            $file = $request->file('avatar');
+            if ($file->isValid()) {
+                // Hapus avatar lama jika ada
+                if ($avatarPath && Storage::disk('public')->exists($avatarPath)) {
+                    Storage::disk('public')->delete($avatarPath);
+                }
+                
+                // Simpan yang baru dengan cara yang lebih resilient (seperti di ProductController)
+                $tempPath = $file->getRealPath() ?: $file->getPathname();
+                $fileName = $file->hashName();
+                $avatarPath = "avatars/{$fileName}";
+
+                $stream = fopen($tempPath, 'r');
+                Storage::disk('public')->put($avatarPath, $stream);
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
             }
-            // Simpan yang baru
-            $avatarPath = $request->file('avatar')->store('avatars', 'public');
         }
 
         // Update atau Create UserProfile
@@ -57,8 +94,8 @@ class StoreController extends Controller
                 'store_name' => $request->store_name,
                 'bio' => $request->bio,
                 'address' => $request->address,
+                'city' => $request->city,
                 'avatar' => $avatarPath,
-                // Pastikan 'phone' dihandle jika ada inputnya, atau biarkan existing
             ]
         );
 

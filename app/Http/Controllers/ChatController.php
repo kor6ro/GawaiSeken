@@ -9,19 +9,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
+use Inertia\Inertia;
+use Inertia\Response;
+
 class ChatController extends Controller
 {
     // =========================================================
     // INDEX – List all chats for the authenticated user
     // =========================================================
-    public function index()
+    public function index(): Response
     {
         $userId = Auth::id();
 
-        $chats = Chat::where('buyer_id', $userId)
-            ->orWhere('seller_id', $userId)
+        $chats = Chat::query()->where('buyer_id', '=', $userId)
+            ->orWhere('seller_id', '=', $userId)
             ->with([
-                'product',
+                'product.images',
                 'buyer.profile',
                 'seller.profile',
                 'messages' => fn($q) => $q->latest()->limit(1),
@@ -34,22 +37,24 @@ class ChatController extends Controller
             ->orderByRaw('COALESCE(last_message_at, created_at) DESC')
             ->get();
 
-        return view('chat.index', compact('chats'));
+        return Inertia::render('Chat/Index', [
+            'chats' => $chats,
+        ]);
     }
 
     // =========================================================
     // SHOW – View a single chat thread
     // =========================================================
-    public function show($id)
+    public function show($id): Response|\Illuminate\Http\RedirectResponse
     {
         if (str_starts_with($id, 'product-')) {
             $productId = str_replace('product-', '', $id);
             $product = Product::with(['images', 'user.profile'])->findOrFail($productId);
 
             // Check if chat already exists anyway
-            $chat = Chat::where('product_id', $product->id)
-                ->where('buyer_id', Auth::id())
-                ->first();
+            $chat = Chat::query()->where('product_id', '=', $product->id)
+                ->where('buyer_id', '=', Auth::id())
+                ->first(['*']);
 
             if ($chat) {
                 return redirect()->route('chat.show', $chat);
@@ -80,15 +85,22 @@ class ChatController extends Controller
             $this->authorizeChat($chat);
 
             // Mark opponent messages as read
-            ChatMessage::where('chat_id', $chat->id)
+            $updated = ChatMessage::query()->where('chat_id', '=', $chat->id)
                 ->where('sender_id', '!=', Auth::id())
                 ->whereNull('read_at')
                 ->update(['read_at' => now()]);
+            
+            if ($updated > 0) {
+                broadcast(new \App\Events\MessageRead($chat->id))->toOthers();
+            }
 
             $isNewChat = false;
         }
 
-        return view('chat.show', compact('chat', 'isNewChat'));
+        return Inertia::render('Chat/Show', [
+            'chat' => $chat,
+            'isNewChat' => $isNewChat,
+        ]);
     }
 
     // =========================================================
@@ -115,7 +127,7 @@ class ChatController extends Controller
         $message = $chat->messages()->create([
             'sender_id' => Auth::id(),
             'type' => 'text',
-            'message' => $request->message,
+            'message' => $request->input('message'),
         ]);
 
         $chat->update(['last_message_at' => now()]);
@@ -193,5 +205,25 @@ class ChatController extends Controller
         return array_merge($message->toArray(), [
             'image_url' => $message->image_path ? Storage::url($message->image_path) : null,
         ]);
+    }
+
+    // =========================================================
+    // MARK AS READ – Update read receipts dynamically
+    // =========================================================
+    public function markAsRead($id)
+    {
+        $chat = Chat::findOrFail($id);
+        $this->authorizeChat($chat);
+
+        $updated = ChatMessage::query()->where('chat_id', '=', $chat->id)
+            ->where('sender_id', '!=', Auth::id())
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        if ($updated > 0) {
+            broadcast(new \App\Events\MessageRead($chat->id))->toOthers();
+        }
+
+        return response()->json(['success' => true]);
     }
 }

@@ -12,10 +12,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-    $middleware->alias([
-                'seller' => \App\Http\Middleware\EnsureIsSeller::class,
-            ]);
-        })
+        $middleware->web(append: [
+            \App\Http\Middleware\HandleInertiaRequests::class,
+        ]);
+        $middleware->alias([
+            'seller' => \App\Http\Middleware\EnsureIsSeller::class,
+        ]);
+    })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();

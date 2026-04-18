@@ -19,6 +19,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password'); // varchar [cite: 58]
             $table->string('role')->default('buyer'); // varchar [cite: 64] - Menentukan akses user
+            $table->json('favorites')->nullable(); // Pivot favorite (IDs array)
             $table->rememberToken();
             $table->timestamps(); // created_at & updated_at [cite: 70, 76]
         });

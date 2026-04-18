@@ -19,17 +19,50 @@ class Product extends Model
         'brand',
         'type',
         'condition',
+        'is_cod',
+        'is_negotiable',
         'reference_url',
         'description',
         'price',
         'status',
         'specifications',
+        'reports',
     ];
 
     // Casting JSON ke Array otomatis
     protected $casts = [
         'specifications' => 'array',
+        'is_cod' => 'boolean',
+        'is_negotiable' => 'boolean',
+        'reports' => 'array',
     ];
+
+    /**
+     * Get the condition badge color.
+     * Hijau = Bekas Mulus
+     * Kuning = Bekas Ada minus
+     * Merah = Minus
+     */
+    public function getConditionBadgeColorAttribute(): string
+    {
+        $condition = strtolower($this->condition);
+        
+        if (str_contains($condition, 'mulus')) {
+            return 'green';
+        }
+        
+        if ($condition === 'minus') {
+            return 'red';
+        }
+        
+        if (str_contains($condition, 'minus')) {
+            return 'yellow';
+        }
+        
+        return 'green';
+    }
+
+    protected $appends = ['condition_badge_color'];
 
     public function category(): BelongsTo
     {

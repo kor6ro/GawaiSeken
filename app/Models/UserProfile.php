@@ -12,11 +12,17 @@ class UserProfile extends Model
 
     protected $fillable = [
         'user_id',
-        'store_name', // Ditambahkan
+        'store_name',
         'avatar',
         'phone',
         'address',
+        'city',
+        'is_ktp_verified',
         'bio',
+    ];
+
+    protected $casts = [
+        'is_ktp_verified' => 'boolean',
     ];
 
     public function user(): BelongsTo

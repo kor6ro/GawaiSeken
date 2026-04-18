@@ -1,41 +1,23 @@
 import './bootstrap';
+import '../css/app.css';
 
-import Alpine from 'alpinejs';
-import { createIcons, icons } from 'lucide';
+import { createApp, h } from 'vue';
+import { createInertiaApp } from '@inertiajs/vue3';
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import { ZiggyVue } from 'ziggy-js';
 
-window.Alpine = Alpine;
+const appName = import.meta.env.VITE_APP_NAME || 'GawaiSeken';
 
-// Expose lucide globally so views can call it too (e.g. after AJAX updates)
-window.lucide = { createIcons, icons };
-
-// Helper: run createIcons on a specific root (or whole document), safely
-function renderIcons(root) {
-    createIcons({
-        icons,
-        attrs: { 'stroke-width': 2 },
-        nameAttr: 'data-lucide',
-        root: root || document.body,
-    });
-}
-window.renderIcons = renderIcons;
-
-Alpine.store('theme', {
-    isDark: localStorage.getItem('theme') === 'dark' ||
-        (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
-
-    toggle() {
-        this.isDark = !this.isDark;
-        localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
-        document.documentElement.classList.toggle('dark', this.isDark);
-
-        // Re-render icons after Alpine re-shows the correct sun/moon span
-        Alpine.nextTick(() => renderIcons(document.body));
-    }
+createInertiaApp({
+    title: (title) => `${title} - ${appName}`,
+    resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
+    setup({ el, App, props, plugin }) {
+        return createApp({ render: () => h(App, props) })
+            .use(plugin)
+            .use(ZiggyVue, props.initialPage.props.ziggy)
+            .mount(el);
+    },
+    progress: {
+        color: '#4B5563',
+    },
 });
-
-// Run icons AFTER Alpine has started so x-cloak elements are already visible
-document.addEventListener('alpine:initialized', () => {
-    renderIcons(document.body);
-});
-
-Alpine.start();

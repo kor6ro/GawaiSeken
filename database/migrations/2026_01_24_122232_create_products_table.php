@@ -20,8 +20,11 @@ return new class extends Migration {
             $table->string('reference_url')->nullable();
             $table->text('description');
             $table->decimal('price', 15, 2);
+            $table->boolean('is_cod')->default(false);
+            $table->boolean('is_negotiable')->default(true);
             $table->string('status')->default('available');
             $table->json('specifications')->nullable();
+            $table->json('reports')->nullable(); // Metadata: user_id, reason, date
 
             $table->softDeletes();
             $table->timestamps();

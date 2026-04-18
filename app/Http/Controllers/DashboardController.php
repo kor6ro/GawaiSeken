@@ -9,11 +9,13 @@ use App\Models\ChatMessage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
+use Inertia\Inertia;
+
 class DashboardController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
+        $user = Auth::user()->load('profile');
 
         // Data 1: Produk Aktif
         $productsCount = Product::where('user_id', $user->id)
@@ -46,7 +48,7 @@ class DashboardController extends Controller
                 ->latest()
                 ->paginate(5); // Tampilkan 5 per halaman di tabel
 
-    return view('dashboard', compact(
+    return Inertia::render('Dashboard', compact(
         'user', 
         'productsCount', 
         'transactionsCount', 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class HomeController extends Controller
 {
@@ -18,8 +19,18 @@ class HomeController extends Controller
         ];
 
         // Mulai query produk yang statusnya available
-        $query = Product::with(['images', 'category', 'seller.profile'])
-            ->where('status', 'available');
+        $query = Product::with([
+            'images', 
+            'category', 
+            'seller.profile',
+            'seller' => function($q) {
+                $q->withAvg('reviewsAsSeller', 'rating')
+                  ->withCount(['reviewsAsSeller', 'transactionsAsSeller' => function($tn) {
+                      $tn->where('status', 'completed');
+                  }]);
+            }
+        ])
+        ->where('status', 'available');
 
         // 1. Filter Pencarian (Search)
         if ($request->filled('search')) {
@@ -58,16 +69,24 @@ class HomeController extends Controller
         }
 
         // Ambil data produk (paginate)
-        $products = $query->paginate(12)->withQueryString();
-
-        // Jika request AJAX, kembalikan partial view
-        if ($request->ajax()) {
-            return view('products._list', compact('products'))->render();
-        }
+        $isMobile = preg_match('/Mobile|Android|iPhone/i', $request->userAgent());
+        $perPage = $isMobile ? 8 : 15;
+        $products = $query->paginate($perPage)->withQueryString();
 
         // Ambil semua kategori untuk sidebar filter
         $categories = Category::all();
 
-        return view('home', array_merge(compact('products', 'categories'), $filterData));
+        return Inertia::render('Home', array_merge([
+            'products' => $products,
+            'categories' => $categories,
+            'filters' => [
+                'search' => $request->search,
+                'category' => $request->category,
+                'ram' => $request->ram,
+                'storage' => $request->storage,
+                'kelengkapan' => $request->kelengkapan,
+                'sort' => $request->sort,
+            ],
+        ], $filterData));
     }
 }

@@ -20,6 +20,8 @@ return new class extends Migration
             $table->string('avatar')->nullable();
             $table->string('phone')->nullable();
             $table->text('address')->nullable();
+            $table->string('city')->nullable();
+            $table->boolean('is_ktp_verified')->default(false);
             $table->text('bio')->nullable();
             
             $table->timestamps();
