@@ -5,11 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\ProductImage;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Gate;
+use App\Jobs\ProcessProductImage;
+
 
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,28 +29,8 @@ class ProductController extends Controller
     }
 
     // Menyimpan produk ke database
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
-        // Sanitize price: remove any non-numeric characters (like dots or Rp prefix)
-        if ($request->has('price')) {
-            $request->merge(['price' => preg_replace('/[^0-9]/', '', $request->price)]);
-        }
-
-        $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'brand' => 'required|string|max:255',
-            'type' => 'required|string|max:255',
-            'condition' => 'required|string|max:255',
-            'is_cod' => 'nullable|boolean',
-            'is_negotiable' => 'nullable|boolean',
-            'price' => 'required|numeric|min:1000|max:99999999999',
-            'description' => 'required|string',
-            'specifications' => 'nullable|array',
-            'specifications.battery_health' => 'nullable|numeric|min:0|max:100',
-            'images' => 'required|array|min:1',
-            'images.*' => 'image|mimes:jpeg,png,jpg|max:2048',
-        ]);
-
         DB::transaction(function () use ($request) {
             $category = Category::find($request->category_id);
             $reference_url = null;
@@ -79,25 +64,15 @@ class ProductController extends Controller
                 'specifications' => $request->specifications,
             ]);
 
-            // 2. Simpan Foto (bisa multiple)
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
                     if ($file->isValid()) {
-                        // Resilient storage for Windows/Laragon where getRealPath() might return false
-                        $tempPath = $file->getRealPath() ?: $file->getPathname();
+                        // Simpan file sementara ke disk 'local' (bukan public)
+                        $tempPath = $file->store('tmp', 'local');
                         $fileName = $file->hashName();
-                        $path = "products/{$fileName}";
 
-                        $stream = fopen($tempPath, 'r');
-                        Storage::disk('public')->put($path, $stream);
-                        if (is_resource($stream)) {
-                            fclose($stream);
-                        }
-
-                        ProductImage::create([
-                            'product_id' => $product->id,
-                            'image_path' => $path,
-                        ]);
+                        // Dispatch Job untuk proses kompresi, resize, dan penyimpanan final
+                        ProcessProductImage::dispatch($product, $tempPath, $fileName)->afterCommit();
                     }
                 }
             }
@@ -108,10 +83,7 @@ class ProductController extends Controller
 
     public function edit(Product $product): Response
     {
-        // Keamanan: Pastikan hanya pemilik yang bisa edit
-        if ($product->user_id !== Auth::id()) {
-            abort(403);
-        }
+        Gate::authorize('update', $product);
 
         $categories = Category::all();
         // Load relasi category dan images agar tidak error di view
@@ -120,33 +92,9 @@ class ProductController extends Controller
         return Inertia::render('Products/Edit', compact('product', 'categories'));
     }
 
-    public function update(Request $request, Product $product)
+    public function update(UpdateProductRequest $request, Product $product)
     {
-        if ($product->user_id !== Auth::id()) {
-            abort(403);
-        }
-
-        // Sanitize price
-        if ($request->has('price')) {
-            $request->merge(['price' => preg_replace('/[^0-9]/', '', $request->price)]);
-        }
-
-        $request->validate([
-            'brand' => 'required|string|max:255',
-            'type' => 'required|string|max:255',
-            'condition' => 'required|string|max:255',
-            'is_cod' => 'nullable|boolean',
-            'is_negotiable' => 'nullable|boolean',
-            'price' => 'required|numeric|min:1000|max:99999999999',
-            'description' => 'required|string',
-            'status' => 'required|in:available,sold',
-            'specifications' => 'nullable|array',
-            'specifications.battery_health' => 'nullable|numeric|min:0|max:100',
-            'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,jpg|max:2048',
-            'delete_images' => 'nullable|array',
-            'delete_images.*' => 'exists:product_images,id',
-        ]);
+        Gate::authorize('update', $product);
 
         DB::transaction(function () use ($request, $product) {
             $catName = strtolower(trim($product->category->name ?? ''));
@@ -187,24 +135,15 @@ class ProductController extends Controller
                 }
             }
 
-            // 3. Handle Tambah Foto Baru
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
                     if ($file->isValid()) {
-                        $tempPath = $file->getRealPath() ?: $file->getPathname();
+                        // Simpan file sementara ke disk 'local' (bukan public)
+                        $tempPath = $file->store('tmp', 'local');
                         $fileName = $file->hashName();
-                        $path = "products/{$fileName}";
 
-                        $stream = fopen($tempPath, 'r');
-                        Storage::disk('public')->put($path, $stream);
-                        if (is_resource($stream)) {
-                            fclose($stream);
-                        }
-
-                        ProductImage::create([
-                            'product_id' => $product->id,
-                            'image_path' => $path,
-                        ]);
+                        // Dispatch Job untuk proses kompresi, resize, dan penyimpanan final
+                        ProcessProductImage::dispatch($product, $tempPath, $fileName)->afterCommit();
                     }
                 }
             }
@@ -215,18 +154,15 @@ class ProductController extends Controller
 
     public function show(Product $product): Response
     {
-        // Pastikan load relasi user/toko agar bisa menampilkan info penjual
-        $product->load(['user.profile', 'images', 'category']);
+        // Pastikan load relasi store/toko agar bisa menampilkan info penjual
+        $product->load(['store.profile', 'images', 'category']);
 
         return Inertia::render('Products/Show', compact('product'));
     }
 
     public function destroy(Product $product)
     {
-        // 1. Keamanan: Cek apakah yang menghapus adalah pemilik produk
-        if ($product->user_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
-        }
+        Gate::authorize('delete', $product);
 
         // 2. Hapus File Gambar dari Storage (Agar hemat penyimpanan)
         if ($product->images->isNotEmpty()) {
@@ -335,7 +271,7 @@ class ProductController extends Controller
         $perPage = $isMobile ? 8 : 15;
 
         $products = Product::whereIn('id', $favoriteIds)
-            ->with(['images', 'category', 'seller.profile'])
+            ->with(['images', 'category', 'store.profile'])
             ->latest()
             ->paginate($perPage);
 

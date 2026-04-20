@@ -22,8 +22,8 @@ class HomeController extends Controller
         $query = Product::with([
             'images', 
             'category', 
-            'seller.profile',
-            'seller' => function($q) {
+            'store.profile',
+            'store' => function($q) {
                 $q->withAvg('reviewsAsSeller', 'rating')
                   ->withCount(['reviewsAsSeller', 'transactionsAsSeller' => function($tn) {
                       $tn->where('status', 'completed');

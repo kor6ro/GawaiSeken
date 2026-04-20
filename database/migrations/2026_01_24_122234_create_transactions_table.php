@@ -19,6 +19,7 @@ return new class extends Migration
         $table->foreignId('seller_id')->constrained('users'); // [cite: 117, 246]
         $table->decimal('price', 15, 2); // decimal [cite: 119, 248]
         $table->string('status'); // varchar [cite: 121, 251]
+        $table->softDeletes();
         $table->timestamps();
     });
     }

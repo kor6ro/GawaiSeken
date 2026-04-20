@@ -11,18 +11,18 @@ return new class extends Migration {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('category_id')->constrained('categories');
-            $table->string('title');
+            $table->foreignId('category_id')->constrained('categories')->index();
+            $table->string('title')->index();
             $table->string('slug')->unique();
             $table->string('brand')->nullable();
             $table->string('type')->nullable();
             $table->string('condition')->nullable();
             $table->string('reference_url')->nullable();
             $table->text('description');
-            $table->decimal('price', 15, 2);
+            $table->decimal('price', 15, 2)->index();
             $table->boolean('is_cod')->default(false);
             $table->boolean('is_negotiable')->default(true);
-            $table->string('status')->default('available');
+            $table->string('status')->default('available')->index();
             $table->json('specifications')->nullable();
             $table->json('reports')->nullable(); // Metadata: user_id, reason, date
 

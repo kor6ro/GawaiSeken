@@ -43,10 +43,13 @@ class DashboardController extends Controller
             $unreadMessagesCount = 0; 
         }
 
+        $isMobile = preg_match('/Mobile|Android|iPhone/i', request()->userAgent());
+        $perPage = $isMobile ? 6 : 10;
+
         $myProducts = Product::where('user_id', $user->id)
-                ->with(['category', 'images'])
+                ->with(['category', 'images', 'store'])
                 ->latest()
-                ->paginate(5); // Tampilkan 5 per halaman di tabel
+                ->paginate($perPage); // Tampilkan genap di mobile, 10 di desktop
 
     return Inertia::render('Dashboard', compact(
         'user', 

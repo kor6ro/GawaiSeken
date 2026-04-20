@@ -4,7 +4,7 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import {
     ChevronLeft, ImageIcon, Send, X, Package, CheckCheck,
-    Clock, Smile, Phone, Video, MoreVertical, Download
+    Clock, Smile, Phone, Video, MoreVertical, Download, AlertTriangle
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -141,11 +141,18 @@ const sendMessage = async () => {
     const text = newMessage.value.trim();
     if (!text) return;
 
-    const tempId = Date.now();
-    messages.value.push({
-        temp_id: tempId, id: null, sender_id: auth.user.id,
-        type: 'text', message: text, created_at: new Date().toISOString(), is_sending: true,
-    });
+    const tempId = `temp-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    const tempMsg = {
+        temp_id: tempId,
+        id: null,
+        sender_id: auth.user.id,
+        type: 'text',
+        message: text,
+        created_at: new Date().toISOString(),
+        status: 'sending',
+    };
+    
+    messages.value.push(tempMsg);
 
     newMessage.value = '';
     resizeTextarea();
@@ -153,16 +160,24 @@ const sendMessage = async () => {
 
     try {
         const { data } = await axios.post(route('chat.store', chatId.value), { message: text });
+        
         if (currentIsNewChat.value) {
             currentIsNewChat.value = false;
             chatId.value = data.id;
             setupEcho();
             window.history.replaceState(null, '', route('chat.show', data.id));
         }
+
         const idx = messages.value.findIndex(m => m.temp_id === tempId);
-        if (idx !== -1) messages.value[idx] = { ...data, is_sending: false };
+        if (idx !== -1) {
+            messages.value[idx] = { ...data, status: 'sent' };
+        }
     } catch (e) {
         console.error('Send failed:', e);
+        const idx = messages.value.findIndex(m => m.temp_id === tempId);
+        if (idx !== -1) {
+            messages.value[idx].status = 'error';
+        }
     }
 };
 
@@ -170,12 +185,17 @@ const sendImage = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    const tempId = Date.now();
+    const tempId = `temp-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
     const localUrl = URL.createObjectURL(file);
 
     messages.value.push({
-        temp_id: tempId, id: null, sender_id: auth.user.id,
-        type: 'image', image_url: localUrl, created_at: new Date().toISOString(), is_sending: true,
+        temp_id: tempId,
+        id: null,
+        sender_id: auth.user.id,
+        type: 'image',
+        image_url: localUrl,
+        created_at: new Date().toISOString(),
+        status: 'sending',
     });
     scrollToBottom();
 
@@ -187,16 +207,24 @@ const sendImage = async (event) => {
         const { data } = await axios.post(route('chat.image', chatId.value), fd, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
+
         if (currentIsNewChat.value) {
             currentIsNewChat.value = false;
             chatId.value = data.id;
             setupEcho();
             window.history.replaceState(null, '', route('chat.show', data.id));
         }
+
         const idx = messages.value.findIndex(m => m.temp_id === tempId);
-        if (idx !== -1) messages.value[idx] = { ...data, is_sending: false };
+        if (idx !== -1) {
+            messages.value[idx] = { ...data, status: 'sent' };
+        }
     } catch (e) {
         console.error('Image upload failed:', e);
+        const idx = messages.value.findIndex(m => m.temp_id === tempId);
+        if (idx !== -1) {
+            messages.value[idx].status = 'error';
+        }
     }
 };
 
@@ -310,17 +338,23 @@ onUnmounted(() => {
                             <img :src="msg.image_url" class="chat-bubble-image-content" />
 
                             <!-- Sending overlay -->
-                            <div v-if="msg.is_sending" class="chat-bubble-sending-overlay">
+                            <div v-if="msg.status === 'sending'" class="chat-bubble-sending-overlay">
                                 <div class="uploading-spinner"></div>
+                            </div>
+                            
+                            <!-- Error overlay -->
+                            <div v-if="msg.status === 'error'" class="chat-bubble-sending-overlay bg-red-500/20">
+                                <AlertTriangle class="w-8 h-8 text-white" />
                             </div>
 
                             <!-- Bottom meta strip -->
                             <div class="chat-bubble-image-meta">
                                 <span class="text-[10px] text-white/90 font-medium">{{ formatTime(msg.created_at) }}</span>
                                 <template v-if="msg.sender_id === auth.user.id">
-                                    <CheckCheck v-if="!msg.is_sending && msg.read_at" class="w-3.5 h-3.5 text-blue-300" />
-                                    <CheckCheck v-else-if="!msg.is_sending" class="w-3.5 h-3.5 text-white/60" />
-                                    <Clock v-else class="w-3 h-3 text-white/60 animate-spin" />
+                                    <CheckCheck v-if="msg.status !== 'sending' && msg.status !== 'error' && msg.read_at" class="w-3.5 h-3.5 text-blue-300" />
+                                    <CheckCheck v-else-if="msg.status !== 'sending' && msg.status !== 'error'" class="w-3.5 h-3.5 text-white/60" />
+                                    <Clock v-else-if="msg.status === 'sending'" class="w-3 h-3 text-white/60 animate-spin" />
+                                    <AlertTriangle v-else class="w-3.5 h-3.5 text-red-400" />
                                 </template>
                             </div>
                         </div>
@@ -337,8 +371,9 @@ onUnmounted(() => {
                                 <span class="chat-bubble-time"
                                       :class="msg.sender_id === auth.user.id ? 'text-white/60' : 'text-slate-500 dark:text-slate-400'">{{ formatTime(msg.created_at) }}</span>
                                 <template v-if="msg.sender_id === auth.user.id">
-                                    <Clock v-if="msg.is_sending" class="w-3 h-3 text-white/50" />
+                                    <Clock v-if="msg.status === 'sending'" class="w-3 h-3 text-white/50 animate-spin" />
                                     <CheckCheck v-else-if="msg.read_at" class="w-3.5 h-3.5 text-blue-300" />
+                                    <AlertTriangle v-else-if="msg.status === 'error'" class="w-3.5 h-3.5 text-red-400" />
                                     <CheckCheck v-else class="w-3.5 h-3.5 text-white/50" />
                                 </template>
                             </div>

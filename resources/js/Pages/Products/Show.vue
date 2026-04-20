@@ -182,24 +182,24 @@ const specifications = computed(() => {
                                         <div class="flex items-center gap-4">
                                             <div class="relative">
                                                 <div class="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center text-xl font-black text-primary-foreground shadow-xl transition-transform group-hover:scale-105">
-                                                    {{ product.seller?.name.charAt(0).toUpperCase() }}
+                                                    {{ product.store?.name.charAt(0).toUpperCase() }}
                                                 </div>
-                                                <div v-if="product.seller?.profile?.is_ktp_verified && product.seller?.transactions_as_seller_count >= 5" 
+                                                <div v-if="product.store?.profile?.is_ktp_verified && product.store?.transactions_as_seller_count >= 5" 
                                                      class="absolute -bottom-1 -right-1 bg-amber-400 text-white p-1 rounded-lg border-2 border-card shadow-lg ring-1 ring-amber-500/20">
                                                     <ShieldCheck class="w-4 h-4" />
                                                 </div>
                                             </div>
                                             <div>
                                                 <div class="flex items-center gap-2">
-                                                    <h4 class="font-black text-lg">{{ product.seller?.profile?.store_name ?? product.seller?.name }}</h4>
-                                                    <div v-if="product.seller?.profile?.is_ktp_verified && product.seller?.transactions_as_seller_count >= 5" 
+                                                    <h4 class="font-black text-lg">{{ product.store?.profile?.store_name ?? product.store?.name }}</h4>
+                                                    <div v-if="product.store?.profile?.is_ktp_verified && product.store?.transactions_as_seller_count >= 5" 
                                                          class="bg-amber-400/10 text-amber-600 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
                                                         Premium Seller
                                                     </div>
                                                 </div>
                                                 <div class="flex items-center text-xs text-muted-foreground mt-1">
                                                     <MapPin class="w-3 h-3 mr-1" />
-                                                    {{ product.seller?.profile?.city || 'Lokasi tidak diisi' }}
+                                                    {{ product.store?.profile?.city || 'Lokasi tidak diisi' }}
                                                 </div>
                                             </div>
                                         </div>

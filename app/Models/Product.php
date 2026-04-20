@@ -79,6 +79,14 @@ class Product extends Model
     }
 
     /**
+     * Alias 'store' untuk relasi 'seller' (User)
+     */
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
      * Alias 'seller' tetap dipertahankan jaga-jaga jika ada fitur lain yang memakainya
      */
     public function seller(): BelongsTo

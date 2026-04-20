@@ -85,7 +85,7 @@ const isNewPosting = computed(() => {
 });
 
 const isPremiumSeller = computed(() => {
-    return props.product.seller?.profile?.is_ktp_verified && (props.product.seller?.transactions_as_seller_count >= 5);
+    return props.product.store?.profile?.is_ktp_verified && (props.product.store?.transactions_as_seller_count >= 5);
 });
 
 const conditionBadgeClass = computed(() => {
@@ -160,65 +160,51 @@ const conditionBadgeClass = computed(() => {
         </div>
 
         <!-- Body Content -->
-        <div class="p-3.5 flex flex-col flex-grow">
-            <!-- Brand & Category (Muted, Small) -->
-            <div class="flex items-center gap-1.5 mb-1.5 opacity-60">
-                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter truncate max-w-[80px]">
-                    {{ product.brand }}
-                </span>
-                <span class="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
-                <span class="text-[9px] font-medium text-slate-400 uppercase tracking-tighter truncate">
-                    {{ product.category?.name }}
-                </span>
+        <div class="p-4 flex flex-col flex-grow">
+            <!-- Price: Most Prominent -->
+            <div class="text-xl sm:text-2xl font-black text-primary dark:text-blue-400 tracking-tight leading-tight mb-1">
+                Rp{{ new Intl.NumberFormat('id-ID').format(product.price) }}
             </div>
 
-            <!-- Title (Big & Bold) -->
-            <h3 class="text-sm font-black text-slate-900 dark:text-white line-clamp-2 leading-snug min-h-[2.5rem] mb-3 group-hover:text-primary transition-colors">
+            <!-- Title: Second most prominent -->
+            <h3 class="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 line-clamp-1 group-hover:text-primary transition-colors leading-snug mb-3">
                 {{ product.title }}
             </h3>
 
-            <!-- Price & Hero -->
-            <div class="mt-auto pt-2.5 border-t border-slate-100 dark:border-white/5">
-                <div class="text-[15px] sm:text-xl font-black text-primary dark:text-blue-400 leading-tight">
-                    Rp{{ new Intl.NumberFormat('id-ID').format(product.price) }}
-                </div>
-            </div>
-
-            <!-- Profile & Meta (Responsive Footer) -->
-            <div class="mt-3.5 flex flex-col gap-2">
+            <!-- Secondary Info (Condition & Store) -->
+            <div class="mt-auto space-y-3">
                 <div class="flex items-center justify-between gap-2 overflow-hidden">
-                    <Link :href="route('store.show', product.user_id)" class="flex items-center gap-1.5 group/seller z-20 min-w-0">
-                        <div class="relative shrink-0">
-                            <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[9px] sm:text-[10px] font-black text-slate-500 border border-slate-200 dark:border-white/10 group-hover/seller:border-primary/50 transition-colors">
-                                {{ product.seller.name.charAt(0).toUpperCase() }}
-                            </div>
-                            <ShieldCheck v-if="isPremiumSeller" class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 text-amber-500 fill-white dark:fill-slate-900" />
-                        </div>
-                        <div class="flex flex-col min-w-0">
-                            <span class="text-[9px] sm:text-[10px] font-black text-slate-700 dark:text-slate-300 truncate max-w-[70px] sm:max-w-none group-hover/seller:text-primary">
-                                {{ product.seller.profile?.store_name ?? product.seller.name }}
-                            </span>
-                            <div class="flex items-center gap-1 text-[8px] sm:text-[9px] text-slate-400">
-                                <Star v-if="product.seller.reviews_as_seller_avg_rating" class="w-2 h-2 text-amber-500 fill-current" />
-                                <span v-if="product.seller.reviews_as_seller_avg_rating" class="font-bold">
-                                    {{ Number(product.seller.reviews_as_seller_avg_rating).toFixed(1) }}
-                                </span>
-                                <span v-else class="text-blue-500 font-bold uppercase tracking-tighter text-[7px]">Baru</span>
-                            </div>
-                        </div>
-                    </Link>
+                    <div class="flex items-center gap-1.5 min-w-0">
+                        <!-- Condition Text -->
+                        <span class="text-[10px] sm:text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 shrink-0">
+                            {{ product.condition }}
+                        </span>
+                        
+                        <span class="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0"></span>
 
-                    <!-- Time Ago (Desktop Only or Small Mobile) -->
-                    <div class="flex items-center gap-0.5 text-[8px] sm:text-[9px] text-slate-400 shrink-0">
-                        <Clock class="w-2 h-2 sm:w-2.5 sm:h-2.5 stroke-[1.5]" />
-                        <span>{{ formatTimeAgo(product.created_at) }}</span>
+                        <!-- Store Name -->
+                        <Link :href="route('store.show', product.user_id)" class="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 truncate hover:text-primary transition-colors z-20">
+                            {{ product.store.profile?.store_name ?? product.store.name }}
+                        </Link>
+                    </div>
+
+                    <!-- Rating -->
+                    <div v-if="product.store.reviews_as_seller_avg_rating" class="flex items-center gap-0.5 text-[10px] sm:text-xs font-bold text-amber-500 shrink-0">
+                        <Star class="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current" />
+                        <span>{{ Number(product.store.reviews_as_seller_avg_rating).toFixed(1) }}</span>
                     </div>
                 </div>
 
-                <!-- Location Line (Separate row on mobile to avoid overlap) -->
-                <div class="flex items-center gap-1 text-[8px] sm:text-[9px] text-slate-400">
-                    <MapPin class="w-2 h-2 sm:w-2.5 sm:h-2.5 stroke-[1.5]" />
-                    <span class="truncate">{{ product.seller.profile?.city ?? 'Lokasi N/A' }}</span>
+                <!-- Footer Meta (Location & Time) -->
+                <div class="flex items-center justify-between pt-2.5 border-t border-slate-100 dark:border-white/5 text-[9px] sm:text-[10px] text-slate-400">
+                    <div class="flex items-center gap-1 truncate">
+                        <MapPin class="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+                        <span class="truncate">{{ product.store.profile?.city ?? 'Lokasi N/A' }}</span>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full bg-slate-50 dark:bg-slate-800/50">
+                        <Clock class="w-2.5 h-2.5" />
+                        <span>{{ formatTimeAgo(product.created_at) }}</span>
+                    </div>
                 </div>
             </div>
         </div>
