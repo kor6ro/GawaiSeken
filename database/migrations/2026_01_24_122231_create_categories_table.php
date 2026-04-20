@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-    Schema::create('categories', function (Blueprint $table) {
-        $table->id();
-        $table->string('name'); // varchar [cite: 95, 216]
-        $table->string('slug')->unique(); // varchar [cite: 99, 221]
-        $table->timestamps();
-    });
+        Schema::create('categories', function (Blueprint $table) {
+            $table->id();
+            $table->string('name'); // varchar [cite: 95, 216]
+            $table->string('slug')->unique(); // varchar [cite: 99, 221]
+            $table->timestamps();
+        });
     }
 
     /**

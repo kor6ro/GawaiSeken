@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StoreController;
 use App\Models\Product;
 use Illuminate\Support\Facades\Route;
@@ -50,4 +50,4 @@ Route::get('/products/{product}', [ProductController::class, 'show'])->name('pro
 // --- FITUR TOKO (Seller Public) ---
 Route::get('/store/{user}', [StoreController::class, 'show'])->name('store.show');
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

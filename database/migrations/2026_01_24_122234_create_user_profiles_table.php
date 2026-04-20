@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('user_profiles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            
+
             // Data spesifik Toko/Publik
             $table->string('store_name')->nullable(); // Nama Toko (beda dengan nama User)
             $table->string('avatar')->nullable();
@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('city')->nullable();
             $table->boolean('is_ktp_verified')->default(false);
             $table->text('bio')->nullable();
-            
+
             $table->timestamps();
         });
     }

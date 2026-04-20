@@ -37,6 +37,7 @@ class ChatMessage extends Model
     {
         return $this->type === 'text';
     }
+
     public function isImage(): bool
     {
         return $this->type === 'image';

@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\TransactionStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Transaction extends Model
 {
     use SoftDeletes;
+
     protected $fillable = [
         'reference_number',
         'product_id',
@@ -15,6 +17,10 @@ class Transaction extends Model
         'seller_id',
         'price',
         'status',
+    ];
+
+    protected $casts = [
+        'status' => TransactionStatusEnum::class,
     ];
 
     public function product()

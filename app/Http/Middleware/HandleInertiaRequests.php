@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use App\Models\Category;
 use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
@@ -60,7 +60,7 @@ class HandleInertiaRequests extends Middleware
                 'categories' => Category::all(),
                 'rams' => ['2GB', '3GB', '4GB', '6GB', '8GB', '12GB', '16GB', '18GB', '24GB', '32GB', '64GB'],
                 'storages' => ['32GB', '64GB', '128GB', '256GB', '512GB', '1TB', '2TB'],
-                'kelengkapan' => ['Fullset', 'Unit + Charger', 'Batangan']
+                'kelengkapan' => ['Fullset', 'Unit + Charger', 'Batangan'],
             ],
             'active_filters' => [
                 'search' => $request->search,

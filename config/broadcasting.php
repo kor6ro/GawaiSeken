@@ -60,8 +60,8 @@ return [
                 'useTLS' => env('PUSHER_SCHEME', 'https') === 'https',
             ],
             'client_options' => [
-                    'verify' => false, // Ini agar localhost tidak memblokir koneksi ke Pusher
-                ],
+                'verify' => false, // Ini agar localhost tidak memblokir koneksi ke Pusher
+            ],
         ],
 
         'ably' => [

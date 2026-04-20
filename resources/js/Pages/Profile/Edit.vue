@@ -1,46 +1,46 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AppLayout.vue';
-import DeleteUserForm from './Partials/DeleteUserForm.vue';
-import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
-import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
-import { Head } from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/Layouts/AppLayout.vue'
+import DeleteUserForm from './Partials/DeleteUserForm.vue'
+import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue'
+import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue'
+import { Head } from '@inertiajs/vue3'
 
 defineProps({
-    mustVerifyEmail: {
-        type: Boolean,
-    },
-    status: {
-        type: String,
-    },
-});
+  mustVerifyEmail: {
+    type: Boolean,
+  },
+  status: {
+    type: String,
+  },
+})
 </script>
 
 <template>
-    <Head title="Profile" />
+  <Head title="Profile" />
 
-    <AuthenticatedLayout>
-        <template #header>
-            <h2 class="font-semibold text-xl text-foreground leading-tight">Profile</h2>
-        </template>
+  <AuthenticatedLayout>
+    <template #header>
+      <h2 class="text-xl font-semibold leading-tight text-foreground">Profile</h2>
+    </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-                <div class="p-4 sm:p-8 bg-card shadow sm:rounded-2xl border border-border">
-                    <UpdateProfileInformationForm
-                        :must-verify-email="mustVerifyEmail"
-                        :status="status"
-                        class="max-w-xl"
-                    />
-                </div>
-
-                <div class="p-4 sm:p-8 bg-card shadow sm:rounded-2xl border border-border">
-                    <UpdatePasswordForm class="max-w-xl" />
-                </div>
-
-                <div class="p-4 sm:p-8 bg-card shadow sm:rounded-2xl border border-border">
-                    <DeleteUserForm class="max-w-xl" />
-                </div>
-            </div>
+    <div class="py-12">
+      <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
+        <div class="border border-border bg-card p-4 shadow sm:rounded-2xl sm:p-8">
+          <UpdateProfileInformationForm
+            :must-verify-email="mustVerifyEmail"
+            :status="status"
+            class="max-w-xl"
+          />
         </div>
-    </AuthenticatedLayout>
+
+        <div class="border border-border bg-card p-4 shadow sm:rounded-2xl sm:p-8">
+          <UpdatePasswordForm class="max-w-xl" />
+        </div>
+
+        <div class="border border-border bg-card p-4 shadow sm:rounded-2xl sm:p-8">
+          <DeleteUserForm class="max-w-xl" />
+        </div>
+      </div>
+    </div>
+  </AuthenticatedLayout>
 </template>

@@ -8,7 +8,6 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,10 +26,10 @@ class ChatController extends Controller
                 'product.images',
                 'buyer.profile',
                 'seller.profile',
-                'messages' => fn($q) => $q->latest()->limit(1),
+                'messages' => fn ($q) => $q->latest()->limit(1),
             ])
             ->withCount([
-                'messages as unread_count' => fn($q) => $q
+                'messages as unread_count' => fn ($q) => $q
                     ->where('sender_id', '!=', $userId)
                     ->whereNull('read_at'),
             ])
@@ -89,7 +88,7 @@ class ChatController extends Controller
                 ->where('sender_id', '!=', Auth::id())
                 ->whereNull('read_at')
                 ->update(['read_at' => now()]);
-            
+
             if ($updated > 0) {
                 broadcast(new \App\Events\MessageRead($chat->id))->toOthers();
             }
@@ -187,7 +186,7 @@ class ChatController extends Controller
             return redirect()->back()->with('error', 'Anda tidak bisa chat dengan produk sendiri.');
         }
 
-        return redirect()->route('chat.show', ['chat' => 'product-' . $product->id]);
+        return redirect()->route('chat.show', ['chat' => 'product-'.$product->id]);
     }
 
     // =========================================================

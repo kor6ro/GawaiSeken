@@ -2,7 +2,6 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -14,6 +13,7 @@ class MessageRead implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $chatId;
+
     public $readAt;
 
     public function __construct($chatId)
@@ -25,7 +25,7 @@ class MessageRead implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PresenceChannel('chat.' . $this->chatId),
+            new PresenceChannel('chat.'.$this->chatId),
         ];
     }
 }

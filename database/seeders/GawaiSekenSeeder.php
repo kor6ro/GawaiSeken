@@ -2,10 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Enums\ProductConditionEnum;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -36,7 +37,7 @@ class GawaiSekenSeeder extends Seeder
                 'city' => $cities[$u - 1],
                 'is_ktp_verified' => ($u === 1), // Seller 1 is Premium
                 'phone' => "08123456780$u",
-                'address' => "Jl. Gadget No. $u, " . $cities[$u - 1],
+                'address' => "Jl. Gadget No. $u, ".$cities[$u - 1],
                 'bio' => "Penyedia gadget berkualitas se-{$cities[$u - 1]}.",
             ]);
 
@@ -50,7 +51,8 @@ class GawaiSekenSeeder extends Seeder
                 'title' => 'iPhone 15 Pro Natural Titanium',
                 'brand' => 'Apple',
                 'type' => 'Smartphone',
-                'condition' => 'Bekas - Mulus',
+                'condition' => ProductConditionEnum::SECOND_LIKE_NEW->value,
+
                 'is_cod' => true,
                 'is_negotiable' => false,
                 'description' => 'iPhone 15 Pro 128GB Natural Titanium. BNIB Segel. Garansi iBox resmi.',
@@ -60,16 +62,17 @@ class GawaiSekenSeeder extends Seeder
                     'storage' => '128GB',
                     'color' => 'Natural Titanium',
                     'battery_health' => '100%',
-                    'condition' => 'Seperti Baru'
+                    'condition' => 'Seperti Baru',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catLaptop->id,
                 'title' => 'MacBook Pro M3 Max 14 inch',
                 'brand' => 'Apple',
                 'type' => 'Laptop',
-                'condition' => 'Bekas - Mulus',
+                'condition' => ProductConditionEnum::SECOND_LIKE_NEW->value,
+
                 'is_cod' => true,
                 'is_negotiable' => true,
                 'description' => 'MacBook Pro M3 Max 14-inch Space Black. RAM 36GB, SSD 1TB. Fisik sangat mulus.',
@@ -80,14 +83,15 @@ class GawaiSekenSeeder extends Seeder
                     'storage' => '1TB SSD',
                     'screen' => '14.2-inch Liquid Retina XDR',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catSmartphone->id,
                 'title' => 'Samsung Galaxy S24 Ultra',
                 'brand' => 'Samsung',
                 'type' => 'Smartphone',
-                'condition' => 'Bekas - Ada minus',
+                'condition' => ProductConditionEnum::SECOND_GOOD->value,
+
                 'is_cod' => false,
                 'is_negotiable' => true,
                 'description' => 'Samsung Galaxy S24 Ultra 12GB/256GB Platinum Silver. Kaca belakang ada retak tipis di pojok kanan bawah. Fungsi 100% normal.',
@@ -97,7 +101,7 @@ class GawaiSekenSeeder extends Seeder
                     'storage' => '256GB',
                     'color' => 'Titanium Gray',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catTablet->id,
@@ -110,9 +114,9 @@ class GawaiSekenSeeder extends Seeder
                     'storage' => '256GB',
                     'chip' => 'Apple M4',
                     'screen' => '11-inch Ultra Retina XDR',
-                    'condition' => 'Mulus 98%'
+                    'condition' => 'Mulus 98%',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catAksesoris->id,
@@ -125,9 +129,9 @@ class GawaiSekenSeeder extends Seeder
                     'battery_life' => 'Up to 30 hours',
                     'noise_cancelling' => 'Yes, Active',
                     'color' => 'Black',
-                    'condition' => 'Pemakaian wajar, earpad masih bagus'
+                    'condition' => 'Pemakaian wajar, earpad masih bagus',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catLaptop->id,
@@ -141,9 +145,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '16GB',
                     'gpu' => 'NVIDIA RTX 4060',
                     'storage' => '1TB SSD',
-                    'condition' => 'Mulus, no minus'
+                    'condition' => 'Mulus, no minus',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catSmartphone->id,
@@ -156,9 +160,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '12GB',
                     'storage' => '128GB',
                     'color' => 'Obsidian Black',
-                    'condition' => 'Lengkap, minus lecet pemakaian tipis'
+                    'condition' => 'Lengkap, minus lecet pemakaian tipis',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catLaptop->id,
@@ -172,9 +176,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '16GB',
                     'storage' => '512GB SSD',
                     'weight' => '1.12 kg',
-                    'condition' => 'Keyboard masih empuk, layar jernih'
+                    'condition' => 'Keyboard masih empuk, layar jernih',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catAksesoris->id,
@@ -186,9 +190,9 @@ class GawaiSekenSeeder extends Seeder
                 'specifications' => [
                     'type' => 'In-Ear',
                     'connection' => 'Bluetooth 5.3',
-                    'condition' => 'Seperti Baru, include eartips cadangan'
+                    'condition' => 'Seperti Baru, include eartips cadangan',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catTablet->id,
@@ -201,9 +205,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '12GB',
                     'storage' => '256GB',
                     'screen' => '14.6-inch',
-                    'condition' => 'Mulus, free book cover keyboard'
+                    'condition' => 'Mulus, free book cover keyboard',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catAksesoris->id,
@@ -215,9 +219,9 @@ class GawaiSekenSeeder extends Seeder
                 'specifications' => [
                     'dpi' => '8000 DPI sensor',
                     'connectivity' => 'Bluetooth / Logi Bolt',
-                    'condition' => 'Normal, karet grip masih bagus'
+                    'condition' => 'Normal, karet grip masih bagus',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catSmartphone->id,
@@ -230,9 +234,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '16GB',
                     'storage' => '512GB',
                     'camera' => 'Leica Summilux',
-                    'condition' => 'Fullset dengan photography kit'
+                    'condition' => 'Fullset dengan photography kit',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catSmartphone->id,
@@ -246,9 +250,9 @@ class GawaiSekenSeeder extends Seeder
                     'storage' => '256GB',
                     'color' => 'Sierra Blue',
                     'battery_health' => '86%',
-                    'condition' => 'Mulus, no dent'
+                    'condition' => 'Mulus, no dent',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catSmartphone->id,
@@ -261,9 +265,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '12GB',
                     'storage' => '512GB',
                     'color' => 'Phantom Black',
-                    'condition' => 'Mulus, garansi Samsung Care+ aktif'
+                    'condition' => 'Mulus, garansi Samsung Care+ aktif',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catSmartphone->id,
@@ -276,9 +280,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '8GB',
                     'storage' => '256GB',
                     'color' => 'Mint',
-                    'condition' => 'Normal, layar aman no minus'
+                    'condition' => 'Normal, layar aman no minus',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catLaptop->id,
@@ -292,9 +296,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '8GB',
                     'storage' => '256GB SSD',
                     'battery_health' => '94%',
-                    'condition' => 'Mulus, pemakaian office ringan'
+                    'condition' => 'Mulus, pemakaian office ringan',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catTablet->id,
@@ -307,9 +311,9 @@ class GawaiSekenSeeder extends Seeder
                     'processor' => 'Apple M1',
                     'storage' => '64GB',
                     'connectivity' => 'Wi-Fi Only',
-                    'condition' => 'Mulus, batangan + charger'
+                    'condition' => 'Mulus, batangan + charger',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catAksesoris->id,
@@ -322,9 +326,9 @@ class GawaiSekenSeeder extends Seeder
                     'case' => 'Titanium 49mm',
                     'band' => 'Alpine Loop',
                     'battery_health' => '98%',
-                    'condition' => 'Seperti Baru, lengkap kotaknya'
+                    'condition' => 'Seperti Baru, lengkap kotaknya',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catLaptop->id,
@@ -338,9 +342,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '32GB',
                     'storage' => '1TB SSD',
                     'gpu' => 'RTX 3050 Ti',
-                    'condition' => 'Mulus, baterai awet'
+                    'condition' => 'Mulus, baterai awet',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catTablet->id,
@@ -353,9 +357,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '8GB',
                     'storage' => '256GB',
                     'refresh_rate' => '144Hz',
-                    'condition' => 'Lengkap/Fullset'
+                    'condition' => 'Lengkap/Fullset',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catAksesoris->id,
@@ -368,9 +372,9 @@ class GawaiSekenSeeder extends Seeder
                     'layout' => '75%',
                     'switch' => 'K Pro Banana',
                     'connectivity' => 'Bluetooth / Wired cable',
-                    'condition' => 'Mulus, keycaps tidak mengkilap'
+                    'condition' => 'Mulus, keycaps tidak mengkilap',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catSmartphone->id,
@@ -383,9 +387,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '16GB',
                     'storage' => '512GB',
                     'color' => 'Classic Black',
-                    'condition' => 'Mulus 99% seperti baru'
+                    'condition' => 'Mulus 99% seperti baru',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catSmartphone->id,
@@ -398,9 +402,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '16GB',
                     'storage' => '512GB',
                     'color' => 'Asteroid Black',
-                    'condition' => 'Lengkap dengan box asli'
+                    'condition' => 'Lengkap dengan box asli',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catLaptop->id,
@@ -414,9 +418,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '16GB',
                     'gpu' => 'RTX 3070 Ti',
                     'screen' => 'QHD 240Hz',
-                    'condition' => 'Fisik 95% mulus, baterai normal'
+                    'condition' => 'Fisik 95% mulus, baterai normal',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catLaptop->id,
@@ -430,9 +434,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '16GB',
                     'storage' => '1TB SSD',
                     'screen' => '13.5-inch OLED Touch',
-                    'condition' => 'Mulus, lengkap dengan stylus'
+                    'condition' => 'Mulus, lengkap dengan stylus',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catTablet->id,
@@ -446,9 +450,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '8GB',
                     'storage' => '256GB',
                     'color' => 'Graphite',
-                    'condition' => 'Include Signature Keyboard dan Slim Pen 2'
+                    'condition' => 'Include Signature Keyboard dan Slim Pen 2',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catSmartphone->id,
@@ -461,9 +465,9 @@ class GawaiSekenSeeder extends Seeder
                     'ram' => '12GB',
                     'storage' => '256GB',
                     'color' => 'White',
-                    'condition' => 'Mulus, garansi resmi masih ada 2 bulan'
+                    'condition' => 'Mulus, garansi resmi masih ada 2 bulan',
                 ],
-                'images' => ['products/placeholder.png']
+                'images' => ['products/placeholder.png'],
             ],
             [
                 'category_id' => $catAksesoris->id,
@@ -476,10 +480,10 @@ class GawaiSekenSeeder extends Seeder
                     'weight' => '309g',
                     'battery' => 'Up to 6 hours',
                     'features' => 'ActiveTrack 6.0',
-                    'condition' => 'Jarang pakai, sangat mulus'
+                    'condition' => 'Jarang pakai, sangat mulus',
                 ],
-                'images' => ['products/placeholder.png']
-            ]
+                'images' => ['products/placeholder.png'],
+            ],
         ];
 
         foreach ($products_data as $index => $data) {
@@ -489,7 +493,7 @@ class GawaiSekenSeeder extends Seeder
 
             $product = Product::create(array_merge($data, [
                 'user_id' => $seller->id,
-                'slug' => Str::slug($data['title']) . '-' . uniqid(),
+                'slug' => Str::slug($data['title']).'-'.uniqid(),
                 'status' => 'available',
             ]));
 

@@ -4,9 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redirect;
-
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,7 +17,7 @@ class StoreController extends Controller
     public function show(User $user): Response
     {
         $user->load('profile');
-        
+
         $isMobile = preg_match('/Mobile|Android|iPhone/i', request()->userAgent());
         $perPage = $isMobile ? 8 : 15;
 
@@ -26,8 +25,8 @@ class StoreController extends Controller
             ->with(['images', 'category', 'seller.profile'])
             ->where('status', 'available')
             ->latest()
-            ->paginate($perPage); 
-        
+            ->paginate($perPage);
+
         $reviews = \App\Models\Review::whereHas('product', function ($query) use ($user) {
             $query->where('user_id', $user->id);
         })->with(['buyer', 'product'])->latest()->get();
@@ -36,7 +35,7 @@ class StoreController extends Controller
 
         $stats = [
             'sold' => $user->transactionsAsSeller()->where('status', 'completed')->count(),
-            'rating' => (float)$rating,
+            'rating' => (float) $rating,
             'joined' => $user->created_at->translatedFormat('d F Y'),
             'is_premium' => $user->is_premium,
         ];
@@ -73,7 +72,7 @@ class StoreController extends Controller
                 if ($avatarPath && Storage::disk('public')->exists($avatarPath)) {
                     Storage::disk('public')->delete($avatarPath);
                 }
-                
+
                 // Simpan yang baru dengan cara yang lebih resilient (seperti di ProductController)
                 $tempPath = $file->getRealPath() ?: $file->getPathname();
                 $fileName = $file->hashName();

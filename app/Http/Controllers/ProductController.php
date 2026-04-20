@@ -2,20 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
-use App\Models\Category;
-use App\Models\ProductImage;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Gate;
 use App\Jobs\ProcessProductImage;
-
-
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\ProductImage;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -24,7 +23,8 @@ class ProductController extends Controller
     // Menampilkan form tambah produk
     public function create(): Response
     {
-        $categories = Category::all();
+        $categories = Cache::remember('categories', 60 * 60 * 24, fn () => Category::all());
+
         return Inertia::render('Products/Create', compact('categories'));
     }
 
@@ -37,21 +37,21 @@ class ProductController extends Controller
             if ($category) {
                 $catName = strtolower(trim($category->name));
                 if (in_array($catName, ['smartphone', 'tablet', 'smartphones', 'tablets'])) {
-                    $reference_url = 'https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=' . urlencode($request->brand . ' ' . $request->type);
+                    $reference_url = 'https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName='.urlencode($request->brand.' '.$request->type);
                 } elseif (in_array($catName, ['laptop', 'laptops'])) {
-                    $reference_url = 'https://www.google.com/search?q=' . urlencode($request->brand . ' ' . $request->type);
+                    $reference_url = 'https://www.google.com/search?q='.urlencode($request->brand.' '.$request->type);
                 }
             }
 
             // Auto-generate title
-            $title = trim($request->brand . ' ' . $request->type);
+            $title = trim($request->brand.' '.$request->type);
 
             // 1. Simpan Data Produk
             $product = Product::create([
                 'user_id' => Auth::id(),
                 'category_id' => $request->category_id,
                 'title' => $title,
-                'slug' => Str::slug($title) . '-' . uniqid(),
+                'slug' => Str::slug($title).'-'.uniqid(),
                 'brand' => $request->brand,
                 'type' => $request->type,
                 'condition' => $request->condition,
@@ -85,7 +85,7 @@ class ProductController extends Controller
     {
         Gate::authorize('update', $product);
 
-        $categories = Category::all();
+        $categories = Cache::remember('categories', 60 * 60 * 24, fn () => Category::all());
         // Load relasi category dan images agar tidak error di view
         $product->load('category', 'images');
 
@@ -100,13 +100,13 @@ class ProductController extends Controller
             $catName = strtolower(trim($product->category->name ?? ''));
             $reference_url = null;
             if (in_array($catName, ['smartphone', 'tablet', 'smartphones', 'tablets'])) {
-                $reference_url = 'https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=' . urlencode($request->brand . ' ' . $request->type);
+                $reference_url = 'https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName='.urlencode($request->brand.' '.$request->type);
             } elseif (in_array($catName, ['laptop', 'laptops'])) {
-                $reference_url = 'https://www.google.com/search?q=' . urlencode($request->brand . ' ' . $request->type);
+                $reference_url = 'https://www.google.com/search?q='.urlencode($request->brand.' '.$request->type);
             }
 
             // Auto-generate title
-            $title = trim($request->brand . ' ' . $request->type);
+            $title = trim($request->brand.' '.$request->type);
 
             // 1. Update Data Teks
             $product->update([
@@ -184,34 +184,37 @@ class ProductController extends Controller
     public function searchGsmArena(Request $request)
     {
         $query = $request->query('q');
-        if (!$query) {
+        if (! $query) {
             return response()->json([]);
         }
 
         // Try a few known working unofficial API endpoints
         $endpoints = [
-            "https://gsm-arena-api.vercel.app/search?q=",
-            "https://gsmarena-api-six.vercel.app/api/search?q=",
-            "https://azharimm-gsmarena-api.vercel.app/search?q="
+            'https://gsm-arena-api.vercel.app/search?q=',
+            'https://gsmarena-api-six.vercel.app/api/search?q=',
+            'https://azharimm-gsmarena-api.vercel.app/search?q=',
         ];
 
         foreach ($endpoints as $url) {
             try {
                 /** @var \Illuminate\Http\Client\Response $response */
                 $response = \Illuminate\Support\Facades\Http::withHeaders([
-                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-                ])->timeout(5)->get($url . urlencode($query));
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                ])->timeout(5)->get($url.urlencode($query));
 
                 if ($response->successful()) {
                     $data = $response->json();
 
                     // Normalize the response
-                    if (isset($data['data']))
+                    if (isset($data['data'])) {
                         return response()->json($data['data']);
-                    if (isset($data['results']))
+                    }
+                    if (isset($data['results'])) {
                         return response()->json($data['results']);
-                    if (is_array($data))
+                    }
+                    if (is_array($data)) {
                         return response()->json($data);
+                    }
                 }
             } catch (\Exception $e) {
                 // Continue to next endpoint
@@ -224,24 +227,24 @@ class ProductController extends Controller
     public function getGsmArenaDetails(Request $request)
     {
         $slug = $request->query('slug');
-        if (!$slug) {
+        if (! $slug) {
             return response()->json(['error' => 'Slug is required'], 400);
         }
 
         // We use the same endpoints but with a different path usually
         // Most of these unofficial APIs use /detail?id=slug or /product?id=slug
         $endpoints = [
-            "https://gsm-arena-api.vercel.app/product/", // usually /product/:id
-            "https://gsmarena-api-six.vercel.app/api/product/",
-            "https://azharimm-gsmarena-api.vercel.app/product/"
+            'https://gsm-arena-api.vercel.app/product/', // usually /product/:id
+            'https://gsmarena-api-six.vercel.app/api/product/',
+            'https://azharimm-gsmarena-api.vercel.app/product/',
         ];
 
         foreach ($endpoints as $url) {
             try {
                 /** @var \Illuminate\Http\Client\Response $response */
                 $response = \Illuminate\Support\Facades\Http::withHeaders([
-                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-                ])->timeout(5)->get($url . $slug);
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                ])->timeout(5)->get($url.$slug);
 
                 if ($response->successful()) {
                     $data = $response->json();
@@ -252,7 +255,7 @@ class ProductController extends Controller
 
                     return response()->json([
                         'success' => true,
-                        'data' => $rawSpecs
+                        'data' => $rawSpecs,
                     ]);
                 }
             } catch (\Exception $e) {
@@ -262,11 +265,12 @@ class ProductController extends Controller
 
         return response()->json(['error' => 'Device details not found'], 404);
     }
+
     public function favorites(): Response
     {
         $user = Auth::user();
         $favoriteIds = $user->favorites ?? [];
-        
+
         $isMobile = preg_match('/Mobile|Android|iPhone/i', request()->userAgent());
         $perPage = $isMobile ? 8 : 15;
 
@@ -276,7 +280,7 @@ class ProductController extends Controller
             ->paginate($perPage);
 
         return Inertia::render('Products/Favorites', [
-            'products' => $products
+            'products' => $products,
         ]);
     }
 
@@ -286,7 +290,7 @@ class ProductController extends Controller
         $favorites = $user->favorites ?? [];
 
         if (in_array($product->id, $favorites)) {
-            $favorites = array_values(array_filter($favorites, fn($id) => $id !== $product->id));
+            $favorites = array_values(array_filter($favorites, fn ($id) => $id !== $product->id));
             $status = 'removed';
         } else {
             $favorites[] = $product->id;

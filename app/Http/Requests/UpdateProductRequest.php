@@ -21,7 +21,7 @@ class UpdateProductRequest extends FormRequest
     {
         if ($this->has('price')) {
             $this->merge([
-                'price' => preg_replace('/[^0-9]/', '', $this->price)
+                'price' => preg_replace('/[^0-9]/', '', $this->price),
             ]);
         }
     }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ProductConditionEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -34,7 +35,9 @@ class Product extends Model
         'specifications' => 'array',
         'is_cod' => 'boolean',
         'is_negotiable' => 'boolean',
+        'condition' => ProductConditionEnum::class,
         'reports' => 'array',
+
     ];
 
     /**
@@ -45,21 +48,12 @@ class Product extends Model
      */
     public function getConditionBadgeColorAttribute(): string
     {
-        $condition = strtolower($this->condition);
-        
-        if (str_contains($condition, 'mulus')) {
-            return 'green';
-        }
-        
-        if ($condition === 'minus') {
-            return 'red';
-        }
-        
-        if (str_contains($condition, 'minus')) {
-            return 'yellow';
-        }
-        
-        return 'green';
+        return match ($this->condition) {
+            ProductConditionEnum::NEW, ProductConditionEnum::SECOND_LIKE_NEW => 'green',
+            ProductConditionEnum::SECOND_GOOD => 'yellow',
+            ProductConditionEnum::MINUS => 'red',
+            default => 'green',
+        };
     }
 
     protected $appends = ['condition_badge_color'];

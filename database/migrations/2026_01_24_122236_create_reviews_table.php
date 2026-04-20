@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-    Schema::create('reviews', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('product_id')->constrained('products'); // [cite: 89, 210]
-        $table->foreignId('buyer_id')->constrained('users'); // [cite: 93, 214]
-        $table->foreignId('transaction_id')->constrained('transactions'); // Perbaikan: Pastikan user sudah beli
-        $table->integer('rating'); // int [cite: 97, 219]
-        $table->text('comment'); // text [cite: 100, 223]
-        $table->timestamps();
-    });
+        Schema::create('reviews', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('product_id')->constrained('products'); // [cite: 89, 210]
+            $table->foreignId('buyer_id')->constrained('users'); // [cite: 93, 214]
+            $table->foreignId('transaction_id')->constrained('transactions'); // Perbaikan: Pastikan user sudah beli
+            $table->integer('rating'); // int [cite: 97, 219]
+            $table->text('comment'); // text [cite: 100, 223]
+            $table->timestamps();
+        });
     }
 
     /**

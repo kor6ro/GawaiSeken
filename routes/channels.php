@@ -13,11 +13,13 @@ Broadcast::channel('chat.{chatId}', function ($user, $chatId) {
         if ($product && ($product->user_id !== $user->id)) {
             return ['id' => $user->id, 'name' => $user->name, 'avatar' => $user->profile?->avatar];
         }
+
         return false;
     }
     $chat = \App\Models\Chat::find($chatId);
     if ($chat && ($chat->buyer_id === $user->id || $chat->seller_id === $user->id)) {
         return ['id' => $user->id, 'name' => $user->name, 'avatar' => $user->profile?->avatar];
     }
+
     return false;
 });
