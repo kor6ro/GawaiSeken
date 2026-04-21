@@ -1,13 +1,13 @@
-import { ref, withCtx, unref, createVNode, createTextVNode, createBlock, createCommentVNode, openBlock, toDisplayString, withDirectives, Fragment, renderList, vShow, withModifiers, vModelText, Transition, useSSRContext } from "vue";
+import { ref, onMounted, onUnmounted, watch, withCtx, unref, createVNode, createTextVNode, createBlock, createCommentVNode, openBlock, toDisplayString, withDirectives, Fragment, renderList, vShow, withModifiers, vModelText, Transition, useSSRContext } from "vue";
 import { ssrRenderComponent, ssrRenderClass, ssrRenderStyle, ssrInterpolate, ssrRenderList, ssrRenderAttr } from "vue/server-renderer";
-import { useForm, Head, Link } from "@inertiajs/vue3";
-import { _ as _sfc_main$1 } from "./AppLayout-B-phu6gS.js";
+import { useForm, Head, Link, usePage } from "@inertiajs/vue3";
+import axios from "axios";
+import { _ as _sfc_main$1 } from "./AppLayout-CFkOwdlU.js";
 import { LayoutDashboard, Settings, Package, ShoppingBag, MessageCircle, Plus, Image, Edit3, Trash2, MapPin } from "lucide-vue-next";
-import { _ as _sfc_main$8 } from "./PrimaryButton-b74eHQMS.js";
-import { _ as _sfc_main$2, a as _sfc_main$4 } from "./DangerButton-Cmx7G8Fd.js";
-import { b as _sfc_main$5, _ as _sfc_main$6, a as _sfc_main$7 } from "./TextInput-ivY_q2i2.js";
-import { _ as _sfc_main$9 } from "./Modal-Cw8mmzBN.js";
-import { _ as _sfc_main$3 } from "./Pagination-p2pafXsX.js";
+import { _ as _sfc_main$7 } from "./PrimaryButton-Chd5xZL9.js";
+import { _ as _sfc_main$2, a as _sfc_main$3 } from "./DangerButton-COhGmvyd.js";
+import { b as _sfc_main$4, _ as _sfc_main$5, a as _sfc_main$6 } from "./TextInput-C__yGyCx.js";
+import { _ as _sfc_main$8 } from "./Modal-C0YBTj_6.js";
 import { Cropper } from "vue-advanced-cropper";
 import "./ApplicationLogo-5BXBKbkR.js";
 import "lodash/debounce.js";
@@ -26,6 +26,58 @@ const _sfc_main = {
     var _a, _b, _c, _d;
     const props = __props;
     const tab = ref("overview");
+    const loading = ref(false);
+    const allMyProducts = ref([...props.myProducts.data]);
+    const nextUrl = ref(props.myProducts.next_page_url);
+    const loadMoreTrigger = ref(null);
+    let observer = null;
+    const loadMore = async () => {
+      if (!nextUrl.value || loading.value || tab.value !== "overview") return;
+      loading.value = true;
+      try {
+        const response = await axios.get(nextUrl.value, {
+          headers: {
+            "X-Inertia": "true",
+            "X-Inertia-Version": usePage().version,
+            "X-Inertia-Partial-Component": "Dashboard",
+            "X-Inertia-Partial-Data": "myProducts"
+          }
+        });
+        const newProducts = response.data.props.myProducts;
+        allMyProducts.value.push(...newProducts.data);
+        nextUrl.value = newProducts.next_page_url;
+      } catch (error) {
+        console.error("Error loading more dashboard products:", error);
+      } finally {
+        loading.value = false;
+      }
+    };
+    onMounted(() => {
+      observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            loadMore();
+          }
+        },
+        { rootMargin: "200px" }
+      );
+      if (loadMoreTrigger.value) {
+        observer.observe(loadMoreTrigger.value);
+      }
+    });
+    onUnmounted(() => {
+      if (observer) observer.disconnect();
+    });
+    watch(
+      () => props.myProducts,
+      (newVal) => {
+        if (newVal.current_page === 1) {
+          allMyProducts.value = [...newVal.data];
+        }
+        nextUrl.value = newVal.next_page_url;
+      },
+      { deep: true }
+    );
     const confirmProductDeletion = ref(false);
     const productToDelete = ref(null);
     const deleteForm = useForm({});
@@ -74,12 +126,16 @@ const _sfc_main = {
       const { canvas } = cropper.value.getResult();
       if (canvas) {
         photoPreview.value = canvas.toDataURL();
-        canvas.toBlob((blob) => {
-          const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
-          storeForm.avatar = file;
-          cropModalOpen.value = false;
-          imageToCrop.value = null;
-        }, "image/jpeg", 0.9);
+        canvas.toBlob(
+          (blob) => {
+            const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+            storeForm.avatar = file;
+            cropModalOpen.value = false;
+            imageToCrop.value = null;
+          },
+          "image/jpeg",
+          0.9
+        );
       }
     };
     const updateStoreSettings = () => {
@@ -95,10 +151,10 @@ const _sfc_main = {
       _push(ssrRenderComponent(_sfc_main$1, _attrs, {
         header: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<h2 class="font-semibold text-xl text-foreground leading-tight"${_scopeId}> Seller Dashboard </h2>`);
+            _push2(`<h2 class="text-xl font-semibold leading-tight text-foreground"${_scopeId}>Seller Dashboard</h2>`);
           } else {
             return [
-              createVNode("h2", { class: "font-semibold text-xl text-foreground leading-tight" }, " Seller Dashboard ")
+              createVNode("h2", { class: "text-xl font-semibold leading-tight text-foreground" }, "Seller Dashboard")
             ];
           }
         }),
@@ -106,49 +162,62 @@ const _sfc_main = {
           var _a2, _b2, _c2, _d2;
           if (_push2) {
             _push2(ssrRenderComponent(unref(Head), { title: "Seller Dashboard" }, null, _parent2, _scopeId));
-            _push2(`<div class="py-12"${_scopeId}><div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6"${_scopeId}><div class="flex space-x-1 bg-muted p-1 rounded-xl max-w-md mx-auto sm:mx-0"${_scopeId}><button class="${ssrRenderClass([tab.value === "overview" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground", "flex-1 py-2 sm:py-2.5 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2"])}"${_scopeId}>`);
-            _push2(ssrRenderComponent(unref(LayoutDashboard), { class: "w-4 h-4" }, null, _parent2, _scopeId));
-            _push2(` Ringkasan </button><button class="${ssrRenderClass([tab.value === "settings" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground", "flex-1 py-2 sm:py-2.5 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2"])}"${_scopeId}>`);
-            _push2(ssrRenderComponent(unref(Settings), { class: "w-4 h-4" }, null, _parent2, _scopeId));
-            _push2(` Pengaturan </button></div><div class="transition-all duration-300" style="${ssrRenderStyle(tab.value === "overview" ? null : { display: "none" })}"${_scopeId}><div class="p-4 sm:p-8 bg-card text-card-foreground border border-border shadow-sm sm:rounded-lg mb-6"${_scopeId}><header class="mb-6"${_scopeId}><h2 class="text-lg font-medium"${_scopeId}>Statistik Toko</h2><p class="mt-1 text-sm text-muted-foreground"${_scopeId}>Ringkasan performa penjualan Anda saat ini.</p></header><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"${_scopeId}><div class="bg-muted p-4 sm:p-6 rounded-2xl border border-border transition-colors"${_scopeId}><div class="flex items-center justify-between mb-2"${_scopeId}><p class="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider"${_scopeId}>Produk Aktif</p>`);
-            _push2(ssrRenderComponent(unref(Package), { class: "w-5 h-5 text-primary" }, null, _parent2, _scopeId));
-            _push2(`</div><p class="text-2xl sm:text-3xl font-black text-primary mt-2"${_scopeId}>${ssrInterpolate(__props.productsCount)}</p></div><div class="bg-muted p-4 sm:p-6 rounded-2xl border border-border transition-colors"${_scopeId}><div class="flex items-center justify-between mb-2"${_scopeId}><p class="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider"${_scopeId}>Total Terjual</p>`);
-            _push2(ssrRenderComponent(unref(ShoppingBag), { class: "w-5 h-5 text-green-500" }, null, _parent2, _scopeId));
-            _push2(`</div><p class="text-2xl sm:text-3xl font-black text-green-600 dark:text-green-400 mt-2"${_scopeId}>${ssrInterpolate(__props.transactionsCount)}</p></div><div class="bg-muted p-4 sm:p-6 rounded-2xl border border-border transition-colors"${_scopeId}><div class="flex items-center justify-between mb-2"${_scopeId}><p class="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider"${_scopeId}>Pesan Baru</p>`);
-            _push2(ssrRenderComponent(unref(MessageCircle), { class: "w-5 h-5 text-orange-500" }, null, _parent2, _scopeId));
-            _push2(`</div><p class="text-2xl sm:text-3xl font-black text-orange-500 mt-2"${_scopeId}>${ssrInterpolate(__props.unreadMessagesCount)}</p></div></div></div><div class="p-4 sm:p-8 bg-card text-card-foreground border border-border shadow-sm sm:rounded-lg"${_scopeId}><div class="flex justify-between items-center mb-6"${_scopeId}><div${_scopeId}><h3 class="text-lg font-bold"${_scopeId}>Produk Saya</h3><p class="text-sm text-muted-foreground"${_scopeId}>Kelola barang dagangan Anda.</p></div>`);
+            _push2(`<div class="py-12"${_scopeId}><div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8"${_scopeId}><div class="mx-auto flex max-w-md space-x-1 rounded-xl bg-muted p-1 sm:mx-0"${_scopeId}><button class="${ssrRenderClass([
+              tab.value === "overview" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+              "flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-bold transition-all duration-200 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+            ])}"${_scopeId}>`);
+            _push2(ssrRenderComponent(unref(LayoutDashboard), { class: "h-4 w-4" }, null, _parent2, _scopeId));
+            _push2(` Ringkasan </button><button class="${ssrRenderClass([
+              tab.value === "settings" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+              "flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-bold transition-all duration-200 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+            ])}"${_scopeId}>`);
+            _push2(ssrRenderComponent(unref(Settings), { class: "h-4 w-4" }, null, _parent2, _scopeId));
+            _push2(` Pengaturan </button></div><div class="transition-all duration-300" style="${ssrRenderStyle(tab.value === "overview" ? null : { display: "none" })}"${_scopeId}><div class="mb-6 border border-border bg-card p-4 text-card-foreground shadow-sm sm:rounded-lg sm:p-8"${_scopeId}><header class="mb-6"${_scopeId}><h2 class="text-lg font-medium"${_scopeId}>Statistik Toko</h2><p class="mt-1 text-sm text-muted-foreground"${_scopeId}> Ringkasan performa penjualan Anda saat ini. </p></header><div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3"${_scopeId}><div class="rounded-2xl border border-border bg-muted p-4 transition-colors sm:p-6"${_scopeId}><div class="mb-2 flex items-center justify-between"${_scopeId}><p class="text-xs font-medium uppercase tracking-wider text-muted-foreground sm:text-sm"${_scopeId}> Produk Aktif </p>`);
+            _push2(ssrRenderComponent(unref(Package), { class: "h-5 w-5 text-primary" }, null, _parent2, _scopeId));
+            _push2(`</div><p class="mt-2 text-2xl font-black text-primary sm:text-3xl"${_scopeId}>${ssrInterpolate(__props.productsCount)}</p></div><div class="rounded-2xl border border-border bg-muted p-4 transition-colors sm:p-6"${_scopeId}><div class="mb-2 flex items-center justify-between"${_scopeId}><p class="text-xs font-medium uppercase tracking-wider text-muted-foreground sm:text-sm"${_scopeId}> Total Terjual </p>`);
+            _push2(ssrRenderComponent(unref(ShoppingBag), { class: "h-5 w-5 text-green-500" }, null, _parent2, _scopeId));
+            _push2(`</div><p class="mt-2 text-2xl font-black text-green-600 dark:text-green-400 sm:text-3xl"${_scopeId}>${ssrInterpolate(__props.transactionsCount)}</p></div><div class="rounded-2xl border border-border bg-muted p-4 transition-colors sm:p-6"${_scopeId}><div class="mb-2 flex items-center justify-between"${_scopeId}><p class="text-xs font-medium uppercase tracking-wider text-muted-foreground sm:text-sm"${_scopeId}> Pesan Baru </p>`);
+            _push2(ssrRenderComponent(unref(MessageCircle), { class: "h-5 w-5 text-orange-500" }, null, _parent2, _scopeId));
+            _push2(`</div><p class="mt-2 text-2xl font-black text-orange-500 sm:text-3xl"${_scopeId}>${ssrInterpolate(__props.unreadMessagesCount)}</p></div></div></div><div class="border border-border bg-card p-4 text-card-foreground shadow-sm sm:rounded-lg sm:p-8"${_scopeId}><div class="mb-6 flex items-center justify-between"${_scopeId}><div${_scopeId}><h3 class="text-lg font-bold"${_scopeId}>Produk Saya</h3><p class="text-sm text-muted-foreground"${_scopeId}>Kelola barang dagangan Anda.</p></div>`);
             _push2(ssrRenderComponent(unref(Link), {
               href: _ctx.route("products.create"),
-              class: "inline-flex items-center px-4 py-2 bg-primary border border-transparent rounded-xl font-bold text-xs text-primary-foreground uppercase tracking-widest hover:bg-primary/90 transition duration-150 shadow-md"
+              class: "inline-flex items-center rounded-xl border border-transparent bg-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary-foreground shadow-md transition duration-150 hover:bg-primary/90"
             }, {
               default: withCtx((_2, _push3, _parent3, _scopeId2) => {
                 if (_push3) {
-                  _push3(ssrRenderComponent(unref(Plus), { class: "w-4 h-4 mr-2" }, null, _parent3, _scopeId2));
+                  _push3(ssrRenderComponent(unref(Plus), { class: "mr-2 h-4 w-4" }, null, _parent3, _scopeId2));
                   _push3(`<span${_scopeId2}>Tambah Produk</span>`);
                 } else {
                   return [
-                    createVNode(unref(Plus), { class: "w-4 h-4 mr-2" }),
+                    createVNode(unref(Plus), { class: "mr-2 h-4 w-4" }),
                     createVNode("span", null, "Tambah Produk")
                   ];
                 }
               }),
               _: 1
             }, _parent2, _scopeId));
-            _push2(`</div><div class="overflow-hidden shadow-sm sm:rounded-lg border border-border"${_scopeId}><div class="hidden md:block overflow-x-auto"${_scopeId}><table class="w-full text-sm text-left"${_scopeId}><thead class="text-xs text-muted-foreground uppercase bg-muted border-b border-border"${_scopeId}><tr${_scopeId}><th scope="col" class="px-6 py-4 font-semibold"${_scopeId}>Produk</th><th scope="col" class="px-6 py-4 font-semibold"${_scopeId}>Harga</th><th scope="col" class="px-6 py-4 font-semibold text-center"${_scopeId}>Status</th><th scope="col" class="px-6 py-4 font-semibold text-center"${_scopeId}>Tanggal</th><th scope="col" class="px-6 py-4 font-semibold text-right"${_scopeId}>Aksi</th></tr></thead><tbody class="divide-y divide-border"${_scopeId}><!--[-->`);
-            ssrRenderList(__props.myProducts.data, (item) => {
+            _push2(`</div><div class="overflow-hidden border border-border shadow-sm sm:rounded-lg"${_scopeId}><div class="hidden overflow-x-auto md:block"${_scopeId}><table class="w-full text-left text-sm"${_scopeId}><thead class="border-b border-border bg-muted text-xs uppercase text-muted-foreground"${_scopeId}><tr${_scopeId}><th scope="col" class="px-6 py-4 font-semibold"${_scopeId}>Produk</th><th scope="col" class="px-6 py-4 font-semibold"${_scopeId}>Harga</th><th scope="col" class="px-6 py-4 text-center font-semibold"${_scopeId}>Status</th><th scope="col" class="px-6 py-4 text-center font-semibold"${_scopeId}>Tanggal</th><th scope="col" class="px-6 py-4 text-right font-semibold"${_scopeId}>Aksi</th></tr></thead><tbody class="divide-y divide-border"${_scopeId}><!--[-->`);
+            ssrRenderList(allMyProducts.value, (item) => {
               var _a3;
-              _push2(`<tr class="bg-card hover:bg-muted transition-colors"${_scopeId}><td class="px-6 py-4 align-middle"${_scopeId}><div class="flex items-center gap-4"${_scopeId}><div class="w-12 h-12 rounded-md bg-muted border border-border overflow-hidden flex-shrink-0"${_scopeId}>`);
+              _push2(`<tr class="bg-card transition-colors hover:bg-muted"${_scopeId}><td class="px-6 py-4 align-middle"${_scopeId}><div class="flex items-center gap-4"${_scopeId}><div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border border-border bg-muted"${_scopeId}>`);
               if (item.images && item.images.length > 0) {
-                _push2(`<img${ssrRenderAttr("src", `/storage/${item.images[0].image_path}`)} class="w-full h-full object-cover"${_scopeId}>`);
+                _push2(`<img${ssrRenderAttr("src", `/storage/${item.images[0].image_path}`)} loading="lazy" class="h-full w-full object-cover"${_scopeId}>`);
               } else {
-                _push2(`<div class="flex items-center justify-center w-full h-full text-muted-foreground"${_scopeId}>`);
-                _push2(ssrRenderComponent(unref(Image), { class: "w-6 h-6" }, null, _parent2, _scopeId));
+                _push2(`<div class="flex h-full w-full items-center justify-center text-muted-foreground"${_scopeId}>`);
+                _push2(ssrRenderComponent(unref(Image), { class: "h-6 w-6" }, null, _parent2, _scopeId));
                 _push2(`</div>`);
               }
-              _push2(`</div><div${_scopeId}><div class="text-base font-bold line-clamp-1"${_scopeId}>${ssrInterpolate(item.title)}</div><div class="text-xs text-muted-foreground"${_scopeId}>${ssrInterpolate((_a3 = item.category) == null ? void 0 : _a3.name)}</div></div></div></td><td class="px-6 py-4 align-middle font-medium whitespace-nowrap"${_scopeId}> Rp ${ssrInterpolate(new Intl.NumberFormat("id-ID").format(item.price))}</td><td class="px-6 py-4 align-middle text-center"${_scopeId}><span class="${ssrRenderClass([item.status === "available" ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800" : "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700", "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border"])}"${_scopeId}>${ssrInterpolate(item.status)}</span></td><td class="px-6 py-4 align-middle text-center text-xs whitespace-nowrap text-muted-foreground"${_scopeId}>${ssrInterpolate(new Date(item.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }))}</td><td class="px-6 py-4 align-middle text-right"${_scopeId}><div class="flex items-center justify-end gap-2"${_scopeId}>`);
+              _push2(`</div><div${_scopeId}><div class="line-clamp-1 text-base font-bold"${_scopeId}>${ssrInterpolate(item.title)}</div><div class="text-xs text-muted-foreground"${_scopeId}>${ssrInterpolate((_a3 = item.category) == null ? void 0 : _a3.name)}</div></div></div></td><td class="whitespace-nowrap px-6 py-4 align-middle font-medium"${_scopeId}> Rp ${ssrInterpolate(new Intl.NumberFormat("id-ID").format(item.price))}</td><td class="px-6 py-4 text-center align-middle"${_scopeId}><span class="${ssrRenderClass([
+                item.status === "available" ? "border-green-200 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300" : "border-gray-200 bg-gray-100 text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300",
+                "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold"
+              ])}"${_scopeId}>${ssrInterpolate(item.status)}</span></td><td class="whitespace-nowrap px-6 py-4 text-center align-middle text-xs text-muted-foreground"${_scopeId}>${ssrInterpolate(new Date(item.created_at).toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+              }))}</td><td class="px-6 py-4 text-right align-middle"${_scopeId}><div class="flex items-center justify-end gap-2"${_scopeId}>`);
               _push2(ssrRenderComponent(unref(Link), {
                 href: _ctx.route("products.edit", item.slug),
-                class: "inline-flex items-center px-4 py-2 bg-background border border-border rounded-md font-semibold text-xs text-foreground uppercase tracking-widest shadow-sm hover:bg-muted transition"
+                class: "inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-xs font-semibold uppercase tracking-widest text-foreground shadow-sm transition hover:bg-muted"
               }, {
                 default: withCtx((_2, _push3, _parent3, _scopeId2) => {
                   if (_push3) {
@@ -178,11 +247,11 @@ const _sfc_main = {
               _push2(`</div></td></tr>`);
             });
             _push2(`<!--]-->`);
-            if (__props.myProducts.data.length === 0) {
+            if (allMyProducts.value.length === 0) {
               _push2(`<tr${_scopeId}><td colspan="5" class="px-6 py-12 text-center text-muted-foreground"${_scopeId}><div class="flex flex-col items-center"${_scopeId}><span class="mb-2"${_scopeId}>Belum ada produk yang dijual.</span>`);
               _push2(ssrRenderComponent(unref(Link), {
                 href: _ctx.route("products.create"),
-                class: "text-primary font-bold"
+                class: "font-bold text-primary"
               }, {
                 default: withCtx((_2, _push3, _parent3, _scopeId2) => {
                   if (_push3) {
@@ -199,61 +268,64 @@ const _sfc_main = {
             } else {
               _push2(`<!---->`);
             }
-            _push2(`</tbody></table></div><div class="md:hidden divide-y divide-border"${_scopeId}><!--[-->`);
-            ssrRenderList(__props.myProducts.data, (item) => {
+            _push2(`</tbody></table></div><div class="divide-y divide-border md:hidden"${_scopeId}><!--[-->`);
+            ssrRenderList(allMyProducts.value, (item) => {
               var _a3;
-              _push2(`<div class="p-4 flex flex-col gap-4"${_scopeId}><div class="flex items-center gap-4"${_scopeId}><div class="w-16 h-16 rounded-lg bg-muted border border-border overflow-hidden flex-shrink-0"${_scopeId}>`);
+              _push2(`<div class="flex flex-col gap-4 p-4"${_scopeId}><div class="flex items-center gap-4"${_scopeId}><div class="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-border bg-muted"${_scopeId}>`);
               if (item.images && item.images.length > 0) {
-                _push2(`<img${ssrRenderAttr("src", `/storage/${item.images[0].image_path}`)} class="w-full h-full object-cover"${_scopeId}>`);
+                _push2(`<img${ssrRenderAttr("src", `/storage/${item.images[0].image_path}`)} loading="lazy" class="h-full w-full object-cover"${_scopeId}>`);
               } else {
-                _push2(`<div class="flex items-center justify-center w-full h-full text-muted-foreground"${_scopeId}>`);
-                _push2(ssrRenderComponent(unref(Image), { class: "w-8 h-8" }, null, _parent2, _scopeId));
+                _push2(`<div class="flex h-full w-full items-center justify-center text-muted-foreground"${_scopeId}>`);
+                _push2(ssrRenderComponent(unref(Image), { class: "h-8 w-8" }, null, _parent2, _scopeId));
                 _push2(`</div>`);
               }
-              _push2(`</div><div class="flex-1 min-w-0"${_scopeId}><div class="text-base font-bold truncate"${_scopeId}>${ssrInterpolate(item.title)}</div><div class="text-xs text-muted-foreground"${_scopeId}>${ssrInterpolate((_a3 = item.category) == null ? void 0 : _a3.name)}</div><div class="mt-1 text-primary font-bold"${_scopeId}>Rp ${ssrInterpolate(new Intl.NumberFormat("id-ID").format(item.price))}</div></div></div><div class="flex items-center justify-between gap-4 pt-2 border-t border-border"${_scopeId}><div class="flex flex-col gap-1"${_scopeId}><span class="${ssrRenderClass([item.status === "available" ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800" : "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700", "inline-flex w-fit items-center px-2 py-0.5 rounded-full text-[10px] font-bold border"])}"${_scopeId}>${ssrInterpolate(item.status)}</span><span class="text-[10px] text-muted-foreground"${_scopeId}>${ssrInterpolate(new Date(item.created_at).toLocaleDateString("id-ID"))}</span></div><div class="flex items-center gap-2"${_scopeId}>`);
+              _push2(`</div><div class="min-w-0 flex-1"${_scopeId}><div class="truncate text-base font-bold"${_scopeId}>${ssrInterpolate(item.title)}</div><div class="text-xs text-muted-foreground"${_scopeId}>${ssrInterpolate((_a3 = item.category) == null ? void 0 : _a3.name)}</div><div class="mt-1 font-bold text-primary"${_scopeId}> Rp ${ssrInterpolate(new Intl.NumberFormat("id-ID").format(item.price))}</div></div></div><div class="flex items-center justify-between gap-4 border-t border-border pt-2"${_scopeId}><div class="flex flex-col gap-1"${_scopeId}><span class="${ssrRenderClass([
+                item.status === "available" ? "border-green-200 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300" : "border-gray-200 bg-gray-100 text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300",
+                "inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[10px] font-bold"
+              ])}"${_scopeId}>${ssrInterpolate(item.status)}</span><span class="text-[10px] text-muted-foreground"${_scopeId}>${ssrInterpolate(new Date(item.created_at).toLocaleDateString("id-ID"))}</span></div><div class="flex items-center gap-2"${_scopeId}>`);
               _push2(ssrRenderComponent(unref(Link), {
                 href: _ctx.route("products.edit", item.slug),
-                class: "p-2 text-muted-foreground hover:bg-accent rounded-lg transition"
+                class: "rounded-lg p-2 text-muted-foreground transition hover:bg-accent"
               }, {
                 default: withCtx((_2, _push3, _parent3, _scopeId2) => {
                   if (_push3) {
-                    _push3(ssrRenderComponent(unref(Edit3), { class: "w-5 h-5" }, null, _parent3, _scopeId2));
+                    _push3(ssrRenderComponent(unref(Edit3), { class: "h-5 w-5" }, null, _parent3, _scopeId2));
                   } else {
                     return [
-                      createVNode(unref(Edit3), { class: "w-5 h-5" })
+                      createVNode(unref(Edit3), { class: "h-5 w-5" })
                     ];
                   }
                 }),
                 _: 2
               }, _parent2, _scopeId));
-              _push2(`<button class="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition"${_scopeId}>`);
-              _push2(ssrRenderComponent(unref(Trash2), { class: "w-5 h-5" }, null, _parent2, _scopeId));
+              _push2(`<button class="rounded-lg p-2 text-red-500 transition hover:bg-red-500/10"${_scopeId}>`);
+              _push2(ssrRenderComponent(unref(Trash2), { class: "h-5 w-5" }, null, _parent2, _scopeId));
               _push2(`</button></div></div></div>`);
             });
-            _push2(`<!--]--></div></div>`);
-            if (__props.myProducts.data.length > 0) {
-              _push2(ssrRenderComponent(_sfc_main$3, {
-                links: __props.myProducts.links
-              }, null, _parent2, _scopeId));
+            _push2(`<!--]--></div></div><div class="mt-8 flex justify-center pb-4"${_scopeId}>`);
+            if (loading.value) {
+              _push2(`<div class="flex flex-col items-center gap-2"${_scopeId}><div class="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"${_scopeId}></div><span class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground"${_scopeId}>Memuat produk...</span></div>`);
+            } else if (!nextUrl.value && allMyProducts.value.length > 0) {
+              _push2(`<div class="py-4 text-center"${_scopeId}><span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50"${_scopeId}>Semua produk ditampilkan</span></div>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`</div></div><div class="transition-all duration-300" style="${ssrRenderStyle(tab.value === "settings" ? null : { display: "none" })}"${_scopeId}><div class="p-4 sm:p-8 bg-card text-card-foreground border border-border shadow-sm sm:rounded-lg"${_scopeId}><div class="max-w-xl"${_scopeId}><header${_scopeId}><h2 class="text-lg font-medium"${_scopeId}>Profil Toko</h2><p class="mt-1 text-sm text-muted-foreground"${_scopeId}>Informasi ini akan ditampilkan di halaman publik toko Anda.</p></header><form class="mt-6 space-y-6"${_scopeId}><div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-6 border-b border-border"${_scopeId}><div class="relative group shrink-0"${_scopeId}><div class="relative h-28 w-28 rounded-full overflow-hidden border-[6px] border-background bg-muted shadow-2xl ring-1 ring-border group-hover:ring-primary transition-all duration-300"${_scopeId}>`);
+            _push2(`</div></div></div><div class="transition-all duration-300" style="${ssrRenderStyle(tab.value === "settings" ? null : { display: "none" })}"${_scopeId}><div class="border border-border bg-card p-4 text-card-foreground shadow-sm sm:rounded-lg sm:p-8"${_scopeId}><div class="max-w-xl"${_scopeId}><header${_scopeId}><h2 class="text-lg font-medium"${_scopeId}>Profil Toko</h2><p class="mt-1 text-sm text-muted-foreground"${_scopeId}> Informasi ini akan ditampilkan di halaman publik toko Anda. </p></header><form class="mt-6 space-y-6"${_scopeId}><div class="flex flex-col items-center gap-6 border-b border-border pb-6 sm:flex-row sm:items-start"${_scopeId}><div class="group relative shrink-0"${_scopeId}><div class="relative h-28 w-28 overflow-hidden rounded-full border-[6px] border-background bg-muted shadow-2xl ring-1 ring-border transition-all duration-300 group-hover:ring-primary"${_scopeId}>`);
             if (photoPreview.value) {
-              _push2(`<img${ssrRenderAttr("src", photoPreview.value)} class="h-full w-full object-cover"${_scopeId}>`);
+              _push2(`<img${ssrRenderAttr("src", photoPreview.value)} loading="lazy" class="h-full w-full object-cover"${_scopeId}>`);
             } else if ((_a2 = __props.user.profile) == null ? void 0 : _a2.avatar) {
-              _push2(`<img${ssrRenderAttr("src", `/storage/${__props.user.profile.avatar}`)} class="h-full w-full object-cover"${_scopeId}>`);
+              _push2(`<img${ssrRenderAttr("src", `/storage/${__props.user.profile.avatar}`)} loading="lazy" class="h-full w-full object-cover"${_scopeId}>`);
             } else {
-              _push2(`<div class="h-full w-full bg-primary/10 flex items-center justify-center text-4xl font-black text-primary"${_scopeId}>${ssrInterpolate((((_b2 = __props.user.profile) == null ? void 0 : _b2.store_name) || __props.user.name).substring(0, 1))}</div>`);
+              _push2(`<div class="flex h-full w-full items-center justify-center bg-primary/10 text-4xl font-black text-primary"${_scopeId}>${ssrInterpolate((((_b2 = __props.user.profile) == null ? void 0 : _b2.store_name) || __props.user.name).substring(0, 1))}</div>`);
             }
-            _push2(`<div class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer backdrop-blur-sm"${_scopeId}>`);
-            _push2(ssrRenderComponent(unref(Image), { class: "w-6 h-6 text-white mb-1" }, null, _parent2, _scopeId));
-            _push2(`<span class="text-white text-[10px] font-bold uppercase tracking-wider"${_scopeId}>Ubah</span></div></div><input type="file" class="hidden" accept="image/*"${_scopeId}><div class="absolute -bottom-1 -right-1 bg-background rounded-full p-1 shadow-sm"${_scopeId}><button type="button" class="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full p-2 shadow-sm transition-colors"${_scopeId}>`);
-            _push2(ssrRenderComponent(unref(Edit3), { class: "w-4 h-4" }, null, _parent2, _scopeId));
-            _push2(`</button></div></div><div class="flex-1 text-center sm:text-left pt-2"${_scopeId}><h3 class="text-lg font-black text-foreground"${_scopeId}>Foto Profil Toko</h3><p class="text-sm text-muted-foreground mt-1 mb-4 leading-relaxed"${_scopeId}>Rekomendasi rasio 1:1, maks 2MB. Format file JPG, JPEG, PNG, atau WebP. Gambar yang diunggah akan dapat dicrop secara langsung.</p>`);
-            _push2(ssrRenderComponent(_sfc_main$4, {
+            _push2(`<div class="absolute inset-0 flex cursor-pointer flex-col items-center justify-center bg-black/50 opacity-0 backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-100"${_scopeId}>`);
+            _push2(ssrRenderComponent(unref(Image), { class: "mb-1 h-6 w-6 text-white" }, null, _parent2, _scopeId));
+            _push2(`<span class="text-[10px] font-bold uppercase tracking-wider text-white"${_scopeId}>Ubah</span></div></div><input type="file" class="hidden" accept="image/*"${_scopeId}><div class="absolute -bottom-1 -right-1 rounded-full bg-background p-1 shadow-sm"${_scopeId}><button type="button" class="rounded-full bg-primary p-2 text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"${_scopeId}>`);
+            _push2(ssrRenderComponent(unref(Edit3), { class: "h-4 w-4" }, null, _parent2, _scopeId));
+            _push2(`</button></div></div><div class="flex-1 pt-2 text-center sm:text-left"${_scopeId}><h3 class="text-lg font-black text-foreground"${_scopeId}>Foto Profil Toko</h3><p class="mb-4 mt-1 text-sm leading-relaxed text-muted-foreground"${_scopeId}> Rekomendasi rasio 1:1, maks 2MB. Format file JPG, JPEG, PNG, atau WebP. Gambar yang diunggah akan dapat dicrop secara langsung. </p>`);
+            _push2(ssrRenderComponent(_sfc_main$3, {
               onClick: ($event) => photoInput.value.click(),
-              class: "shadow-sm border-2"
+              class: "border-2 shadow-sm"
             }, {
               default: withCtx((_2, _push3, _parent3, _scopeId2) => {
                 if (_push3) {
@@ -266,89 +338,89 @@ const _sfc_main = {
               }),
               _: 1
             }, _parent2, _scopeId));
-            _push2(ssrRenderComponent(_sfc_main$5, {
+            _push2(ssrRenderComponent(_sfc_main$4, {
               message: unref(storeForm).errors.avatar,
               class: "mt-2"
             }, null, _parent2, _scopeId));
-            _push2(`</div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6"${_scopeId}><div class="md:col-span-2"${_scopeId}>`);
-            _push2(ssrRenderComponent(_sfc_main$6, {
+            _push2(`</div></div><div class="grid grid-cols-1 gap-6 md:grid-cols-2"${_scopeId}><div class="md:col-span-2"${_scopeId}>`);
+            _push2(ssrRenderComponent(_sfc_main$5, {
               for: "store_name",
               value: "Nama Toko / Penjual",
-              class: "font-bold mb-1"
+              class: "mb-1 font-bold"
             }, null, _parent2, _scopeId));
-            _push2(ssrRenderComponent(_sfc_main$7, {
+            _push2(ssrRenderComponent(_sfc_main$6, {
               id: "store_name",
               modelValue: unref(storeForm).store_name,
               "onUpdate:modelValue": ($event) => unref(storeForm).store_name = $event,
               type: "text",
-              class: "block w-full text-sm font-medium h-12 rounded-xl",
+              class: "block h-12 w-full rounded-xl text-sm font-medium",
               placeholder: "Ketik nama toko Anda...",
               required: ""
             }, null, _parent2, _scopeId));
-            _push2(ssrRenderComponent(_sfc_main$5, {
+            _push2(ssrRenderComponent(_sfc_main$4, {
               message: unref(storeForm).errors.store_name,
               class: "mt-1"
             }, null, _parent2, _scopeId));
             _push2(`</div><div class="md:col-span-2"${_scopeId}>`);
-            _push2(ssrRenderComponent(_sfc_main$6, {
+            _push2(ssrRenderComponent(_sfc_main$5, {
               for: "bio",
               value: "Bio / Deskripsi Singkat Toko",
-              class: "font-bold mb-1"
+              class: "mb-1 font-bold"
             }, null, _parent2, _scopeId));
-            _push2(`<textarea id="bio" rows="4" class="block w-full border-border bg-background text-foreground focus:border-primary focus:ring-primary rounded-xl shadow-sm placeholder:text-muted-foreground/60 resize-none" placeholder="Ceritakan kelebihan toko Anda kepada calon pembeli..."${_scopeId}>${ssrInterpolate(unref(storeForm).bio)}</textarea>`);
-            _push2(ssrRenderComponent(_sfc_main$5, {
+            _push2(`<textarea id="bio" rows="4" class="block w-full resize-none rounded-xl border-border bg-background text-foreground shadow-sm placeholder:text-muted-foreground/60 focus:border-primary focus:ring-primary" placeholder="Ceritakan kelebihan toko Anda kepada calon pembeli..."${_scopeId}>${ssrInterpolate(unref(storeForm).bio)}</textarea>`);
+            _push2(ssrRenderComponent(_sfc_main$4, {
               message: unref(storeForm).errors.bio,
               class: "mt-1"
             }, null, _parent2, _scopeId));
             _push2(`</div><div class="md:col-span-1"${_scopeId}>`);
-            _push2(ssrRenderComponent(_sfc_main$6, {
+            _push2(ssrRenderComponent(_sfc_main$5, {
               for: "city",
               value: "Kota / Kabupaten",
-              class: "font-bold mb-1"
+              class: "mb-1 font-bold"
             }, null, _parent2, _scopeId));
-            _push2(`<div class="relative"${_scopeId}><div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"${_scopeId}>`);
+            _push2(`<div class="relative"${_scopeId}><div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"${_scopeId}>`);
             _push2(ssrRenderComponent(unref(MapPin), { class: "h-4 w-4 text-muted-foreground" }, null, _parent2, _scopeId));
             _push2(`</div>`);
-            _push2(ssrRenderComponent(_sfc_main$7, {
+            _push2(ssrRenderComponent(_sfc_main$6, {
               id: "city",
               modelValue: unref(storeForm).city,
               "onUpdate:modelValue": ($event) => unref(storeForm).city = $event,
               type: "text",
-              class: "block w-full pl-9 text-sm h-12 rounded-xl",
+              class: "block h-12 w-full rounded-xl pl-9 text-sm",
               placeholder: "Misal: Jakarta Selatan"
             }, null, _parent2, _scopeId));
             _push2(`</div>`);
-            _push2(ssrRenderComponent(_sfc_main$5, {
+            _push2(ssrRenderComponent(_sfc_main$4, {
               message: unref(storeForm).errors.city,
               class: "mt-1"
             }, null, _parent2, _scopeId));
             _push2(`</div><div class="md:col-span-1"${_scopeId}>`);
-            _push2(ssrRenderComponent(_sfc_main$6, {
+            _push2(ssrRenderComponent(_sfc_main$5, {
               for: "address",
               value: "Alamat Lengkap (Opsional)",
-              class: "font-bold mb-1"
+              class: "mb-1 font-bold"
             }, null, _parent2, _scopeId));
-            _push2(ssrRenderComponent(_sfc_main$7, {
+            _push2(ssrRenderComponent(_sfc_main$6, {
               id: "address",
               modelValue: unref(storeForm).address,
               "onUpdate:modelValue": ($event) => unref(storeForm).address = $event,
               type: "text",
-              class: "block w-full text-sm h-12 rounded-xl",
+              class: "block h-12 w-full rounded-xl text-sm",
               placeholder: "Jalan, No Rumah, RT/RW..."
             }, null, _parent2, _scopeId));
-            _push2(ssrRenderComponent(_sfc_main$5, {
+            _push2(ssrRenderComponent(_sfc_main$4, {
               message: unref(storeForm).errors.address,
               class: "mt-1"
             }, null, _parent2, _scopeId));
-            _push2(`</div></div><div class="flex items-center gap-4 pt-6 border-t border-border mt-8"${_scopeId}>`);
-            _push2(ssrRenderComponent(_sfc_main$8, {
+            _push2(`</div></div><div class="mt-8 flex items-center gap-4 border-t border-border pt-6"${_scopeId}>`);
+            _push2(ssrRenderComponent(_sfc_main$7, {
               disabled: unref(storeForm).processing,
-              class: "h-12 px-8 rounded-xl font-black shadow-lg shadow-primary/20 text-sm"
+              class: "h-12 rounded-xl px-8 text-sm font-black shadow-lg shadow-primary/20"
             }, {
               default: withCtx((_2, _push3, _parent3, _scopeId2) => {
                 if (_push3) {
                   if (unref(storeForm).processing) {
-                    _push3(`<span class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"${_scopeId2}></span>`);
+                    _push3(`<span class="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"${_scopeId2}></span>`);
                   } else {
                     _push3(`<!---->`);
                   }
@@ -357,7 +429,7 @@ const _sfc_main = {
                   return [
                     unref(storeForm).processing ? (openBlock(), createBlock("span", {
                       key: 0,
-                      class: "w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"
+                      class: "mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"
                     })) : createCommentVNode("", true),
                     createTextVNode(" Simpan Perubahan ")
                   ];
@@ -366,23 +438,23 @@ const _sfc_main = {
               _: 1
             }, _parent2, _scopeId));
             if (unref(storeForm).recentlySuccessful) {
-              _push2(`<div class="flex items-center gap-2 bg-green-500/10 text-green-600 dark:text-green-400 px-4 py-2 rounded-lg border border-green-500/20"${_scopeId}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"${_scopeId}><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"${_scopeId}></path></svg><p class="text-sm font-bold"${_scopeId}>Profil Berhasil Diperbarui!</p></div>`);
+              _push2(`<div class="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-2 text-green-600 dark:text-green-400"${_scopeId}><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"${_scopeId}><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"${_scopeId}></path></svg><p class="text-sm font-bold"${_scopeId}>Profil Berhasil Diperbarui!</p></div>`);
             } else {
               _push2(`<!---->`);
             }
             _push2(`</div></form></div></div></div>`);
-            _push2(ssrRenderComponent(_sfc_main$9, {
+            _push2(ssrRenderComponent(_sfc_main$8, {
               show: cropModalOpen.value,
               onClose: cancelCrop,
               maxWidth: "xl"
             }, {
               default: withCtx((_2, _push3, _parent3, _scopeId2) => {
                 if (_push3) {
-                  _push3(`<div class="p-6 bg-card text-card-foreground"${_scopeId2}><header class="mb-4"${_scopeId2}><h2 class="text-xl font-black"${_scopeId2}>Sesuaikan Foto Profil</h2><p class="text-sm text-muted-foreground mt-1"${_scopeId2}>Geser, putar, atau perbesar/perkecil foto untuk mendapatkan potongan yang pas. Lingkaran adalah pratinjau hasil akhirnya.</p></header><div class="relative w-full aspect-square bg-black rounded-2xl overflow-hidden border-2 border-border mb-6 ring-1 ring-border shadow-inner flex items-center justify-center"${_scopeId2}>`);
+                  _push3(`<div class="bg-card p-6 text-card-foreground"${_scopeId2}><header class="mb-4"${_scopeId2}><h2 class="text-xl font-black"${_scopeId2}>Sesuaikan Foto Profil</h2><p class="mt-1 text-sm text-muted-foreground"${_scopeId2}> Geser, putar, atau perbesar/perkecil foto untuk mendapatkan potongan yang pas. Lingkaran adalah pratinjau hasil akhirnya. </p></header><div class="relative mb-6 flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-border bg-black shadow-inner ring-1 ring-border"${_scopeId2}>`);
                   _push3(ssrRenderComponent(unref(Cropper), {
                     ref_key: "cropper",
                     ref: cropper,
-                    class: "w-full h-full object-contain",
+                    class: "h-full w-full object-contain",
                     src: imageToCrop.value,
                     "stencil-props": {
                       aspectRatio: 1,
@@ -397,10 +469,10 @@ const _sfc_main = {
                     },
                     "image-restriction": "stencil"
                   }, null, _parent3, _scopeId2));
-                  _push3(`</div><div class="flex items-center justify-end gap-3 mt-6"${_scopeId2}>`);
-                  _push3(ssrRenderComponent(_sfc_main$4, {
+                  _push3(`</div><div class="mt-6 flex items-center justify-end gap-3"${_scopeId2}>`);
+                  _push3(ssrRenderComponent(_sfc_main$3, {
                     onClick: cancelCrop,
-                    class: "h-11 px-6 rounded-xl hover:bg-muted font-bold"
+                    class: "h-11 rounded-xl px-6 font-bold hover:bg-muted"
                   }, {
                     default: withCtx((_3, _push4, _parent4, _scopeId3) => {
                       if (_push4) {
@@ -413,9 +485,9 @@ const _sfc_main = {
                     }),
                     _: 1
                   }, _parent3, _scopeId2));
-                  _push3(ssrRenderComponent(_sfc_main$8, {
+                  _push3(ssrRenderComponent(_sfc_main$7, {
                     onClick: applyCrop,
-                    class: "h-11 px-8 rounded-xl shadow-lg font-bold"
+                    class: "h-11 rounded-xl px-8 font-bold shadow-lg"
                   }, {
                     default: withCtx((_3, _push4, _parent4, _scopeId3) => {
                       if (_push4) {
@@ -431,16 +503,16 @@ const _sfc_main = {
                   _push3(`</div></div>`);
                 } else {
                   return [
-                    createVNode("div", { class: "p-6 bg-card text-card-foreground" }, [
+                    createVNode("div", { class: "bg-card p-6 text-card-foreground" }, [
                       createVNode("header", { class: "mb-4" }, [
                         createVNode("h2", { class: "text-xl font-black" }, "Sesuaikan Foto Profil"),
-                        createVNode("p", { class: "text-sm text-muted-foreground mt-1" }, "Geser, putar, atau perbesar/perkecil foto untuk mendapatkan potongan yang pas. Lingkaran adalah pratinjau hasil akhirnya.")
+                        createVNode("p", { class: "mt-1 text-sm text-muted-foreground" }, " Geser, putar, atau perbesar/perkecil foto untuk mendapatkan potongan yang pas. Lingkaran adalah pratinjau hasil akhirnya. ")
                       ]),
-                      createVNode("div", { class: "relative w-full aspect-square bg-black rounded-2xl overflow-hidden border-2 border-border mb-6 ring-1 ring-border shadow-inner flex items-center justify-center" }, [
+                      createVNode("div", { class: "relative mb-6 flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-border bg-black shadow-inner ring-1 ring-border" }, [
                         createVNode(unref(Cropper), {
                           ref_key: "cropper",
                           ref: cropper,
-                          class: "w-full h-full object-contain",
+                          class: "h-full w-full object-contain",
                           src: imageToCrop.value,
                           "stencil-props": {
                             aspectRatio: 1,
@@ -456,19 +528,19 @@ const _sfc_main = {
                           "image-restriction": "stencil"
                         }, null, 8, ["src"])
                       ]),
-                      createVNode("div", { class: "flex items-center justify-end gap-3 mt-6" }, [
-                        createVNode(_sfc_main$4, {
+                      createVNode("div", { class: "mt-6 flex items-center justify-end gap-3" }, [
+                        createVNode(_sfc_main$3, {
                           onClick: cancelCrop,
-                          class: "h-11 px-6 rounded-xl hover:bg-muted font-bold"
+                          class: "h-11 rounded-xl px-6 font-bold hover:bg-muted"
                         }, {
                           default: withCtx(() => [
                             createTextVNode("Batal")
                           ]),
                           _: 1
                         }),
-                        createVNode(_sfc_main$8, {
+                        createVNode(_sfc_main$7, {
                           onClick: applyCrop,
-                          class: "h-11 px-8 rounded-xl shadow-lg font-bold"
+                          class: "h-11 rounded-xl px-8 font-bold shadow-lg"
                         }, {
                           default: withCtx(() => [
                             createTextVNode("Terapkan")
@@ -482,17 +554,17 @@ const _sfc_main = {
               }),
               _: 1
             }, _parent2, _scopeId));
-            _push2(ssrRenderComponent(_sfc_main$9, {
+            _push2(ssrRenderComponent(_sfc_main$8, {
               show: confirmProductDeletion.value,
               onClose: closeModal
             }, {
               default: withCtx((_2, _push3, _parent3, _scopeId2) => {
                 var _a3, _b3;
                 if (_push3) {
-                  _push3(`<div class="p-6"${_scopeId2}><div class="flex flex-col items-center text-center justify-center"${_scopeId2}><div class="mx-auto mb-4 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900"${_scopeId2}>`);
+                  _push3(`<div class="p-6"${_scopeId2}><div class="flex flex-col items-center justify-center text-center"${_scopeId2}><div class="mx-auto mb-4 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900"${_scopeId2}>`);
                   _push3(ssrRenderComponent(unref(Trash2), { class: "h-6 w-6 text-red-600 dark:text-red-200" }, null, _parent3, _scopeId2));
-                  _push3(`</div><h2 class="text-lg font-medium"${_scopeId2}>Konfirmasi Hapus</h2><p class="mt-2 text-sm text-muted-foreground"${_scopeId2}>Apakah Anda yakin ingin menghapus produk <strong${_scopeId2}>${ssrInterpolate((_a3 = productToDelete.value) == null ? void 0 : _a3.title)}</strong>? <br${_scopeId2}> Tindakan ini tidak dapat dibatalkan.</p></div><div class="mt-6 flex justify-center gap-3"${_scopeId2}>`);
-                  _push3(ssrRenderComponent(_sfc_main$4, { onClick: closeModal }, {
+                  _push3(`</div><h2 class="text-lg font-medium"${_scopeId2}>Konfirmasi Hapus</h2><p class="mt-2 text-sm text-muted-foreground"${_scopeId2}> Apakah Anda yakin ingin menghapus produk <strong${_scopeId2}>${ssrInterpolate((_a3 = productToDelete.value) == null ? void 0 : _a3.title)}</strong>? <br${_scopeId2}> Tindakan ini tidak dapat dibatalkan. </p></div><div class="mt-6 flex justify-center gap-3"${_scopeId2}>`);
+                  _push3(ssrRenderComponent(_sfc_main$3, { onClick: closeModal }, {
                     default: withCtx((_3, _push4, _parent4, _scopeId3) => {
                       if (_push4) {
                         _push4(`Batal`);
@@ -524,21 +596,21 @@ const _sfc_main = {
                 } else {
                   return [
                     createVNode("div", { class: "p-6" }, [
-                      createVNode("div", { class: "flex flex-col items-center text-center justify-center" }, [
+                      createVNode("div", { class: "flex flex-col items-center justify-center text-center" }, [
                         createVNode("div", { class: "mx-auto mb-4 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900" }, [
                           createVNode(unref(Trash2), { class: "h-6 w-6 text-red-600 dark:text-red-200" })
                         ]),
                         createVNode("h2", { class: "text-lg font-medium" }, "Konfirmasi Hapus"),
                         createVNode("p", { class: "mt-2 text-sm text-muted-foreground" }, [
-                          createTextVNode("Apakah Anda yakin ingin menghapus produk "),
+                          createTextVNode(" Apakah Anda yakin ingin menghapus produk "),
                           createVNode("strong", null, toDisplayString((_b3 = productToDelete.value) == null ? void 0 : _b3.title), 1),
                           createTextVNode("? "),
                           createVNode("br"),
-                          createTextVNode(" Tindakan ini tidak dapat dibatalkan.")
+                          createTextVNode(" Tindakan ini tidak dapat dibatalkan. ")
                         ])
                       ]),
                       createVNode("div", { class: "mt-6 flex justify-center gap-3" }, [
-                        createVNode(_sfc_main$4, { onClick: closeModal }, {
+                        createVNode(_sfc_main$3, { onClick: closeModal }, {
                           default: withCtx(() => [
                             createTextVNode("Batal")
                           ]),
@@ -566,74 +638,80 @@ const _sfc_main = {
             return [
               createVNode(unref(Head), { title: "Seller Dashboard" }),
               createVNode("div", { class: "py-12" }, [
-                createVNode("div", { class: "max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6" }, [
-                  createVNode("div", { class: "flex space-x-1 bg-muted p-1 rounded-xl max-w-md mx-auto sm:mx-0" }, [
+                createVNode("div", { class: "mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8" }, [
+                  createVNode("div", { class: "mx-auto flex max-w-md space-x-1 rounded-xl bg-muted p-1 sm:mx-0" }, [
                     createVNode("button", {
                       onClick: ($event) => tab.value = "overview",
-                      class: [tab.value === "overview" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground", "flex-1 py-2 sm:py-2.5 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2"]
+                      class: [
+                        tab.value === "overview" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                        "flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-bold transition-all duration-200 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+                      ]
                     }, [
-                      createVNode(unref(LayoutDashboard), { class: "w-4 h-4" }),
+                      createVNode(unref(LayoutDashboard), { class: "h-4 w-4" }),
                       createTextVNode(" Ringkasan ")
                     ], 10, ["onClick"]),
                     createVNode("button", {
                       onClick: ($event) => tab.value = "settings",
-                      class: [tab.value === "settings" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground", "flex-1 py-2 sm:py-2.5 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2"]
+                      class: [
+                        tab.value === "settings" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                        "flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-bold transition-all duration-200 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+                      ]
                     }, [
-                      createVNode(unref(Settings), { class: "w-4 h-4" }),
+                      createVNode(unref(Settings), { class: "h-4 w-4" }),
                       createTextVNode(" Pengaturan ")
                     ], 10, ["onClick"])
                   ]),
                   withDirectives(createVNode("div", { class: "transition-all duration-300" }, [
-                    createVNode("div", { class: "p-4 sm:p-8 bg-card text-card-foreground border border-border shadow-sm sm:rounded-lg mb-6" }, [
+                    createVNode("div", { class: "mb-6 border border-border bg-card p-4 text-card-foreground shadow-sm sm:rounded-lg sm:p-8" }, [
                       createVNode("header", { class: "mb-6" }, [
                         createVNode("h2", { class: "text-lg font-medium" }, "Statistik Toko"),
-                        createVNode("p", { class: "mt-1 text-sm text-muted-foreground" }, "Ringkasan performa penjualan Anda saat ini.")
+                        createVNode("p", { class: "mt-1 text-sm text-muted-foreground" }, " Ringkasan performa penjualan Anda saat ini. ")
                       ]),
-                      createVNode("div", { class: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6" }, [
-                        createVNode("div", { class: "bg-muted p-4 sm:p-6 rounded-2xl border border-border transition-colors" }, [
-                          createVNode("div", { class: "flex items-center justify-between mb-2" }, [
-                            createVNode("p", { class: "text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider" }, "Produk Aktif"),
-                            createVNode(unref(Package), { class: "w-5 h-5 text-primary" })
+                      createVNode("div", { class: "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3" }, [
+                        createVNode("div", { class: "rounded-2xl border border-border bg-muted p-4 transition-colors sm:p-6" }, [
+                          createVNode("div", { class: "mb-2 flex items-center justify-between" }, [
+                            createVNode("p", { class: "text-xs font-medium uppercase tracking-wider text-muted-foreground sm:text-sm" }, " Produk Aktif "),
+                            createVNode(unref(Package), { class: "h-5 w-5 text-primary" })
                           ]),
-                          createVNode("p", { class: "text-2xl sm:text-3xl font-black text-primary mt-2" }, toDisplayString(__props.productsCount), 1)
+                          createVNode("p", { class: "mt-2 text-2xl font-black text-primary sm:text-3xl" }, toDisplayString(__props.productsCount), 1)
                         ]),
-                        createVNode("div", { class: "bg-muted p-4 sm:p-6 rounded-2xl border border-border transition-colors" }, [
-                          createVNode("div", { class: "flex items-center justify-between mb-2" }, [
-                            createVNode("p", { class: "text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider" }, "Total Terjual"),
-                            createVNode(unref(ShoppingBag), { class: "w-5 h-5 text-green-500" })
+                        createVNode("div", { class: "rounded-2xl border border-border bg-muted p-4 transition-colors sm:p-6" }, [
+                          createVNode("div", { class: "mb-2 flex items-center justify-between" }, [
+                            createVNode("p", { class: "text-xs font-medium uppercase tracking-wider text-muted-foreground sm:text-sm" }, " Total Terjual "),
+                            createVNode(unref(ShoppingBag), { class: "h-5 w-5 text-green-500" })
                           ]),
-                          createVNode("p", { class: "text-2xl sm:text-3xl font-black text-green-600 dark:text-green-400 mt-2" }, toDisplayString(__props.transactionsCount), 1)
+                          createVNode("p", { class: "mt-2 text-2xl font-black text-green-600 dark:text-green-400 sm:text-3xl" }, toDisplayString(__props.transactionsCount), 1)
                         ]),
-                        createVNode("div", { class: "bg-muted p-4 sm:p-6 rounded-2xl border border-border transition-colors" }, [
-                          createVNode("div", { class: "flex items-center justify-between mb-2" }, [
-                            createVNode("p", { class: "text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider" }, "Pesan Baru"),
-                            createVNode(unref(MessageCircle), { class: "w-5 h-5 text-orange-500" })
+                        createVNode("div", { class: "rounded-2xl border border-border bg-muted p-4 transition-colors sm:p-6" }, [
+                          createVNode("div", { class: "mb-2 flex items-center justify-between" }, [
+                            createVNode("p", { class: "text-xs font-medium uppercase tracking-wider text-muted-foreground sm:text-sm" }, " Pesan Baru "),
+                            createVNode(unref(MessageCircle), { class: "h-5 w-5 text-orange-500" })
                           ]),
-                          createVNode("p", { class: "text-2xl sm:text-3xl font-black text-orange-500 mt-2" }, toDisplayString(__props.unreadMessagesCount), 1)
+                          createVNode("p", { class: "mt-2 text-2xl font-black text-orange-500 sm:text-3xl" }, toDisplayString(__props.unreadMessagesCount), 1)
                         ])
                       ])
                     ]),
-                    createVNode("div", { class: "p-4 sm:p-8 bg-card text-card-foreground border border-border shadow-sm sm:rounded-lg" }, [
-                      createVNode("div", { class: "flex justify-between items-center mb-6" }, [
+                    createVNode("div", { class: "border border-border bg-card p-4 text-card-foreground shadow-sm sm:rounded-lg sm:p-8" }, [
+                      createVNode("div", { class: "mb-6 flex items-center justify-between" }, [
                         createVNode("div", null, [
                           createVNode("h3", { class: "text-lg font-bold" }, "Produk Saya"),
                           createVNode("p", { class: "text-sm text-muted-foreground" }, "Kelola barang dagangan Anda.")
                         ]),
                         createVNode(unref(Link), {
                           href: _ctx.route("products.create"),
-                          class: "inline-flex items-center px-4 py-2 bg-primary border border-transparent rounded-xl font-bold text-xs text-primary-foreground uppercase tracking-widest hover:bg-primary/90 transition duration-150 shadow-md"
+                          class: "inline-flex items-center rounded-xl border border-transparent bg-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary-foreground shadow-md transition duration-150 hover:bg-primary/90"
                         }, {
                           default: withCtx(() => [
-                            createVNode(unref(Plus), { class: "w-4 h-4 mr-2" }),
+                            createVNode(unref(Plus), { class: "mr-2 h-4 w-4" }),
                             createVNode("span", null, "Tambah Produk")
                           ]),
                           _: 1
                         }, 8, ["href"])
                       ]),
-                      createVNode("div", { class: "overflow-hidden shadow-sm sm:rounded-lg border border-border" }, [
-                        createVNode("div", { class: "hidden md:block overflow-x-auto" }, [
-                          createVNode("table", { class: "w-full text-sm text-left" }, [
-                            createVNode("thead", { class: "text-xs text-muted-foreground uppercase bg-muted border-b border-border" }, [
+                      createVNode("div", { class: "overflow-hidden border border-border shadow-sm sm:rounded-lg" }, [
+                        createVNode("div", { class: "hidden overflow-x-auto md:block" }, [
+                          createVNode("table", { class: "w-full text-left text-sm" }, [
+                            createVNode("thead", { class: "border-b border-border bg-muted text-xs uppercase text-muted-foreground" }, [
                               createVNode("tr", null, [
                                 createVNode("th", {
                                   scope: "col",
@@ -645,57 +723,65 @@ const _sfc_main = {
                                 }, "Harga"),
                                 createVNode("th", {
                                   scope: "col",
-                                  class: "px-6 py-4 font-semibold text-center"
+                                  class: "px-6 py-4 text-center font-semibold"
                                 }, "Status"),
                                 createVNode("th", {
                                   scope: "col",
-                                  class: "px-6 py-4 font-semibold text-center"
+                                  class: "px-6 py-4 text-center font-semibold"
                                 }, "Tanggal"),
                                 createVNode("th", {
                                   scope: "col",
-                                  class: "px-6 py-4 font-semibold text-right"
+                                  class: "px-6 py-4 text-right font-semibold"
                                 }, "Aksi")
                               ])
                             ]),
                             createVNode("tbody", { class: "divide-y divide-border" }, [
-                              (openBlock(true), createBlock(Fragment, null, renderList(__props.myProducts.data, (item) => {
+                              (openBlock(true), createBlock(Fragment, null, renderList(allMyProducts.value, (item) => {
                                 var _a3;
                                 return openBlock(), createBlock("tr", {
                                   key: item.id,
-                                  class: "bg-card hover:bg-muted transition-colors"
+                                  class: "bg-card transition-colors hover:bg-muted"
                                 }, [
                                   createVNode("td", { class: "px-6 py-4 align-middle" }, [
                                     createVNode("div", { class: "flex items-center gap-4" }, [
-                                      createVNode("div", { class: "w-12 h-12 rounded-md bg-muted border border-border overflow-hidden flex-shrink-0" }, [
+                                      createVNode("div", { class: "h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border border-border bg-muted" }, [
                                         item.images && item.images.length > 0 ? (openBlock(), createBlock("img", {
                                           key: 0,
                                           src: `/storage/${item.images[0].image_path}`,
-                                          class: "w-full h-full object-cover"
+                                          loading: "lazy",
+                                          class: "h-full w-full object-cover"
                                         }, null, 8, ["src"])) : (openBlock(), createBlock("div", {
                                           key: 1,
-                                          class: "flex items-center justify-center w-full h-full text-muted-foreground"
+                                          class: "flex h-full w-full items-center justify-center text-muted-foreground"
                                         }, [
-                                          createVNode(unref(Image), { class: "w-6 h-6" })
+                                          createVNode(unref(Image), { class: "h-6 w-6" })
                                         ]))
                                       ]),
                                       createVNode("div", null, [
-                                        createVNode("div", { class: "text-base font-bold line-clamp-1" }, toDisplayString(item.title), 1),
+                                        createVNode("div", { class: "line-clamp-1 text-base font-bold" }, toDisplayString(item.title), 1),
                                         createVNode("div", { class: "text-xs text-muted-foreground" }, toDisplayString((_a3 = item.category) == null ? void 0 : _a3.name), 1)
                                       ])
                                     ])
                                   ]),
-                                  createVNode("td", { class: "px-6 py-4 align-middle font-medium whitespace-nowrap" }, " Rp " + toDisplayString(new Intl.NumberFormat("id-ID").format(item.price)), 1),
-                                  createVNode("td", { class: "px-6 py-4 align-middle text-center" }, [
+                                  createVNode("td", { class: "whitespace-nowrap px-6 py-4 align-middle font-medium" }, " Rp " + toDisplayString(new Intl.NumberFormat("id-ID").format(item.price)), 1),
+                                  createVNode("td", { class: "px-6 py-4 text-center align-middle" }, [
                                     createVNode("span", {
-                                      class: ["inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border", item.status === "available" ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800" : "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700"]
+                                      class: [
+                                        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold",
+                                        item.status === "available" ? "border-green-200 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300" : "border-gray-200 bg-gray-100 text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                      ]
                                     }, toDisplayString(item.status), 3)
                                   ]),
-                                  createVNode("td", { class: "px-6 py-4 align-middle text-center text-xs whitespace-nowrap text-muted-foreground" }, toDisplayString(new Date(item.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })), 1),
-                                  createVNode("td", { class: "px-6 py-4 align-middle text-right" }, [
+                                  createVNode("td", { class: "whitespace-nowrap px-6 py-4 text-center align-middle text-xs text-muted-foreground" }, toDisplayString(new Date(item.created_at).toLocaleDateString("id-ID", {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric"
+                                  })), 1),
+                                  createVNode("td", { class: "px-6 py-4 text-right align-middle" }, [
                                     createVNode("div", { class: "flex items-center justify-end gap-2" }, [
                                       createVNode(unref(Link), {
                                         href: _ctx.route("products.edit", item.slug),
-                                        class: "inline-flex items-center px-4 py-2 bg-background border border-border rounded-md font-semibold text-xs text-foreground uppercase tracking-widest shadow-sm hover:bg-muted transition"
+                                        class: "inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-xs font-semibold uppercase tracking-widest text-foreground shadow-sm transition hover:bg-muted"
                                       }, {
                                         default: withCtx(() => [
                                           createTextVNode(" Edit ")
@@ -714,7 +800,7 @@ const _sfc_main = {
                                   ])
                                 ]);
                               }), 128)),
-                              __props.myProducts.data.length === 0 ? (openBlock(), createBlock("tr", { key: 0 }, [
+                              allMyProducts.value.length === 0 ? (openBlock(), createBlock("tr", { key: 0 }, [
                                 createVNode("td", {
                                   colspan: "5",
                                   class: "px-6 py-12 text-center text-muted-foreground"
@@ -723,7 +809,7 @@ const _sfc_main = {
                                     createVNode("span", { class: "mb-2" }, "Belum ada produk yang dijual."),
                                     createVNode(unref(Link), {
                                       href: _ctx.route("products.create"),
-                                      class: "text-primary font-bold"
+                                      class: "font-bold text-primary"
                                     }, {
                                       default: withCtx(() => [
                                         createTextVNode("+ Tambah Produk Baru")
@@ -736,54 +822,58 @@ const _sfc_main = {
                             ])
                           ])
                         ]),
-                        createVNode("div", { class: "md:hidden divide-y divide-border" }, [
-                          (openBlock(true), createBlock(Fragment, null, renderList(__props.myProducts.data, (item) => {
+                        createVNode("div", { class: "divide-y divide-border md:hidden" }, [
+                          (openBlock(true), createBlock(Fragment, null, renderList(allMyProducts.value, (item) => {
                             var _a3;
                             return openBlock(), createBlock("div", {
                               key: item.id,
-                              class: "p-4 flex flex-col gap-4"
+                              class: "flex flex-col gap-4 p-4"
                             }, [
                               createVNode("div", { class: "flex items-center gap-4" }, [
-                                createVNode("div", { class: "w-16 h-16 rounded-lg bg-muted border border-border overflow-hidden flex-shrink-0" }, [
+                                createVNode("div", { class: "h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-border bg-muted" }, [
                                   item.images && item.images.length > 0 ? (openBlock(), createBlock("img", {
                                     key: 0,
                                     src: `/storage/${item.images[0].image_path}`,
-                                    class: "w-full h-full object-cover"
+                                    loading: "lazy",
+                                    class: "h-full w-full object-cover"
                                   }, null, 8, ["src"])) : (openBlock(), createBlock("div", {
                                     key: 1,
-                                    class: "flex items-center justify-center w-full h-full text-muted-foreground"
+                                    class: "flex h-full w-full items-center justify-center text-muted-foreground"
                                   }, [
-                                    createVNode(unref(Image), { class: "w-8 h-8" })
+                                    createVNode(unref(Image), { class: "h-8 w-8" })
                                   ]))
                                 ]),
-                                createVNode("div", { class: "flex-1 min-w-0" }, [
-                                  createVNode("div", { class: "text-base font-bold truncate" }, toDisplayString(item.title), 1),
+                                createVNode("div", { class: "min-w-0 flex-1" }, [
+                                  createVNode("div", { class: "truncate text-base font-bold" }, toDisplayString(item.title), 1),
                                   createVNode("div", { class: "text-xs text-muted-foreground" }, toDisplayString((_a3 = item.category) == null ? void 0 : _a3.name), 1),
-                                  createVNode("div", { class: "mt-1 text-primary font-bold" }, "Rp " + toDisplayString(new Intl.NumberFormat("id-ID").format(item.price)), 1)
+                                  createVNode("div", { class: "mt-1 font-bold text-primary" }, " Rp " + toDisplayString(new Intl.NumberFormat("id-ID").format(item.price)), 1)
                                 ])
                               ]),
-                              createVNode("div", { class: "flex items-center justify-between gap-4 pt-2 border-t border-border" }, [
+                              createVNode("div", { class: "flex items-center justify-between gap-4 border-t border-border pt-2" }, [
                                 createVNode("div", { class: "flex flex-col gap-1" }, [
                                   createVNode("span", {
-                                    class: ["inline-flex w-fit items-center px-2 py-0.5 rounded-full text-[10px] font-bold border", item.status === "available" ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800" : "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700"]
+                                    class: [
+                                      "inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[10px] font-bold",
+                                      item.status === "available" ? "border-green-200 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300" : "border-gray-200 bg-gray-100 text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                    ]
                                   }, toDisplayString(item.status), 3),
                                   createVNode("span", { class: "text-[10px] text-muted-foreground" }, toDisplayString(new Date(item.created_at).toLocaleDateString("id-ID")), 1)
                                 ]),
                                 createVNode("div", { class: "flex items-center gap-2" }, [
                                   createVNode(unref(Link), {
                                     href: _ctx.route("products.edit", item.slug),
-                                    class: "p-2 text-muted-foreground hover:bg-accent rounded-lg transition"
+                                    class: "rounded-lg p-2 text-muted-foreground transition hover:bg-accent"
                                   }, {
                                     default: withCtx(() => [
-                                      createVNode(unref(Edit3), { class: "w-5 h-5" })
+                                      createVNode(unref(Edit3), { class: "h-5 w-5" })
                                     ]),
                                     _: 1
                                   }, 8, ["href"]),
                                   createVNode("button", {
                                     onClick: ($event) => confirmDeletion(item),
-                                    class: "p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition"
+                                    class: "rounded-lg p-2 text-red-500 transition hover:bg-red-500/10"
                                   }, [
-                                    createVNode(unref(Trash2), { class: "w-5 h-5" })
+                                    createVNode(unref(Trash2), { class: "h-5 w-5" })
                                   ], 8, ["onClick"])
                                 ])
                               ])
@@ -791,46 +881,62 @@ const _sfc_main = {
                           }), 128))
                         ])
                       ]),
-                      __props.myProducts.data.length > 0 ? (openBlock(), createBlock(_sfc_main$3, {
-                        key: 0,
-                        links: __props.myProducts.links
-                      }, null, 8, ["links"])) : createCommentVNode("", true)
+                      createVNode("div", {
+                        ref_key: "loadMoreTrigger",
+                        ref: loadMoreTrigger,
+                        class: "mt-8 flex justify-center pb-4"
+                      }, [
+                        loading.value ? (openBlock(), createBlock("div", {
+                          key: 0,
+                          class: "flex flex-col items-center gap-2"
+                        }, [
+                          createVNode("div", { class: "h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" }),
+                          createVNode("span", { class: "text-[10px] font-bold uppercase tracking-wider text-muted-foreground" }, "Memuat produk...")
+                        ])) : !nextUrl.value && allMyProducts.value.length > 0 ? (openBlock(), createBlock("div", {
+                          key: 1,
+                          class: "py-4 text-center"
+                        }, [
+                          createVNode("span", { class: "text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50" }, "Semua produk ditampilkan")
+                        ])) : createCommentVNode("", true)
+                      ], 512)
                     ])
                   ], 512), [
                     [vShow, tab.value === "overview"]
                   ]),
                   withDirectives(createVNode("div", { class: "transition-all duration-300" }, [
-                    createVNode("div", { class: "p-4 sm:p-8 bg-card text-card-foreground border border-border shadow-sm sm:rounded-lg" }, [
+                    createVNode("div", { class: "border border-border bg-card p-4 text-card-foreground shadow-sm sm:rounded-lg sm:p-8" }, [
                       createVNode("div", { class: "max-w-xl" }, [
                         createVNode("header", null, [
                           createVNode("h2", { class: "text-lg font-medium" }, "Profil Toko"),
-                          createVNode("p", { class: "mt-1 text-sm text-muted-foreground" }, "Informasi ini akan ditampilkan di halaman publik toko Anda.")
+                          createVNode("p", { class: "mt-1 text-sm text-muted-foreground" }, " Informasi ini akan ditampilkan di halaman publik toko Anda. ")
                         ]),
                         createVNode("form", {
                           onSubmit: withModifiers(updateStoreSettings, ["prevent"]),
                           class: "mt-6 space-y-6"
                         }, [
-                          createVNode("div", { class: "flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-6 border-b border-border" }, [
-                            createVNode("div", { class: "relative group shrink-0" }, [
-                              createVNode("div", { class: "relative h-28 w-28 rounded-full overflow-hidden border-[6px] border-background bg-muted shadow-2xl ring-1 ring-border group-hover:ring-primary transition-all duration-300" }, [
+                          createVNode("div", { class: "flex flex-col items-center gap-6 border-b border-border pb-6 sm:flex-row sm:items-start" }, [
+                            createVNode("div", { class: "group relative shrink-0" }, [
+                              createVNode("div", { class: "relative h-28 w-28 overflow-hidden rounded-full border-[6px] border-background bg-muted shadow-2xl ring-1 ring-border transition-all duration-300 group-hover:ring-primary" }, [
                                 photoPreview.value ? (openBlock(), createBlock("img", {
                                   key: 0,
                                   src: photoPreview.value,
+                                  loading: "lazy",
                                   class: "h-full w-full object-cover"
                                 }, null, 8, ["src"])) : ((_c2 = __props.user.profile) == null ? void 0 : _c2.avatar) ? (openBlock(), createBlock("img", {
                                   key: 1,
                                   src: `/storage/${__props.user.profile.avatar}`,
+                                  loading: "lazy",
                                   class: "h-full w-full object-cover"
                                 }, null, 8, ["src"])) : (openBlock(), createBlock("div", {
                                   key: 2,
-                                  class: "h-full w-full bg-primary/10 flex items-center justify-center text-4xl font-black text-primary"
+                                  class: "flex h-full w-full items-center justify-center bg-primary/10 text-4xl font-black text-primary"
                                 }, toDisplayString((((_d2 = __props.user.profile) == null ? void 0 : _d2.store_name) || __props.user.name).substring(0, 1)), 1)),
                                 createVNode("div", {
-                                  class: "absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer backdrop-blur-sm",
+                                  class: "absolute inset-0 flex cursor-pointer flex-col items-center justify-center bg-black/50 opacity-0 backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-100",
                                   onClick: ($event) => photoInput.value.click()
                                 }, [
-                                  createVNode(unref(Image), { class: "w-6 h-6 text-white mb-1" }),
-                                  createVNode("span", { class: "text-white text-[10px] font-bold uppercase tracking-wider" }, "Ubah")
+                                  createVNode(unref(Image), { class: "mb-1 h-6 w-6 text-white" }),
+                                  createVNode("span", { class: "text-[10px] font-bold uppercase tracking-wider text-white" }, "Ubah")
                                 ], 8, ["onClick"])
                               ]),
                               createVNode("input", {
@@ -841,128 +947,128 @@ const _sfc_main = {
                                 accept: "image/*",
                                 onChange: updatePhotoPreview
                               }, null, 544),
-                              createVNode("div", { class: "absolute -bottom-1 -right-1 bg-background rounded-full p-1 shadow-sm" }, [
+                              createVNode("div", { class: "absolute -bottom-1 -right-1 rounded-full bg-background p-1 shadow-sm" }, [
                                 createVNode("button", {
                                   type: "button",
                                   onClick: withModifiers(($event) => photoInput.value.click(), ["prevent"]),
-                                  class: "bg-primary hover:bg-primary/90 text-primary-foreground rounded-full p-2 shadow-sm transition-colors"
+                                  class: "rounded-full bg-primary p-2 text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
                                 }, [
-                                  createVNode(unref(Edit3), { class: "w-4 h-4" })
+                                  createVNode(unref(Edit3), { class: "h-4 w-4" })
                                 ], 8, ["onClick"])
                               ])
                             ]),
-                            createVNode("div", { class: "flex-1 text-center sm:text-left pt-2" }, [
+                            createVNode("div", { class: "flex-1 pt-2 text-center sm:text-left" }, [
                               createVNode("h3", { class: "text-lg font-black text-foreground" }, "Foto Profil Toko"),
-                              createVNode("p", { class: "text-sm text-muted-foreground mt-1 mb-4 leading-relaxed" }, "Rekomendasi rasio 1:1, maks 2MB. Format file JPG, JPEG, PNG, atau WebP. Gambar yang diunggah akan dapat dicrop secara langsung."),
-                              createVNode(_sfc_main$4, {
+                              createVNode("p", { class: "mb-4 mt-1 text-sm leading-relaxed text-muted-foreground" }, " Rekomendasi rasio 1:1, maks 2MB. Format file JPG, JPEG, PNG, atau WebP. Gambar yang diunggah akan dapat dicrop secara langsung. "),
+                              createVNode(_sfc_main$3, {
                                 onClick: withModifiers(($event) => photoInput.value.click(), ["prevent"]),
-                                class: "shadow-sm border-2"
+                                class: "border-2 shadow-sm"
                               }, {
                                 default: withCtx(() => [
                                   createTextVNode("Unggah Gambar")
                                 ]),
                                 _: 1
                               }, 8, ["onClick"]),
-                              createVNode(_sfc_main$5, {
+                              createVNode(_sfc_main$4, {
                                 message: unref(storeForm).errors.avatar,
                                 class: "mt-2"
                               }, null, 8, ["message"])
                             ])
                           ]),
-                          createVNode("div", { class: "grid grid-cols-1 md:grid-cols-2 gap-6" }, [
+                          createVNode("div", { class: "grid grid-cols-1 gap-6 md:grid-cols-2" }, [
                             createVNode("div", { class: "md:col-span-2" }, [
-                              createVNode(_sfc_main$6, {
+                              createVNode(_sfc_main$5, {
                                 for: "store_name",
                                 value: "Nama Toko / Penjual",
-                                class: "font-bold mb-1"
+                                class: "mb-1 font-bold"
                               }),
-                              createVNode(_sfc_main$7, {
+                              createVNode(_sfc_main$6, {
                                 id: "store_name",
                                 modelValue: unref(storeForm).store_name,
                                 "onUpdate:modelValue": ($event) => unref(storeForm).store_name = $event,
                                 type: "text",
-                                class: "block w-full text-sm font-medium h-12 rounded-xl",
+                                class: "block h-12 w-full rounded-xl text-sm font-medium",
                                 placeholder: "Ketik nama toko Anda...",
                                 required: ""
                               }, null, 8, ["modelValue", "onUpdate:modelValue"]),
-                              createVNode(_sfc_main$5, {
+                              createVNode(_sfc_main$4, {
                                 message: unref(storeForm).errors.store_name,
                                 class: "mt-1"
                               }, null, 8, ["message"])
                             ]),
                             createVNode("div", { class: "md:col-span-2" }, [
-                              createVNode(_sfc_main$6, {
+                              createVNode(_sfc_main$5, {
                                 for: "bio",
                                 value: "Bio / Deskripsi Singkat Toko",
-                                class: "font-bold mb-1"
+                                class: "mb-1 font-bold"
                               }),
                               withDirectives(createVNode("textarea", {
                                 id: "bio",
                                 "onUpdate:modelValue": ($event) => unref(storeForm).bio = $event,
                                 rows: "4",
-                                class: "block w-full border-border bg-background text-foreground focus:border-primary focus:ring-primary rounded-xl shadow-sm placeholder:text-muted-foreground/60 resize-none",
+                                class: "block w-full resize-none rounded-xl border-border bg-background text-foreground shadow-sm placeholder:text-muted-foreground/60 focus:border-primary focus:ring-primary",
                                 placeholder: "Ceritakan kelebihan toko Anda kepada calon pembeli..."
                               }, null, 8, ["onUpdate:modelValue"]), [
                                 [vModelText, unref(storeForm).bio]
                               ]),
-                              createVNode(_sfc_main$5, {
+                              createVNode(_sfc_main$4, {
                                 message: unref(storeForm).errors.bio,
                                 class: "mt-1"
                               }, null, 8, ["message"])
                             ]),
                             createVNode("div", { class: "md:col-span-1" }, [
-                              createVNode(_sfc_main$6, {
+                              createVNode(_sfc_main$5, {
                                 for: "city",
                                 value: "Kota / Kabupaten",
-                                class: "font-bold mb-1"
+                                class: "mb-1 font-bold"
                               }),
                               createVNode("div", { class: "relative" }, [
-                                createVNode("div", { class: "absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none" }, [
+                                createVNode("div", { class: "pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3" }, [
                                   createVNode(unref(MapPin), { class: "h-4 w-4 text-muted-foreground" })
                                 ]),
-                                createVNode(_sfc_main$7, {
+                                createVNode(_sfc_main$6, {
                                   id: "city",
                                   modelValue: unref(storeForm).city,
                                   "onUpdate:modelValue": ($event) => unref(storeForm).city = $event,
                                   type: "text",
-                                  class: "block w-full pl-9 text-sm h-12 rounded-xl",
+                                  class: "block h-12 w-full rounded-xl pl-9 text-sm",
                                   placeholder: "Misal: Jakarta Selatan"
                                 }, null, 8, ["modelValue", "onUpdate:modelValue"])
                               ]),
-                              createVNode(_sfc_main$5, {
+                              createVNode(_sfc_main$4, {
                                 message: unref(storeForm).errors.city,
                                 class: "mt-1"
                               }, null, 8, ["message"])
                             ]),
                             createVNode("div", { class: "md:col-span-1" }, [
-                              createVNode(_sfc_main$6, {
+                              createVNode(_sfc_main$5, {
                                 for: "address",
                                 value: "Alamat Lengkap (Opsional)",
-                                class: "font-bold mb-1"
+                                class: "mb-1 font-bold"
                               }),
-                              createVNode(_sfc_main$7, {
+                              createVNode(_sfc_main$6, {
                                 id: "address",
                                 modelValue: unref(storeForm).address,
                                 "onUpdate:modelValue": ($event) => unref(storeForm).address = $event,
                                 type: "text",
-                                class: "block w-full text-sm h-12 rounded-xl",
+                                class: "block h-12 w-full rounded-xl text-sm",
                                 placeholder: "Jalan, No Rumah, RT/RW..."
                               }, null, 8, ["modelValue", "onUpdate:modelValue"]),
-                              createVNode(_sfc_main$5, {
+                              createVNode(_sfc_main$4, {
                                 message: unref(storeForm).errors.address,
                                 class: "mt-1"
                               }, null, 8, ["message"])
                             ])
                           ]),
-                          createVNode("div", { class: "flex items-center gap-4 pt-6 border-t border-border mt-8" }, [
-                            createVNode(_sfc_main$8, {
+                          createVNode("div", { class: "mt-8 flex items-center gap-4 border-t border-border pt-6" }, [
+                            createVNode(_sfc_main$7, {
                               disabled: unref(storeForm).processing,
-                              class: "h-12 px-8 rounded-xl font-black shadow-lg shadow-primary/20 text-sm"
+                              class: "h-12 rounded-xl px-8 text-sm font-black shadow-lg shadow-primary/20"
                             }, {
                               default: withCtx(() => [
                                 unref(storeForm).processing ? (openBlock(), createBlock("span", {
                                   key: 0,
-                                  class: "w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"
+                                  class: "mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"
                                 })) : createCommentVNode("", true),
                                 createTextVNode(" Simpan Perubahan ")
                               ]),
@@ -971,15 +1077,15 @@ const _sfc_main = {
                             createVNode(Transition, {
                               "enter-from-class": "opacity-0 -translate-y-2",
                               "leave-to-class": "opacity-0 translate-y-2",
-                              class: "transition ease-out duration-300"
+                              class: "transition duration-300 ease-out"
                             }, {
                               default: withCtx(() => [
                                 unref(storeForm).recentlySuccessful ? (openBlock(), createBlock("div", {
                                   key: 0,
-                                  class: "flex items-center gap-2 bg-green-500/10 text-green-600 dark:text-green-400 px-4 py-2 rounded-lg border border-green-500/20"
+                                  class: "flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-2 text-green-600 dark:text-green-400"
                                 }, [
                                   (openBlock(), createBlock("svg", {
-                                    class: "w-4 h-4",
+                                    class: "h-4 w-4",
                                     fill: "none",
                                     stroke: "currentColor",
                                     viewBox: "0 0 24 24"
@@ -1003,22 +1109,22 @@ const _sfc_main = {
                   ], 512), [
                     [vShow, tab.value === "settings"]
                   ]),
-                  createVNode(_sfc_main$9, {
+                  createVNode(_sfc_main$8, {
                     show: cropModalOpen.value,
                     onClose: cancelCrop,
                     maxWidth: "xl"
                   }, {
                     default: withCtx(() => [
-                      createVNode("div", { class: "p-6 bg-card text-card-foreground" }, [
+                      createVNode("div", { class: "bg-card p-6 text-card-foreground" }, [
                         createVNode("header", { class: "mb-4" }, [
                           createVNode("h2", { class: "text-xl font-black" }, "Sesuaikan Foto Profil"),
-                          createVNode("p", { class: "text-sm text-muted-foreground mt-1" }, "Geser, putar, atau perbesar/perkecil foto untuk mendapatkan potongan yang pas. Lingkaran adalah pratinjau hasil akhirnya.")
+                          createVNode("p", { class: "mt-1 text-sm text-muted-foreground" }, " Geser, putar, atau perbesar/perkecil foto untuk mendapatkan potongan yang pas. Lingkaran adalah pratinjau hasil akhirnya. ")
                         ]),
-                        createVNode("div", { class: "relative w-full aspect-square bg-black rounded-2xl overflow-hidden border-2 border-border mb-6 ring-1 ring-border shadow-inner flex items-center justify-center" }, [
+                        createVNode("div", { class: "relative mb-6 flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-border bg-black shadow-inner ring-1 ring-border" }, [
                           createVNode(unref(Cropper), {
                             ref_key: "cropper",
                             ref: cropper,
-                            class: "w-full h-full object-contain",
+                            class: "h-full w-full object-contain",
                             src: imageToCrop.value,
                             "stencil-props": {
                               aspectRatio: 1,
@@ -1034,19 +1140,19 @@ const _sfc_main = {
                             "image-restriction": "stencil"
                           }, null, 8, ["src"])
                         ]),
-                        createVNode("div", { class: "flex items-center justify-end gap-3 mt-6" }, [
-                          createVNode(_sfc_main$4, {
+                        createVNode("div", { class: "mt-6 flex items-center justify-end gap-3" }, [
+                          createVNode(_sfc_main$3, {
                             onClick: cancelCrop,
-                            class: "h-11 px-6 rounded-xl hover:bg-muted font-bold"
+                            class: "h-11 rounded-xl px-6 font-bold hover:bg-muted"
                           }, {
                             default: withCtx(() => [
                               createTextVNode("Batal")
                             ]),
                             _: 1
                           }),
-                          createVNode(_sfc_main$8, {
+                          createVNode(_sfc_main$7, {
                             onClick: applyCrop,
-                            class: "h-11 px-8 rounded-xl shadow-lg font-bold"
+                            class: "h-11 rounded-xl px-8 font-bold shadow-lg"
                           }, {
                             default: withCtx(() => [
                               createTextVNode("Terapkan")
@@ -1058,7 +1164,7 @@ const _sfc_main = {
                     ]),
                     _: 1
                   }, 8, ["show"]),
-                  createVNode(_sfc_main$9, {
+                  createVNode(_sfc_main$8, {
                     show: confirmProductDeletion.value,
                     onClose: closeModal
                   }, {
@@ -1066,21 +1172,21 @@ const _sfc_main = {
                       var _a3;
                       return [
                         createVNode("div", { class: "p-6" }, [
-                          createVNode("div", { class: "flex flex-col items-center text-center justify-center" }, [
+                          createVNode("div", { class: "flex flex-col items-center justify-center text-center" }, [
                             createVNode("div", { class: "mx-auto mb-4 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900" }, [
                               createVNode(unref(Trash2), { class: "h-6 w-6 text-red-600 dark:text-red-200" })
                             ]),
                             createVNode("h2", { class: "text-lg font-medium" }, "Konfirmasi Hapus"),
                             createVNode("p", { class: "mt-2 text-sm text-muted-foreground" }, [
-                              createTextVNode("Apakah Anda yakin ingin menghapus produk "),
+                              createTextVNode(" Apakah Anda yakin ingin menghapus produk "),
                               createVNode("strong", null, toDisplayString((_a3 = productToDelete.value) == null ? void 0 : _a3.title), 1),
                               createTextVNode("? "),
                               createVNode("br"),
-                              createTextVNode(" Tindakan ini tidak dapat dibatalkan.")
+                              createTextVNode(" Tindakan ini tidak dapat dibatalkan. ")
                             ])
                           ]),
                           createVNode("div", { class: "mt-6 flex justify-center gap-3" }, [
-                            createVNode(_sfc_main$4, { onClick: closeModal }, {
+                            createVNode(_sfc_main$3, { onClick: closeModal }, {
                               default: withCtx(() => [
                                 createTextVNode("Batal")
                               ]),

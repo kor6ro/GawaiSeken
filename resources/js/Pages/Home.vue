@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, shallowRef, watch, unref } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import axios from 'axios'
 import AppLayout from '@/Layouts/AppLayout.vue'
@@ -9,6 +9,7 @@ import Modal from '@/Components/Modal.vue'
 import { SlidersHorizontal, Search, Cpu, HardDrive, Package, ArrowUpDown, X } from 'lucide-vue-next'
 import debounce from 'lodash/debounce'
 import pickBy from 'lodash/pickBy'
+import { useIntersectionObserver } from '@vueuse/core'
 
 const props = defineProps({
   products: Object,
@@ -24,10 +25,10 @@ const filterModalOpen = ref(false)
 const search = ref(props.filters.search || '')
 const loading = ref(false)
 
-const allProducts = ref([...props.products.data])
+// Optimized Reactivity: use shallowRef to prevent deep proxying of large product lists
+const allProducts = shallowRef([...props.products.data])
 const nextUrl = ref(props.products.next_page_url)
 const loadMoreTrigger = ref(null)
-let observer = null
 
 const loadMore = async () => {
   if (!nextUrl.value || loading.value) return
@@ -38,13 +39,14 @@ const loadMore = async () => {
       headers: {
         'X-Inertia': 'true',
         'X-Inertia-Version': usePage().version,
-        'X-Inertia-Partial-Component': 'Home',
+        'X-Inertia-Partial-Component': 'Home', // Ensure fetching correct component partial
         'X-Inertia-Partial-Data': 'products',
       },
     })
 
     const newProducts = response.data.props.products
-    allProducts.value.push(...newProducts.data)
+    // Re-assign array reference to trigger shallowRef reactivity without mutating deep objects
+    allProducts.value = [...allProducts.value, ...newProducts.data]
     nextUrl.value = newProducts.next_page_url
   } catch (error) {
     console.error('Error loading more products:', error)
@@ -53,24 +55,18 @@ const loadMore = async () => {
   }
 }
 
-onMounted(() => {
-  observer = new IntersectionObserver(
-    (entries) => {
-      if (entries[0].isIntersecting) {
-        loadMore()
-      }
-    },
-    { rootMargin: '200px' }
-  )
-
-  if (loadMoreTrigger.value) {
-    observer.observe(loadMoreTrigger.value)
+useIntersectionObserver(
+  loadMoreTrigger,
+  ([{ isIntersecting }]) => {
+    if (isIntersecting) {
+      loadMore()
+    }
+  },
+  {
+    // Increase root margin to buffer loading before user actually reaches the end
+    rootMargin: '400px 0px',
   }
-})
-
-onUnmounted(() => {
-  if (observer) observer.disconnect()
-})
+)
 
 watch(
   () => props.products,
@@ -80,7 +76,7 @@ watch(
     }
     nextUrl.value = newVal.next_page_url
   },
-  { deep: true }
+  { deep: false } // Avoid deep watching the entire products object!
 )
 
 const filterParams = ref({
@@ -239,12 +235,20 @@ const hasActiveFilters = () => {
 
         <!-- Load More / Infinite Scroll Sentinel -->
         <div ref="loadMoreTrigger" class="mt-12 flex justify-center">
-          <div v-if="loading" class="flex flex-col items-center gap-2">
-            <div
-              class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"
-            ></div>
-            <span class="text-xs font-bold uppercase tracking-widest text-muted-foreground"
-              >Memuat barang...</span
+          <div v-if="loading" class="flex w-full flex-col items-center gap-6 py-6">
+            <div class="flex gap-2">
+              <div
+                class="h-3 w-3 animate-[bounce_1s_infinite_0ms] rounded-full bg-primary/70"
+              ></div>
+              <div
+                class="h-3 w-3 animate-[bounce_1s_infinite_200ms] rounded-full bg-primary/80"
+              ></div>
+              <div
+                class="h-3 w-3 animate-[bounce_1s_infinite_400ms] rounded-full bg-primary/90"
+              ></div>
+            </div>
+            <span class="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60"
+              >Mengambil Data Produk...</span
             >
           </div>
           <div v-else-if="!nextUrl && allProducts.length > 0" class="py-8 text-center">

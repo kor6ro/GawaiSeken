@@ -57,7 +57,7 @@ const _sfc_main = {
     });
     return (_ctx, _push, _parent, _attrs) => {
       ssrRenderTeleport(_push, (_push2) => {
-        _push2(`<div class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50 transition-all" scroll-region style="${ssrRenderStyle(__props.show ? null : { display: "none" })}"><div class="fixed inset-0 transform transition-all" style="${ssrRenderStyle(__props.show ? null : { display: "none" })}"><div class="absolute inset-0 bg-gray-500/75 dark:bg-gray-900/75 backdrop-blur-sm"></div></div><div class="${ssrRenderClass([maxWidthClass.value, "mb-6 bg-background rounded-2xl overflow-hidden shadow-xl transform transition-all sm:w-full sm:mx-auto border border-border"])}" style="${ssrRenderStyle(__props.show ? null : { display: "none" })}">`);
+        _push2(`<div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden p-4 sm:p-0" style="${ssrRenderStyle(__props.show ? null : { display: "none" })}"><div class="fixed inset-0 bg-black/50" style="${ssrRenderStyle(__props.show ? null : { display: "none" })}"></div><div class="${ssrRenderClass([maxWidthClass.value, "relative w-full transform-gpu overflow-hidden rounded-2xl border border-border bg-background shadow-2xl will-change-transform"])}" style="${ssrRenderStyle(__props.show ? null : { display: "none" })}">`);
         if (__props.show) {
           ssrRenderSlot(_ctx.$slots, "default", {}, null, _push2, _parent);
         } else {

@@ -1,8 +1,8 @@
 import { withCtx, unref, createTextVNode, createVNode, withModifiers, useSSRContext } from "vue";
 import { ssrRenderComponent } from "vue/server-renderer";
-import { _ as _sfc_main$1 } from "./GuestLayout-DqpGDuOc.js";
-import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4 } from "./TextInput-ivY_q2i2.js";
-import { _ as _sfc_main$5 } from "./PrimaryButton-b74eHQMS.js";
+import { _ as _sfc_main$1 } from "./GuestLayout-BwVHXVA6.js";
+import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4 } from "./TextInput-C__yGyCx.js";
+import { _ as _sfc_main$5 } from "./PrimaryButton-Chd5xZL9.js";
 import { useForm, Head } from "@inertiajs/vue3";
 import "./ApplicationLogo-5BXBKbkR.js";
 const _sfc_main = {
@@ -41,7 +41,7 @@ const _sfc_main = {
               class: "mt-2",
               message: unref(form).errors.password
             }, null, _parent2, _scopeId));
-            _push2(`</div><div class="flex justify-end mt-4"${_scopeId}>`);
+            _push2(`</div><div class="mt-4 flex justify-end"${_scopeId}>`);
             _push2(ssrRenderComponent(_sfc_main$5, {
               class: ["ms-4", { "opacity-25": unref(form).processing }],
               disabled: unref(form).processing
@@ -85,7 +85,7 @@ const _sfc_main = {
                     message: unref(form).errors.password
                   }, null, 8, ["message"])
                 ]),
-                createVNode("div", { class: "flex justify-end mt-4" }, [
+                createVNode("div", { class: "mt-4 flex justify-end" }, [
                   createVNode(_sfc_main$5, {
                     class: ["ms-4", { "opacity-25": unref(form).processing }],
                     disabled: unref(form).processing

@@ -32,7 +32,7 @@ const _sfc_main$1 = {
   },
   setup(__props) {
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<label${ssrRenderAttrs(mergeProps({ class: "block font-medium text-sm text-gray-700 dark:text-gray-300" }, _attrs))}>`);
+      _push(`<label${ssrRenderAttrs(mergeProps({ class: "block text-sm font-medium text-gray-700 dark:text-gray-300" }, _attrs))}>`);
       if (__props.value) {
         _push(`<span>${ssrInterpolate(__props.value)}</span>`);
       } else {
@@ -73,7 +73,7 @@ const _sfc_main = {
     return (_ctx, _push, _parent, _attrs) => {
       let _temp0;
       _push(`<input${ssrRenderAttrs((_temp0 = mergeProps({
-        class: "border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-primary focus:ring-primary rounded-xl shadow-sm",
+        class: "rounded-xl border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300",
         ref_key: "input",
         ref: input
       }, _attrs), mergeProps(_temp0, ssrGetDynamicModelProps(_temp0, model.value))))}>`);

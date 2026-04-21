@@ -4,7 +4,7 @@ import { Link, usePage, router } from "@inertiajs/vue3";
 import { _ as _sfc_main$4 } from "./ApplicationLogo-5BXBKbkR.js";
 import { Home, LayoutDashboard, MessageSquare, Search, SlidersHorizontal, ShoppingCart, Sun, Moon, User, LogOut, ChevronDown, Menu, X, Settings, Cpu, HardDrive, ArrowUpDown } from "lucide-vue-next";
 import debounce from "lodash/debounce.js";
-import { _ as _sfc_main$5 } from "./Modal-Cw8mmzBN.js";
+import { _ as _sfc_main$5 } from "./Modal-C0YBTj_6.js";
 import pickBy from "lodash/pickBy.js";
 const _sfc_main$3 = {
   __name: "ResponsiveNavLink",
@@ -89,7 +89,7 @@ const _sfc_main$2 = {
     return (_ctx, _push, _parent, _attrs) => {
       _push(`<div${ssrRenderAttrs(mergeProps({ class: "relative" }, _attrs))}><div>`);
       ssrRenderSlot(_ctx.$slots, "trigger", {}, null, _push, _parent);
-      _push(`</div><div class="fixed inset-0 z-40" style="${ssrRenderStyle(unref(open) ? null : { display: "none" })}"></div><div class="${ssrRenderClass([[widthClass.value, alignmentClasses.value], "absolute z-50 mt-2 rounded-md shadow-lg border border-border"])}" style="${ssrRenderStyle([
+      _push(`</div><div class="fixed inset-0 z-40" style="${ssrRenderStyle(unref(open) ? null : { display: "none" })}"></div><div class="${ssrRenderClass([[widthClass.value, alignmentClasses.value], "absolute z-50 mt-2 rounded-md border border-border shadow-lg"])}" style="${ssrRenderStyle([
         { "display": "none" },
         unref(open) ? null : { display: "none" }
       ])}"><div class="${ssrRenderClass([__props.contentClasses, "rounded-md ring-1 ring-black ring-opacity-5"])}">`);
@@ -117,7 +117,7 @@ const _sfc_main$1 = {
     return (_ctx, _push, _parent, _attrs) => {
       _push(ssrRenderComponent(unref(Link), mergeProps({
         href: __props.href,
-        class: "block w-full px-4 py-2 text-start text-sm leading-5 text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:outline-none focus:bg-accent transition duration-150 ease-in-out"
+        class: "block w-full px-4 py-2 text-start text-sm leading-5 text-muted-foreground transition duration-150 ease-in-out hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:outline-none"
       }, _attrs), {
         default: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
@@ -157,13 +157,16 @@ const _sfc_main = {
       sort: initialFilters.sort || "latest"
     });
     const performSearch = debounce(() => {
-      let params = pickBy({
-        search: search.value,
-        ...filterParams.value
-      }, (value, key) => {
-        if (key === "sort" && value === "latest") return false;
-        return value !== "" && value !== null && value !== void 0;
-      });
+      let params = pickBy(
+        {
+          search: search.value,
+          ...filterParams.value
+        },
+        (value, key) => {
+          if (key === "sort" && value === "latest") return false;
+          return value !== "" && value !== null && value !== void 0;
+        }
+      );
       router.get(route("home"), params, {
         preserveState: true,
         preserveScroll: true
@@ -191,38 +194,42 @@ const _sfc_main = {
       return filterParams.value.category || filterParams.value.ram || filterParams.value.storage || filterParams.value.kelengkapan || filterParams.value.sort && filterParams.value.sort !== "latest" || search.value;
     };
     const showingNavigationDropdown = ref(false);
-    const isDark = ref(localStorage.getItem("theme") === "dark" || !("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    const isDark = ref(
+      localStorage.getItem("theme") === "dark" || !("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches
+    );
     onMounted(() => {
       document.documentElement.classList.toggle("dark", isDark.value);
     });
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<div${ssrRenderAttrs(mergeProps({ class: "min-h-screen bg-background text-foreground transition-colors duration-200" }, _attrs))}><nav class="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border sticky top-0 z-50 transition-colors duration-200"><div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="flex justify-between h-16"><div class="flex items-center"><div class="shrink-0 flex items-center mr-6">`);
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "min-h-screen bg-background text-foreground transition-colors duration-100" }, _attrs))}><nav class="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur transition-colors duration-100 supports-[backdrop-filter]:bg-background/60"><div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"><div class="flex h-16 justify-between"><div class="flex items-center"><div class="mr-6 flex shrink-0 items-center">`);
       _push(ssrRenderComponent(unref(Link), {
         href: _ctx.route("home")
       }, {
         default: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(ssrRenderComponent(_sfc_main$4, { class: "w-28 h-auto" }, null, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_sfc_main$4, { class: "h-auto w-28" }, null, _parent2, _scopeId));
           } else {
             return [
-              createVNode(_sfc_main$4, { class: "w-28 h-auto" })
+              createVNode(_sfc_main$4, { class: "h-auto w-28" })
             ];
           }
         }),
         _: 1
       }, _parent));
-      _push(`</div><div class="hidden sm:flex items-center gap-1 border-l border-border/50 pl-4 h-8">`);
+      _push(`</div><div class="hidden h-8 items-center gap-1 border-l border-border/50 pl-4 sm:flex">`);
       _push(ssrRenderComponent(unref(Link), {
         href: _ctx.route("home"),
-        class: [[_ctx.route().current("home") ? "text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"], "p-2 rounded-xl transition-all duration-200 group relative"],
+        class: [[
+          _ctx.route().current("home") ? "text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"
+        ], "group relative rounded-xl p-2 transition-all duration-100"],
         title: "Home"
       }, {
         default: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(ssrRenderComponent(unref(Home), { class: "w-5 h-5 group-hover:scale-110 transition-transform" }, null, _parent2, _scopeId));
+            _push2(ssrRenderComponent(unref(Home), { class: "h-5 w-5 transition-transform group-hover:scale-110" }, null, _parent2, _scopeId));
           } else {
             return [
-              createVNode(unref(Home), { class: "w-5 h-5 group-hover:scale-110 transition-transform" })
+              createVNode(unref(Home), { class: "h-5 w-5 transition-transform group-hover:scale-110" })
             ];
           }
         }),
@@ -233,15 +240,17 @@ const _sfc_main = {
         if (unref(auth).user.role === "seller") {
           _push(ssrRenderComponent(unref(Link), {
             href: _ctx.route("dashboard"),
-            class: [[_ctx.route().current("dashboard") ? "text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"], "p-2 rounded-xl transition-all duration-200 group relative"],
+            class: [[
+              _ctx.route().current("dashboard") ? "text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"
+            ], "group relative rounded-xl p-2 transition-all duration-100"],
             title: "Dashboard"
           }, {
             default: withCtx((_, _push2, _parent2, _scopeId) => {
               if (_push2) {
-                _push2(ssrRenderComponent(unref(LayoutDashboard), { class: "w-5 h-5 group-hover:scale-110 transition-transform" }, null, _parent2, _scopeId));
+                _push2(ssrRenderComponent(unref(LayoutDashboard), { class: "h-5 w-5 transition-transform group-hover:scale-110" }, null, _parent2, _scopeId));
               } else {
                 return [
-                  createVNode(unref(LayoutDashboard), { class: "w-5 h-5 group-hover:scale-110 transition-transform" })
+                  createVNode(unref(LayoutDashboard), { class: "h-5 w-5 transition-transform group-hover:scale-110" })
                 ];
               }
             }),
@@ -252,15 +261,17 @@ const _sfc_main = {
         }
         _push(ssrRenderComponent(unref(Link), {
           href: _ctx.route("chat.index"),
-          class: [[_ctx.route().current("chat.*") ? "text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"], "p-2 rounded-xl transition-all duration-200 group relative"],
+          class: [[
+            _ctx.route().current("chat.*") ? "text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"
+          ], "group relative rounded-xl p-2 transition-all duration-100"],
           title: "Pesan"
         }, {
           default: withCtx((_, _push2, _parent2, _scopeId) => {
             if (_push2) {
-              _push2(ssrRenderComponent(unref(MessageSquare), { class: "w-5 h-5 group-hover:scale-110 transition-transform" }, null, _parent2, _scopeId));
+              _push2(ssrRenderComponent(unref(MessageSquare), { class: "h-5 w-5 transition-transform group-hover:scale-110" }, null, _parent2, _scopeId));
             } else {
               return [
-                createVNode(unref(MessageSquare), { class: "w-5 h-5 group-hover:scale-110 transition-transform" })
+                createVNode(unref(MessageSquare), { class: "h-5 w-5 transition-transform group-hover:scale-110" })
               ];
             }
           }),
@@ -270,37 +281,39 @@ const _sfc_main = {
       } else {
         _push(`<!---->`);
       }
-      _push(`</div></div><div class="hidden sm:flex sm:items-center gap-1"><div class="flex items-center gap-2 mr-2"><div class="relative group"><div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10 transition-colors">`);
+      _push(`</div></div><div class="hidden gap-1 sm:flex sm:items-center"><div class="mr-2 flex items-center gap-2"><div class="group relative"><div class="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 transition-colors">`);
       _push(ssrRenderComponent(unref(Search), { class: "h-4 w-4 text-muted-foreground group-focus-within:text-primary" }, null, _parent));
-      _push(`</div><input type="text"${ssrRenderAttr("value", search.value)} placeholder="Cari gadget..." class="w-40 lg:w-56 pl-9 pr-4 py-1.5 rounded-xl bg-muted/60 border-transparent focus:border-border focus:bg-background focus:ring-2 focus:ring-primary/20 text-sm transition-all duration-200 placeholder:text-muted-foreground/70"></div><button class="p-2 rounded-xl bg-muted/60 hover:bg-accent text-muted-foreground hover:text-primary transition-all relative group" title="Filter Pencarian">`);
-      _push(ssrRenderComponent(unref(SlidersHorizontal), { class: "w-4 h-4" }, null, _parent));
+      _push(`</div><input type="text"${ssrRenderAttr("value", search.value)} placeholder="Cari gadget..." class="w-40 rounded-xl border-transparent bg-muted/60 py-1.5 pl-9 pr-4 text-sm transition-all duration-100 placeholder:text-muted-foreground/70 focus:border-border focus:bg-background focus:ring-2 focus:ring-primary/20 lg:w-56"></div><button class="group relative rounded-xl bg-muted/60 p-2 text-muted-foreground transition-all hover:bg-accent hover:text-primary" title="Filter Pencarian">`);
+      _push(ssrRenderComponent(unref(SlidersHorizontal), { class: "h-4 w-4" }, null, _parent));
       if (hasActiveFilters()) {
-        _push(`<span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background animate-pulse"></span>`);
+        _push(`<span class="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full border-2 border-background bg-primary"></span>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</button></div><div class="flex items-center gap-1 mr-2 px-2 border-r border-border/50">`);
+      _push(`</button></div><div class="mr-2 flex items-center gap-1 border-r border-border/50 px-2">`);
       if (unref(auth).user) {
         _push(ssrRenderComponent(unref(Link), {
           href: _ctx.route("products.favorites"),
-          class: [[_ctx.route().current("products.favorites") ? "text-primary bg-primary/10" : "text-muted-foreground hover:bg-accent hover:text-primary"], "p-2 rounded-xl transition relative group"],
+          class: [[
+            _ctx.route().current("products.favorites") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-primary"
+          ], "group relative rounded-xl p-2 transition"],
           title: "Keranjang Saya"
         }, {
           default: withCtx((_, _push2, _parent2, _scopeId) => {
             var _a, _b;
             if (_push2) {
-              _push2(ssrRenderComponent(unref(ShoppingCart), { class: "w-5 h-5 transition-transform group-hover:scale-110" }, null, _parent2, _scopeId));
+              _push2(ssrRenderComponent(unref(ShoppingCart), { class: "h-5 w-5 transition-transform group-hover:scale-110" }, null, _parent2, _scopeId));
               if (((_a = unref(auth).user.favorites) == null ? void 0 : _a.length) > 0) {
-                _push2(`<span class="absolute top-1 right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background"${_scopeId}></span>`);
+                _push2(`<span class="absolute right-1 top-1 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary"${_scopeId}></span>`);
               } else {
                 _push2(`<!---->`);
               }
             } else {
               return [
-                createVNode(unref(ShoppingCart), { class: "w-5 h-5 transition-transform group-hover:scale-110" }),
+                createVNode(unref(ShoppingCart), { class: "h-5 w-5 transition-transform group-hover:scale-110" }),
                 ((_b = unref(auth).user.favorites) == null ? void 0 : _b.length) > 0 ? (openBlock(), createBlock("span", {
                   key: 0,
-                  class: "absolute top-1 right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background"
+                  class: "absolute right-1 top-1 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary"
                 })) : createCommentVNode("", true)
               ];
             }
@@ -310,11 +323,11 @@ const _sfc_main = {
       } else {
         _push(`<!---->`);
       }
-      _push(`<button type="button" class="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:outline-none rounded-xl p-2 transition">`);
+      _push(`<button type="button" class="rounded-xl p-2 text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus:outline-none">`);
       if (isDark.value) {
-        _push(ssrRenderComponent(unref(Sun), { class: "w-5 h-5" }, null, _parent));
+        _push(ssrRenderComponent(unref(Sun), { class: "h-5 w-5" }, null, _parent));
       } else {
-        _push(ssrRenderComponent(unref(Moon), { class: "w-5 h-5" }, null, _parent));
+        _push(ssrRenderComponent(unref(Moon), { class: "h-5 w-5" }, null, _parent));
       }
       _push(`</button></div>`);
       if (unref(auth).user) {
@@ -325,20 +338,20 @@ const _sfc_main = {
         }, {
           trigger: withCtx((_, _push2, _parent2, _scopeId) => {
             if (_push2) {
-              _push2(`<button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-xl text-muted-foreground bg-muted/60 backdrop-blur-md hover:text-foreground hover:bg-muted/80 focus:outline-none transition ease-in-out duration-150 shadow-sm"${_scopeId}><div class="flex items-center gap-2"${_scopeId}><div class="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase"${_scopeId}>${ssrInterpolate(unref(auth).user.name.charAt(0))}</div><div class="hidden lg:block text-left mr-1"${_scopeId}><div class="text-[11px] font-bold truncate max-w-[100px] leading-tight"${_scopeId}>${ssrInterpolate(unref(auth).user.name)}</div><div class="text-[9px] text-muted-foreground leading-tight"${_scopeId}>${ssrInterpolate(unref(auth).user.role)}</div></div></div>`);
+              _push2(`<button type="button" class="inline-flex items-center rounded-xl border border-transparent bg-muted/60 px-3 py-2 text-sm font-medium leading-4 text-muted-foreground shadow-sm backdrop-blur-md transition duration-150 ease-in-out hover:bg-muted/80 hover:text-foreground focus:outline-none"${_scopeId}><div class="flex items-center gap-2"${_scopeId}><div class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold uppercase text-primary"${_scopeId}>${ssrInterpolate(unref(auth).user.name.charAt(0))}</div><div class="mr-1 hidden text-left lg:block"${_scopeId}><div class="max-w-[100px] truncate text-[11px] font-bold leading-tight"${_scopeId}>${ssrInterpolate(unref(auth).user.name)}</div><div class="text-[9px] leading-tight text-muted-foreground"${_scopeId}>${ssrInterpolate(unref(auth).user.role)}</div></div></div>`);
               _push2(ssrRenderComponent(unref(ChevronDown), { class: "h-3 w-3 text-muted-foreground" }, null, _parent2, _scopeId));
               _push2(`</button>`);
             } else {
               return [
                 createVNode("button", {
                   type: "button",
-                  class: "inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-xl text-muted-foreground bg-muted/60 backdrop-blur-md hover:text-foreground hover:bg-muted/80 focus:outline-none transition ease-in-out duration-150 shadow-sm"
+                  class: "inline-flex items-center rounded-xl border border-transparent bg-muted/60 px-3 py-2 text-sm font-medium leading-4 text-muted-foreground shadow-sm backdrop-blur-md transition duration-150 ease-in-out hover:bg-muted/80 hover:text-foreground focus:outline-none"
                 }, [
                   createVNode("div", { class: "flex items-center gap-2" }, [
-                    createVNode("div", { class: "w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase" }, toDisplayString(unref(auth).user.name.charAt(0)), 1),
-                    createVNode("div", { class: "hidden lg:block text-left mr-1" }, [
-                      createVNode("div", { class: "text-[11px] font-bold truncate max-w-[100px] leading-tight" }, toDisplayString(unref(auth).user.name), 1),
-                      createVNode("div", { class: "text-[9px] text-muted-foreground leading-tight" }, toDisplayString(unref(auth).user.role), 1)
+                    createVNode("div", { class: "flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold uppercase text-primary" }, toDisplayString(unref(auth).user.name.charAt(0)), 1),
+                    createVNode("div", { class: "mr-1 hidden text-left lg:block" }, [
+                      createVNode("div", { class: "max-w-[100px] truncate text-[11px] font-bold leading-tight" }, toDisplayString(unref(auth).user.name), 1),
+                      createVNode("div", { class: "text-[9px] leading-tight text-muted-foreground" }, toDisplayString(unref(auth).user.role), 1)
                     ])
                   ]),
                   createVNode(unref(ChevronDown), { class: "h-3 w-3 text-muted-foreground" })
@@ -348,17 +361,17 @@ const _sfc_main = {
           }),
           content: withCtx((_, _push2, _parent2, _scopeId) => {
             if (_push2) {
-              _push2(`<div class="px-4 py-2 border-b border-border mb-1 block lg:hidden"${_scopeId}><div class="text-sm font-bold truncate"${_scopeId}>${ssrInterpolate(unref(auth).user.name)}</div><div class="text-xs text-muted-foreground"${_scopeId}>${ssrInterpolate(unref(auth).user.role)}</div></div>`);
+              _push2(`<div class="mb-1 block border-b border-border px-4 py-2 lg:hidden"${_scopeId}><div class="truncate text-sm font-bold"${_scopeId}>${ssrInterpolate(unref(auth).user.name)}</div><div class="text-xs text-muted-foreground"${_scopeId}>${ssrInterpolate(unref(auth).user.role)}</div></div>`);
               _push2(ssrRenderComponent(_sfc_main$1, {
                 href: _ctx.route("profile.edit")
               }, {
                 default: withCtx((_2, _push3, _parent3, _scopeId2) => {
                   if (_push3) {
-                    _push3(ssrRenderComponent(unref(User), { class: "w-4 h-4 inline mr-2" }, null, _parent3, _scopeId2));
+                    _push3(ssrRenderComponent(unref(User), { class: "mr-2 inline h-4 w-4" }, null, _parent3, _scopeId2));
                     _push3(` Profile `);
                   } else {
                     return [
-                      createVNode(unref(User), { class: "w-4 h-4 inline mr-2" }),
+                      createVNode(unref(User), { class: "mr-2 inline h-4 w-4" }),
                       createTextVNode(" Profile ")
                     ];
                   }
@@ -372,11 +385,11 @@ const _sfc_main = {
               }, {
                 default: withCtx((_2, _push3, _parent3, _scopeId2) => {
                   if (_push3) {
-                    _push3(ssrRenderComponent(unref(LogOut), { class: "w-4 h-4 inline mr-2 text-red-500" }, null, _parent3, _scopeId2));
+                    _push3(ssrRenderComponent(unref(LogOut), { class: "mr-2 inline h-4 w-4 text-red-500" }, null, _parent3, _scopeId2));
                     _push3(` Log Out `);
                   } else {
                     return [
-                      createVNode(unref(LogOut), { class: "w-4 h-4 inline mr-2 text-red-500" }),
+                      createVNode(unref(LogOut), { class: "mr-2 inline h-4 w-4 text-red-500" }),
                       createTextVNode(" Log Out ")
                     ];
                   }
@@ -385,15 +398,15 @@ const _sfc_main = {
               }, _parent2, _scopeId));
             } else {
               return [
-                createVNode("div", { class: "px-4 py-2 border-b border-border mb-1 block lg:hidden" }, [
-                  createVNode("div", { class: "text-sm font-bold truncate" }, toDisplayString(unref(auth).user.name), 1),
+                createVNode("div", { class: "mb-1 block border-b border-border px-4 py-2 lg:hidden" }, [
+                  createVNode("div", { class: "truncate text-sm font-bold" }, toDisplayString(unref(auth).user.name), 1),
                   createVNode("div", { class: "text-xs text-muted-foreground" }, toDisplayString(unref(auth).user.role), 1)
                 ]),
                 createVNode(_sfc_main$1, {
                   href: _ctx.route("profile.edit")
                 }, {
                   default: withCtx(() => [
-                    createVNode(unref(User), { class: "w-4 h-4 inline mr-2" }),
+                    createVNode(unref(User), { class: "mr-2 inline h-4 w-4" }),
                     createTextVNode(" Profile ")
                   ]),
                   _: 1
@@ -404,7 +417,7 @@ const _sfc_main = {
                   as: "button"
                 }, {
                   default: withCtx(() => [
-                    createVNode(unref(LogOut), { class: "w-4 h-4 inline mr-2 text-red-500" }),
+                    createVNode(unref(LogOut), { class: "mr-2 inline h-4 w-4 text-red-500" }),
                     createTextVNode(" Log Out ")
                   ]),
                   _: 1
@@ -419,7 +432,7 @@ const _sfc_main = {
         _push(`<div class="flex items-center gap-2 pl-2">`);
         _push(ssrRenderComponent(unref(Link), {
           href: _ctx.route("login"),
-          class: "text-xs text-foreground hover:text-primary font-bold transition px-3"
+          class: "px-3 text-xs font-bold text-foreground transition hover:text-primary"
         }, {
           default: withCtx((_, _push2, _parent2, _scopeId) => {
             if (_push2) {
@@ -434,7 +447,7 @@ const _sfc_main = {
         }, _parent));
         _push(ssrRenderComponent(unref(Link), {
           href: _ctx.route("register"),
-          class: "inline-flex items-center px-4 py-2 bg-primary border border-transparent rounded-xl font-black text-[10px] text-primary-foreground uppercase tracking-widest hover:bg-primary/90 transition duration-150 shadow-sm"
+          class: "inline-flex items-center rounded-xl border border-transparent bg-primary px-4 py-2 text-[10px] font-black uppercase tracking-widest text-primary-foreground shadow-sm transition duration-150 hover:bg-primary/90"
         }, {
           default: withCtx((_, _push2, _parent2, _scopeId) => {
             if (_push2) {
@@ -449,23 +462,28 @@ const _sfc_main = {
         }, _parent));
         _push(`</div>`);
       }
-      _push(`</div><div class="-me-2 flex items-center sm:hidden gap-1"><button type="button" class="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring rounded-lg text-sm p-2.5 transition">`);
+      _push(`</div><div class="-me-2 flex items-center gap-1 sm:hidden"><button type="button" class="rounded-lg p-2.5 text-sm text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring">`);
       if (isDark.value) {
-        _push(ssrRenderComponent(unref(Sun), { class: "w-5 h-5" }, null, _parent));
+        _push(ssrRenderComponent(unref(Sun), { class: "h-5 w-5" }, null, _parent));
       } else {
-        _push(ssrRenderComponent(unref(Moon), { class: "w-5 h-5" }, null, _parent));
+        _push(ssrRenderComponent(unref(Moon), { class: "h-5 w-5" }, null, _parent));
       }
-      _push(`</button><button class="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none transition duration-150 ease-in-out">`);
+      _push(`</button><button class="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition duration-150 ease-in-out hover:bg-accent hover:text-foreground focus:outline-none">`);
       if (!showingNavigationDropdown.value) {
-        _push(ssrRenderComponent(unref(Menu), { class: "w-6 h-6" }, null, _parent));
+        _push(ssrRenderComponent(unref(Menu), { class: "h-6 w-6" }, null, _parent));
       } else {
-        _push(ssrRenderComponent(unref(X), { class: "w-6 h-6" }, null, _parent));
+        _push(ssrRenderComponent(unref(X), { class: "h-6 w-6" }, null, _parent));
       }
-      _push(`</button></div></div></div><div class="${ssrRenderClass([{ block: showingNavigationDropdown.value, hidden: !showingNavigationDropdown.value }, "sm:hidden bg-background border-t border-border shadow-xl"])}"><div class="p-4 border-b border-border flex gap-2"><div class="relative flex-1"><div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">`);
-      _push(ssrRenderComponent(unref(Search), { class: "h-4 w-4 text-muted-foreground" }, null, _parent));
-      _push(`</div><input type="text"${ssrRenderAttr("value", search.value)} placeholder="Cari gadget..." class="w-full pl-10 pr-4 py-2 rounded-xl bg-muted border-none focus:ring-2 focus:ring-primary text-sm transition-all"></div><button class="p-2 bg-muted rounded-xl text-muted-foreground">`);
-      _push(ssrRenderComponent(unref(SlidersHorizontal), { class: "w-5 h-5" }, null, _parent));
-      _push(`</button></div><div class="pt-2 pb-3 space-y-1">`);
+      _push(`</button></div></div><div class="pb-3 pt-2 sm:hidden"><div class="flex gap-2"><div class="group relative flex-1"><div class="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 transition-colors">`);
+      _push(ssrRenderComponent(unref(Search), { class: "h-4 w-4 text-muted-foreground group-focus-within:text-primary" }, null, _parent));
+      _push(`</div><input type="text"${ssrRenderAttr("value", search.value)} placeholder="Cari gadget..." class="w-full rounded-xl border-transparent bg-muted/60 py-2 pl-10 pr-4 text-sm transition-all duration-100 placeholder:text-muted-foreground/70 focus:border-border focus:bg-background focus:ring-2 focus:ring-primary/20"></div><button class="group relative rounded-xl bg-muted/60 p-2 text-muted-foreground transition-all hover:bg-accent hover:text-primary" title="Filter Pencarian">`);
+      _push(ssrRenderComponent(unref(SlidersHorizontal), { class: "h-5 w-5" }, null, _parent));
+      if (hasActiveFilters()) {
+        _push(`<span class="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full border-2 border-background bg-primary"></span>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</button></div></div></div><div class="${ssrRenderClass([{ block: showingNavigationDropdown.value, hidden: !showingNavigationDropdown.value }, "border-t border-border bg-background shadow-xl sm:hidden"])}"><div class="space-y-1 pb-3 pt-2">`);
       _push(ssrRenderComponent(_sfc_main$3, {
         href: _ctx.route("home"),
         active: _ctx.route().current("home")
@@ -473,13 +491,13 @@ const _sfc_main = {
         default: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
             _push2(`<div class="flex items-center gap-2"${_scopeId}>`);
-            _push2(ssrRenderComponent(unref(Home), { class: "w-4 h-4" }, null, _parent2, _scopeId));
-            _push2(` Home </div>`);
+            _push2(ssrRenderComponent(unref(Home), { class: "h-4 w-4" }, null, _parent2, _scopeId));
+            _push2(` Home</div>`);
           } else {
             return [
               createVNode("div", { class: "flex items-center gap-2" }, [
-                createVNode(unref(Home), { class: "w-4 h-4" }),
-                createTextVNode(" Home ")
+                createVNode(unref(Home), { class: "h-4 w-4" }),
+                createTextVNode(" Home")
               ])
             ];
           }
@@ -496,12 +514,12 @@ const _sfc_main = {
             default: withCtx((_, _push2, _parent2, _scopeId) => {
               if (_push2) {
                 _push2(`<div class="flex items-center gap-2"${_scopeId}>`);
-                _push2(ssrRenderComponent(unref(LayoutDashboard), { class: "w-4 h-4" }, null, _parent2, _scopeId));
+                _push2(ssrRenderComponent(unref(LayoutDashboard), { class: "h-4 w-4" }, null, _parent2, _scopeId));
                 _push2(` Seller Dashboard </div>`);
               } else {
                 return [
                   createVNode("div", { class: "flex items-center gap-2" }, [
-                    createVNode(unref(LayoutDashboard), { class: "w-4 h-4" }),
+                    createVNode(unref(LayoutDashboard), { class: "h-4 w-4" }),
                     createTextVNode(" Seller Dashboard ")
                   ])
                 ];
@@ -519,13 +537,13 @@ const _sfc_main = {
           default: withCtx((_, _push2, _parent2, _scopeId) => {
             if (_push2) {
               _push2(`<div class="flex items-center gap-2"${_scopeId}>`);
-              _push2(ssrRenderComponent(unref(MessageSquare), { class: "w-4 h-4" }, null, _parent2, _scopeId));
-              _push2(` Pesan </div>`);
+              _push2(ssrRenderComponent(unref(MessageSquare), { class: "h-4 w-4" }, null, _parent2, _scopeId));
+              _push2(` Pesan</div>`);
             } else {
               return [
                 createVNode("div", { class: "flex items-center gap-2" }, [
-                  createVNode(unref(MessageSquare), { class: "w-4 h-4" }),
-                  createTextVNode(" Pesan ")
+                  createVNode(unref(MessageSquare), { class: "h-4 w-4" }),
+                  createTextVNode(" Pesan")
                 ])
               ];
             }
@@ -536,23 +554,23 @@ const _sfc_main = {
       } else {
         _push(`<!---->`);
       }
-      _push(`</div><div class="pt-4 pb-1 border-t border-border">`);
+      _push(`</div><div class="border-t border-border pb-1 pt-4">`);
       if (unref(auth).user) {
-        _push(`<!--[--><div class="px-4 flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-muted flex items-center justify-center">`);
-        _push(ssrRenderComponent(unref(User), { class: "w-6 h-6 text-muted-foreground" }, null, _parent));
-        _push(`</div><div><div class="font-medium text-base text-foreground">${ssrInterpolate(unref(auth).user.name)}</div><div class="font-medium text-sm text-muted-foreground">${ssrInterpolate(unref(auth).user.role)} | ${ssrInterpolate(unref(auth).user.email)}</div></div></div><div class="mt-3 space-y-1">`);
+        _push(`<!--[--><div class="flex items-center gap-3 px-4"><div class="flex h-10 w-10 items-center justify-center rounded-full bg-muted">`);
+        _push(ssrRenderComponent(unref(User), { class: "h-6 w-6 text-muted-foreground" }, null, _parent));
+        _push(`</div><div><div class="text-base font-medium text-foreground">${ssrInterpolate(unref(auth).user.name)}</div><div class="text-sm font-medium text-muted-foreground">${ssrInterpolate(unref(auth).user.role)} | ${ssrInterpolate(unref(auth).user.email)}</div></div></div><div class="mt-3 space-y-1">`);
         _push(ssrRenderComponent(_sfc_main$3, {
           href: _ctx.route("profile.edit")
         }, {
           default: withCtx((_, _push2, _parent2, _scopeId) => {
             if (_push2) {
               _push2(`<div class="flex items-center gap-2"${_scopeId}>`);
-              _push2(ssrRenderComponent(unref(Settings), { class: "w-4 h-4" }, null, _parent2, _scopeId));
+              _push2(ssrRenderComponent(unref(Settings), { class: "h-4 w-4" }, null, _parent2, _scopeId));
               _push2(` Profile Settings </div>`);
             } else {
               return [
                 createVNode("div", { class: "flex items-center gap-2" }, [
-                  createVNode(unref(Settings), { class: "w-4 h-4" }),
+                  createVNode(unref(Settings), { class: "h-4 w-4" }),
                   createTextVNode(" Profile Settings ")
                 ])
               ];
@@ -564,18 +582,18 @@ const _sfc_main = {
           href: _ctx.route("logout"),
           method: "post",
           as: "button",
-          class: "text-red-500 font-bold"
+          class: "font-bold text-red-500"
         }, {
           default: withCtx((_, _push2, _parent2, _scopeId) => {
             if (_push2) {
               _push2(`<div class="flex items-center gap-2"${_scopeId}>`);
-              _push2(ssrRenderComponent(unref(LogOut), { class: "w-4 h-4" }, null, _parent2, _scopeId));
-              _push2(` Log Out </div>`);
+              _push2(ssrRenderComponent(unref(LogOut), { class: "h-4 w-4" }, null, _parent2, _scopeId));
+              _push2(` Log Out</div>`);
             } else {
               return [
                 createVNode("div", { class: "flex items-center gap-2" }, [
-                  createVNode(unref(LogOut), { class: "w-4 h-4" }),
-                  createTextVNode(" Log Out ")
+                  createVNode(unref(LogOut), { class: "h-4 w-4" }),
+                  createTextVNode(" Log Out")
                 ])
               ];
             }
@@ -584,10 +602,10 @@ const _sfc_main = {
         }, _parent));
         _push(`</div><!--]-->`);
       } else {
-        _push(`<div class="p-4 space-y-3">`);
+        _push(`<div class="space-y-3 p-4">`);
         _push(ssrRenderComponent(unref(Link), {
           href: _ctx.route("login"),
-          class: "block w-full text-center py-2 text-foreground font-semibold border border-border rounded-xl"
+          class: "block w-full rounded-xl border border-border py-2 text-center font-semibold text-foreground"
         }, {
           default: withCtx((_, _push2, _parent2, _scopeId) => {
             if (_push2) {
@@ -602,7 +620,7 @@ const _sfc_main = {
         }, _parent));
         _push(ssrRenderComponent(unref(Link), {
           href: _ctx.route("register"),
-          class: "block w-full text-center py-2 bg-primary text-primary-foreground font-bold rounded-xl shadow-lg"
+          class: "block w-full rounded-xl bg-primary py-2 text-center font-bold text-primary-foreground shadow-lg"
         }, {
           default: withCtx((_, _push2, _parent2, _scopeId) => {
             if (_push2) {
@@ -624,49 +642,49 @@ const _sfc_main = {
       }, {
         default: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<div class="p-6 bg-background text-foreground transition-colors"${_scopeId}><div class="flex justify-between items-center mb-6 pb-4 border-b border-border"${_scopeId}><div${_scopeId}><h2 class="text-xl font-bold"${_scopeId}>Filter Pencarian</h2><p class="text-xs text-muted-foreground mt-1"${_scopeId}>Sesuaikan hasil sesuai kebutuhan Anda</p></div><button class="p-2 bg-muted rounded-full text-muted-foreground hover:bg-accent transition"${_scopeId}>`);
+            _push2(`<div class="bg-background p-6 text-foreground transition-colors duration-100"${_scopeId}><div class="mb-6 flex items-center justify-between border-b border-border pb-4"${_scopeId}><div${_scopeId}><h2 class="text-xl font-bold"${_scopeId}>Filter Pencarian</h2><p class="mt-1 text-xs text-muted-foreground"${_scopeId}>Sesuaikan hasil sesuai kebutuhan Anda</p></div><button class="rounded-full bg-muted p-2 text-muted-foreground transition-colors hover:bg-accent"${_scopeId}>`);
             _push2(ssrRenderComponent(unref(X), { class: "h-5 w-5" }, null, _parent2, _scopeId));
-            _push2(`</button></div><div class="mb-6"${_scopeId}><h4 class="text-sm font-bold mb-3 uppercase tracking-wider"${_scopeId}>Kategori</h4><div class="grid grid-cols-2 sm:grid-cols-3 gap-3"${_scopeId}><!--[-->`);
+            _push2(`</button></div><div class="mb-6"${_scopeId}><h4 class="mb-3 text-sm font-bold uppercase tracking-wider"${_scopeId}>Kategori</h4><div class="grid grid-cols-2 gap-3 sm:grid-cols-3"${_scopeId}><!--[-->`);
             ssrRenderList(unref(globalFilters).categories, (cat) => {
-              _push2(`<label class="cursor-pointer relative group"${_scopeId}><input type="radio"${ssrIncludeBooleanAttr(ssrLooseEqual(filterParams.value.category, cat.slug)) ? " checked" : ""}${ssrRenderAttr("value", cat.slug)} class="peer sr-only"${_scopeId}><div class="px-3 py-2.5 rounded-xl border border-border text-center text-xs font-bold transition-all peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:border-primary"${_scopeId}>${ssrInterpolate(cat.name)}</div></label>`);
+              _push2(`<label class="group relative cursor-pointer"${_scopeId}><input type="radio"${ssrIncludeBooleanAttr(ssrLooseEqual(filterParams.value.category, cat.slug)) ? " checked" : ""}${ssrRenderAttr("value", cat.slug)} class="peer sr-only"${_scopeId}><div class="rounded-xl border border-border px-3 py-2.5 text-center text-xs font-bold transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground"${_scopeId}>${ssrInterpolate(cat.name)}</div></label>`);
             });
-            _push2(`<!--]--><label class="cursor-pointer relative group"${_scopeId}><input type="radio"${ssrIncludeBooleanAttr(ssrLooseEqual(filterParams.value.category, "")) ? " checked" : ""} value="" class="peer sr-only"${_scopeId}><div class="px-3 py-2.5 rounded-xl border border-border text-center text-xs font-bold transition-all peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:border-primary"${_scopeId}> Semua </div></label></div></div><div class="mb-6"${_scopeId}><h4 class="text-[10px] font-bold mb-3 uppercase tracking-wider flex items-center gap-2 text-primary"${_scopeId}>`);
-            _push2(ssrRenderComponent(unref(Cpu), { class: "w-4 h-4" }, null, _parent2, _scopeId));
+            _push2(`<!--]--><label class="group relative cursor-pointer"${_scopeId}><input type="radio"${ssrIncludeBooleanAttr(ssrLooseEqual(filterParams.value.category, "")) ? " checked" : ""} value="" class="peer sr-only"${_scopeId}><div class="rounded-xl border border-border px-3 py-2.5 text-center text-xs font-bold transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground"${_scopeId}> Semua </div></label></div></div><div class="mb-6"${_scopeId}><h4 class="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-primary"${_scopeId}>`);
+            _push2(ssrRenderComponent(unref(Cpu), { class: "h-4 w-4" }, null, _parent2, _scopeId));
             _push2(` RAM </h4><div class="flex flex-wrap gap-2"${_scopeId}><!--[-->`);
             ssrRenderList(unref(globalFilters).rams, (ram) => {
-              _push2(`<label class="cursor-pointer group relative"${_scopeId}><input type="radio"${ssrIncludeBooleanAttr(ssrLooseEqual(filterParams.value.ram, ram)) ? " checked" : ""}${ssrRenderAttr("value", ram)} class="peer sr-only"${_scopeId}><span class="px-3 py-1.5 rounded-lg text-[10px] font-bold border border-border bg-background peer-checked:bg-primary peer-checked:text-primary-foreground transition-all"${_scopeId}>${ssrInterpolate(ram)}</span></label>`);
+              _push2(`<label class="group relative cursor-pointer"${_scopeId}><input type="radio"${ssrIncludeBooleanAttr(ssrLooseEqual(filterParams.value.ram, ram)) ? " checked" : ""}${ssrRenderAttr("value", ram)} class="peer sr-only"${_scopeId}><span class="rounded-lg border border-border bg-background px-3 py-1.5 text-[10px] font-bold transition-colors peer-checked:bg-primary peer-checked:text-primary-foreground"${_scopeId}>${ssrInterpolate(ram)}</span></label>`);
             });
-            _push2(`<!--]--></div></div><div class="mb-6"${_scopeId}><h4 class="text-[10px] font-bold mb-3 uppercase tracking-wider flex items-center gap-2 text-primary"${_scopeId}>`);
-            _push2(ssrRenderComponent(unref(HardDrive), { class: "w-4 h-4" }, null, _parent2, _scopeId));
+            _push2(`<!--]--></div></div><div class="mb-6"${_scopeId}><h4 class="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-primary"${_scopeId}>`);
+            _push2(ssrRenderComponent(unref(HardDrive), { class: "h-4 w-4" }, null, _parent2, _scopeId));
             _push2(` Penyimpanan </h4><div class="flex flex-wrap gap-2"${_scopeId}><!--[-->`);
             ssrRenderList(unref(globalFilters).storages, (storage) => {
-              _push2(`<label class="cursor-pointer group relative"${_scopeId}><input type="radio"${ssrIncludeBooleanAttr(ssrLooseEqual(filterParams.value.storage, storage)) ? " checked" : ""}${ssrRenderAttr("value", storage)} class="peer sr-only"${_scopeId}><span class="px-3 py-1.5 rounded-lg text-[10px] font-bold border border-border bg-background peer-checked:bg-primary peer-checked:text-primary-foreground transition-all"${_scopeId}>${ssrInterpolate(storage)}</span></label>`);
+              _push2(`<label class="group relative cursor-pointer"${_scopeId}><input type="radio"${ssrIncludeBooleanAttr(ssrLooseEqual(filterParams.value.storage, storage)) ? " checked" : ""}${ssrRenderAttr("value", storage)} class="peer sr-only"${_scopeId}><span class="rounded-lg border border-border bg-background px-3 py-1.5 text-[10px] font-bold transition-colors peer-checked:bg-primary peer-checked:text-primary-foreground"${_scopeId}>${ssrInterpolate(storage)}</span></label>`);
             });
-            _push2(`<!--]--></div></div><div class="mb-8"${_scopeId}><h4 class="text-[10px] font-bold mb-3 uppercase tracking-wider flex items-center gap-2 text-primary"${_scopeId}>`);
-            _push2(ssrRenderComponent(unref(ArrowUpDown), { class: "w-4 h-4" }, null, _parent2, _scopeId));
-            _push2(` Urutkan </h4><div class="grid grid-cols-2 gap-3"${_scopeId}><label class="cursor-pointer group relative"${_scopeId}><input type="radio"${ssrIncludeBooleanAttr(ssrLooseEqual(filterParams.value.sort, "latest")) ? " checked" : ""} value="latest" class="peer sr-only"${_scopeId}><div class="px-3 py-2.5 rounded-xl border border-border text-center text-[10px] font-bold transition-all peer-checked:bg-primary peer-checked:text-primary-foreground"${_scopeId}> Terbaru </div></label><label class="cursor-pointer group relative"${_scopeId}><input type="radio"${ssrIncludeBooleanAttr(ssrLooseEqual(filterParams.value.sort, "oldest")) ? " checked" : ""} value="oldest" class="peer sr-only"${_scopeId}><div class="px-3 py-2.5 rounded-xl border border-border text-center text-[10px] font-bold transition-all peer-checked:bg-primary peer-checked:text-primary-foreground"${_scopeId}> Terlama </div></label></div></div><div class="flex items-center justify-end gap-3 pt-6 border-t border-border"${_scopeId}><button class="text-xs text-red-500 hover:text-red-600 font-bold px-4 transition-colors"${_scopeId}> Reset </button><button class="px-8 py-2 text-sm font-black text-primary-foreground bg-primary rounded-xl hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all"${_scopeId}> Terapkan </button></div></div>`);
+            _push2(`<!--]--></div></div><div class="mb-8"${_scopeId}><h4 class="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-primary"${_scopeId}>`);
+            _push2(ssrRenderComponent(unref(ArrowUpDown), { class: "h-4 w-4" }, null, _parent2, _scopeId));
+            _push2(` Urutkan </h4><div class="grid grid-cols-2 gap-3"${_scopeId}><label class="group relative cursor-pointer"${_scopeId}><input type="radio"${ssrIncludeBooleanAttr(ssrLooseEqual(filterParams.value.sort, "latest")) ? " checked" : ""} value="latest" class="peer sr-only"${_scopeId}><div class="rounded-xl border border-border px-3 py-2.5 text-center text-[10px] font-bold transition-colors peer-checked:bg-primary peer-checked:text-primary-foreground"${_scopeId}> Terbaru </div></label><label class="group relative cursor-pointer"${_scopeId}><input type="radio"${ssrIncludeBooleanAttr(ssrLooseEqual(filterParams.value.sort, "oldest")) ? " checked" : ""} value="oldest" class="peer sr-only"${_scopeId}><div class="rounded-xl border border-border px-3 py-2.5 text-center text-[10px] font-bold transition-colors peer-checked:bg-primary peer-checked:text-primary-foreground"${_scopeId}> Terlama </div></label></div></div><div class="flex items-center justify-end gap-3 border-t border-border pt-6"${_scopeId}><button class="px-4 text-xs font-bold text-red-500 transition-colors hover:text-red-600"${_scopeId}> Reset </button><button class="rounded-xl bg-primary px-8 py-2 text-sm font-black text-primary-foreground shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90"${_scopeId}> Terapkan </button></div></div>`);
           } else {
             return [
-              createVNode("div", { class: "p-6 bg-background text-foreground transition-colors" }, [
-                createVNode("div", { class: "flex justify-between items-center mb-6 pb-4 border-b border-border" }, [
+              createVNode("div", { class: "bg-background p-6 text-foreground transition-colors duration-100" }, [
+                createVNode("div", { class: "mb-6 flex items-center justify-between border-b border-border pb-4" }, [
                   createVNode("div", null, [
                     createVNode("h2", { class: "text-xl font-bold" }, "Filter Pencarian"),
-                    createVNode("p", { class: "text-xs text-muted-foreground mt-1" }, "Sesuaikan hasil sesuai kebutuhan Anda")
+                    createVNode("p", { class: "mt-1 text-xs text-muted-foreground" }, "Sesuaikan hasil sesuai kebutuhan Anda")
                   ]),
                   createVNode("button", {
                     onClick: ($event) => filterModalOpen.value = false,
-                    class: "p-2 bg-muted rounded-full text-muted-foreground hover:bg-accent transition"
+                    class: "rounded-full bg-muted p-2 text-muted-foreground transition-colors hover:bg-accent"
                   }, [
                     createVNode(unref(X), { class: "h-5 w-5" })
                   ], 8, ["onClick"])
                 ]),
                 createVNode("div", { class: "mb-6" }, [
-                  createVNode("h4", { class: "text-sm font-bold mb-3 uppercase tracking-wider" }, "Kategori"),
-                  createVNode("div", { class: "grid grid-cols-2 sm:grid-cols-3 gap-3" }, [
+                  createVNode("h4", { class: "mb-3 text-sm font-bold uppercase tracking-wider" }, "Kategori"),
+                  createVNode("div", { class: "grid grid-cols-2 gap-3 sm:grid-cols-3" }, [
                     (openBlock(true), createBlock(Fragment, null, renderList(unref(globalFilters).categories, (cat) => {
                       return openBlock(), createBlock("label", {
                         key: cat.id,
-                        class: "cursor-pointer relative group"
+                        class: "group relative cursor-pointer"
                       }, [
                         withDirectives(createVNode("input", {
                           type: "radio",
@@ -676,10 +694,10 @@ const _sfc_main = {
                         }, null, 8, ["onUpdate:modelValue", "value"]), [
                           [vModelRadio, filterParams.value.category]
                         ]),
-                        createVNode("div", { class: "px-3 py-2.5 rounded-xl border border-border text-center text-xs font-bold transition-all peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:border-primary" }, toDisplayString(cat.name), 1)
+                        createVNode("div", { class: "rounded-xl border border-border px-3 py-2.5 text-center text-xs font-bold transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground" }, toDisplayString(cat.name), 1)
                       ]);
                     }), 128)),
-                    createVNode("label", { class: "cursor-pointer relative group" }, [
+                    createVNode("label", { class: "group relative cursor-pointer" }, [
                       withDirectives(createVNode("input", {
                         type: "radio",
                         "onUpdate:modelValue": ($event) => filterParams.value.category = $event,
@@ -688,20 +706,20 @@ const _sfc_main = {
                       }, null, 8, ["onUpdate:modelValue"]), [
                         [vModelRadio, filterParams.value.category]
                       ]),
-                      createVNode("div", { class: "px-3 py-2.5 rounded-xl border border-border text-center text-xs font-bold transition-all peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:border-primary" }, " Semua ")
+                      createVNode("div", { class: "rounded-xl border border-border px-3 py-2.5 text-center text-xs font-bold transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground" }, " Semua ")
                     ])
                   ])
                 ]),
                 createVNode("div", { class: "mb-6" }, [
-                  createVNode("h4", { class: "text-[10px] font-bold mb-3 uppercase tracking-wider flex items-center gap-2 text-primary" }, [
-                    createVNode(unref(Cpu), { class: "w-4 h-4" }),
+                  createVNode("h4", { class: "mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-primary" }, [
+                    createVNode(unref(Cpu), { class: "h-4 w-4" }),
                     createTextVNode(" RAM ")
                   ]),
                   createVNode("div", { class: "flex flex-wrap gap-2" }, [
                     (openBlock(true), createBlock(Fragment, null, renderList(unref(globalFilters).rams, (ram) => {
                       return openBlock(), createBlock("label", {
                         key: ram,
-                        class: "cursor-pointer group relative"
+                        class: "group relative cursor-pointer"
                       }, [
                         withDirectives(createVNode("input", {
                           type: "radio",
@@ -711,21 +729,21 @@ const _sfc_main = {
                         }, null, 8, ["onUpdate:modelValue", "value"]), [
                           [vModelRadio, filterParams.value.ram]
                         ]),
-                        createVNode("span", { class: "px-3 py-1.5 rounded-lg text-[10px] font-bold border border-border bg-background peer-checked:bg-primary peer-checked:text-primary-foreground transition-all" }, toDisplayString(ram), 1)
+                        createVNode("span", { class: "rounded-lg border border-border bg-background px-3 py-1.5 text-[10px] font-bold transition-colors peer-checked:bg-primary peer-checked:text-primary-foreground" }, toDisplayString(ram), 1)
                       ]);
                     }), 128))
                   ])
                 ]),
                 createVNode("div", { class: "mb-6" }, [
-                  createVNode("h4", { class: "text-[10px] font-bold mb-3 uppercase tracking-wider flex items-center gap-2 text-primary" }, [
-                    createVNode(unref(HardDrive), { class: "w-4 h-4" }),
+                  createVNode("h4", { class: "mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-primary" }, [
+                    createVNode(unref(HardDrive), { class: "h-4 w-4" }),
                     createTextVNode(" Penyimpanan ")
                   ]),
                   createVNode("div", { class: "flex flex-wrap gap-2" }, [
                     (openBlock(true), createBlock(Fragment, null, renderList(unref(globalFilters).storages, (storage) => {
                       return openBlock(), createBlock("label", {
                         key: storage,
-                        class: "cursor-pointer group relative"
+                        class: "group relative cursor-pointer"
                       }, [
                         withDirectives(createVNode("input", {
                           type: "radio",
@@ -735,18 +753,18 @@ const _sfc_main = {
                         }, null, 8, ["onUpdate:modelValue", "value"]), [
                           [vModelRadio, filterParams.value.storage]
                         ]),
-                        createVNode("span", { class: "px-3 py-1.5 rounded-lg text-[10px] font-bold border border-border bg-background peer-checked:bg-primary peer-checked:text-primary-foreground transition-all" }, toDisplayString(storage), 1)
+                        createVNode("span", { class: "rounded-lg border border-border bg-background px-3 py-1.5 text-[10px] font-bold transition-colors peer-checked:bg-primary peer-checked:text-primary-foreground" }, toDisplayString(storage), 1)
                       ]);
                     }), 128))
                   ])
                 ]),
                 createVNode("div", { class: "mb-8" }, [
-                  createVNode("h4", { class: "text-[10px] font-bold mb-3 uppercase tracking-wider flex items-center gap-2 text-primary" }, [
-                    createVNode(unref(ArrowUpDown), { class: "w-4 h-4" }),
+                  createVNode("h4", { class: "mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-primary" }, [
+                    createVNode(unref(ArrowUpDown), { class: "h-4 w-4" }),
                     createTextVNode(" Urutkan ")
                   ]),
                   createVNode("div", { class: "grid grid-cols-2 gap-3" }, [
-                    createVNode("label", { class: "cursor-pointer group relative" }, [
+                    createVNode("label", { class: "group relative cursor-pointer" }, [
                       withDirectives(createVNode("input", {
                         type: "radio",
                         "onUpdate:modelValue": ($event) => filterParams.value.sort = $event,
@@ -755,9 +773,9 @@ const _sfc_main = {
                       }, null, 8, ["onUpdate:modelValue"]), [
                         [vModelRadio, filterParams.value.sort]
                       ]),
-                      createVNode("div", { class: "px-3 py-2.5 rounded-xl border border-border text-center text-[10px] font-bold transition-all peer-checked:bg-primary peer-checked:text-primary-foreground" }, " Terbaru ")
+                      createVNode("div", { class: "rounded-xl border border-border px-3 py-2.5 text-center text-[10px] font-bold transition-colors peer-checked:bg-primary peer-checked:text-primary-foreground" }, " Terbaru ")
                     ]),
-                    createVNode("label", { class: "cursor-pointer group relative" }, [
+                    createVNode("label", { class: "group relative cursor-pointer" }, [
                       withDirectives(createVNode("input", {
                         type: "radio",
                         "onUpdate:modelValue": ($event) => filterParams.value.sort = $event,
@@ -766,18 +784,18 @@ const _sfc_main = {
                       }, null, 8, ["onUpdate:modelValue"]), [
                         [vModelRadio, filterParams.value.sort]
                       ]),
-                      createVNode("div", { class: "px-3 py-2.5 rounded-xl border border-border text-center text-[10px] font-bold transition-all peer-checked:bg-primary peer-checked:text-primary-foreground" }, " Terlama ")
+                      createVNode("div", { class: "rounded-xl border border-border px-3 py-2.5 text-center text-[10px] font-bold transition-colors peer-checked:bg-primary peer-checked:text-primary-foreground" }, " Terlama ")
                     ])
                   ])
                 ]),
-                createVNode("div", { class: "flex items-center justify-end gap-3 pt-6 border-t border-border" }, [
+                createVNode("div", { class: "flex items-center justify-end gap-3 border-t border-border pt-6" }, [
                   createVNode("button", {
                     onClick: resetFilters,
-                    class: "text-xs text-red-500 hover:text-red-600 font-bold px-4 transition-colors"
+                    class: "px-4 text-xs font-bold text-red-500 transition-colors hover:text-red-600"
                   }, " Reset "),
                   createVNode("button", {
                     onClick: applyFilters,
-                    class: "px-8 py-2 text-sm font-black text-primary-foreground bg-primary rounded-xl hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all"
+                    class: "rounded-xl bg-primary px-8 py-2 text-sm font-black text-primary-foreground shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90"
                   }, " Terapkan ")
                 ])
               ])
@@ -787,7 +805,7 @@ const _sfc_main = {
         _: 1
       }, _parent));
       if (_ctx.$slots.header) {
-        _push(`<header class="bg-card border-b border-border shadow-sm"><div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">`);
+        _push(`<header class="border-b border-border bg-card shadow-sm"><div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">`);
         ssrRenderSlot(_ctx.$slots, "header", {}, null, _push, _parent);
         _push(`</div></header>`);
       } else {

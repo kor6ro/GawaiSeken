@@ -13,7 +13,7 @@ const _sfc_main = {
     return (_ctx, _push, _parent, _attrs) => {
       _push(`<button${ssrRenderAttrs(mergeProps({
         type: __props.type,
-        class: "inline-flex items-center justify-center px-6 py-3 bg-primary border border-transparent rounded-lg font-black text-xs text-primary-foreground uppercase tracking-widest hover:bg-primary/90 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:shadow-inner focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200 shadow-md"
+        class: "inline-flex items-center justify-center rounded-lg border border-transparent bg-primary px-6 py-3 text-xs font-black uppercase tracking-widest text-primary-foreground shadow-md transition-all duration-100 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-95 active:shadow-inner"
       }, _attrs))}>`);
       ssrRenderSlot(_ctx.$slots, "default", {}, null, _push, _parent);
       _push(`</button>`);

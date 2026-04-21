@@ -109,7 +109,7 @@ const conditionBadgeClass = computed(() => {
 
 <template>
   <div
-    class="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 dark:border-white/5 dark:bg-slate-900"
+    class="product-card-container group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-200 will-change-transform hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5 dark:border-white/5 dark:bg-slate-900"
   >
     <!-- Main Product Link -->
     <Link :href="route('products.show', product.slug)" class="absolute inset-0 z-10"></Link>
@@ -118,31 +118,31 @@ const conditionBadgeClass = computed(() => {
     <div class="pointer-events-none absolute left-2.5 top-2.5 z-20 flex flex-col gap-1">
       <div
         v-if="isNewPosting"
-        class="flex items-center gap-1 rounded-md bg-emerald-500/90 py-0.5 pl-1 pr-2 text-[8px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur"
+        class="flex items-center gap-1 rounded-md bg-emerald-500 py-0.5 pl-1 pr-2 text-[8px] font-black uppercase tracking-wider text-white shadow-sm"
       >
         <Zap class="h-2.5 w-2.5 fill-current" />
         <span>Baru</span>
       </div>
       <div
         v-if="product.is_cod"
-        class="flex items-center gap-1 rounded-md bg-blue-500/90 py-0.5 pl-1 pr-2 text-[8px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur"
+        class="flex items-center gap-1 rounded-md bg-blue-500 py-0.5 pl-1 pr-2 text-[8px] font-black uppercase tracking-wider text-white shadow-sm"
       >
         <Handshake class="h-2.5 w-2.5" />
         <span>COD</span>
       </div>
       <div
         v-if="product.is_negotiable"
-        class="flex items-center gap-1 rounded-md bg-indigo-500/90 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur"
+        class="flex items-center gap-1 rounded-md bg-indigo-500 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-white shadow-sm"
       >
         <span>Nego</span>
       </div>
     </div>
 
-    <!-- Top RIGHT: Actions (Favorite & Flag) - Neatened Glassmorphism -->
+    <!-- Top RIGHT: Actions (Favorite & Flag) - Clean Solid Background -->
     <div class="absolute right-2.5 top-2.5 z-20 flex flex-col gap-1.5">
       <button
         @click.stop="toggleFavorite"
-        class="group/heart rounded-full border border-white/20 bg-white/60 p-2 shadow-sm backdrop-blur-md transition-all hover:scale-110 active:scale-95 dark:bg-slate-800/60"
+        class="group/heart rounded-full border border-slate-200 bg-white p-2 shadow-sm transition-all duration-200 hover:scale-105 active:scale-95 dark:border-white/10 dark:bg-slate-800"
         :class="
           isFavorited ? 'text-rose-500 hover:text-rose-600' : 'text-slate-400 hover:text-blue-500'
         "
@@ -152,7 +152,7 @@ const conditionBadgeClass = computed(() => {
       </button>
       <button
         @click.stop="reportProduct"
-        class="rounded-full border border-white/20 bg-white/60 p-2 text-slate-400 shadow-sm backdrop-blur-md transition-all hover:scale-110 hover:text-amber-500 dark:bg-slate-800/60"
+        class="rounded-full border border-slate-200 bg-white p-2 text-slate-400 shadow-sm transition-all duration-200 hover:scale-105 hover:text-amber-500 dark:border-white/10 dark:bg-slate-800"
       >
         <Flag class="h-3.5 w-3.5" />
       </button>
@@ -165,7 +165,7 @@ const conditionBadgeClass = computed(() => {
           :src="`/storage/${product.images[activeImage].image_path}`"
           :alt="product.title"
           loading="lazy"
-          class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+          class="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
 
         <!-- Hover Dots -->
@@ -303,6 +303,12 @@ const conditionBadgeClass = computed(() => {
 </template>
 
 <style scoped>
+.product-card-container {
+  /* Native windowing/virtualization rendering */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
+}
+
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;

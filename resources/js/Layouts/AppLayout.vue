@@ -116,9 +116,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background text-foreground transition-colors duration-200">
+  <div class="min-h-screen bg-background text-foreground transition-colors duration-100">
     <nav
-      class="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur transition-colors duration-200 supports-[backdrop-filter]:bg-background/60"
+      class="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur transition-colors duration-100 supports-[backdrop-filter]:bg-background/60"
     >
       <!-- Primary Navigation Menu -->
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -140,7 +140,7 @@ onMounted(() => {
                     ? 'text-primary'
                     : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                 ]"
-                class="group relative rounded-xl p-2 transition-all duration-200"
+                class="group relative rounded-xl p-2 transition-all duration-100"
                 title="Home"
               >
                 <Home class="h-5 w-5 transition-transform group-hover:scale-110" />
@@ -155,7 +155,7 @@ onMounted(() => {
                       ? 'text-primary'
                       : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                   ]"
-                  class="group relative rounded-xl p-2 transition-all duration-200"
+                  class="group relative rounded-xl p-2 transition-all duration-100"
                   title="Dashboard"
                 >
                   <LayoutDashboard class="h-5 w-5 transition-transform group-hover:scale-110" />
@@ -168,7 +168,7 @@ onMounted(() => {
                       ? 'text-primary'
                       : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                   ]"
-                  class="group relative rounded-xl p-2 transition-all duration-200"
+                  class="group relative rounded-xl p-2 transition-all duration-100"
                   title="Pesan"
                 >
                   <MessageSquare class="h-5 w-5 transition-transform group-hover:scale-110" />
@@ -180,7 +180,7 @@ onMounted(() => {
           <!-- Right Side Actions (Desktop) -->
           <div class="hidden gap-1 sm:flex sm:items-center">
             <!-- Global Search & Filter -->
-            <div class="mr-2 flex items-center gap-2">
+            <div v-if="$page.component === 'Home'" class="mr-2 flex items-center gap-2">
               <div class="group relative">
                 <div
                   class="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 transition-colors"
@@ -191,7 +191,7 @@ onMounted(() => {
                   type="text"
                   v-model="search"
                   placeholder="Cari gadget..."
-                  class="w-40 rounded-xl border-transparent bg-muted/60 py-1.5 pl-9 pr-4 text-sm transition-all duration-200 placeholder:text-muted-foreground/70 focus:border-border focus:bg-background focus:ring-2 focus:ring-primary/20 lg:w-56"
+                  class="w-40 rounded-xl border-transparent bg-muted/60 py-1.5 pl-9 pr-4 text-sm transition-all duration-100 placeholder:text-muted-foreground/70 focus:border-border focus:bg-background focus:ring-2 focus:ring-primary/20 lg:w-56"
                 />
               </div>
               <button
@@ -316,6 +316,36 @@ onMounted(() => {
             </button>
           </div>
         </div>
+
+        <!-- Mobile Search Bar (Only Visible on Home) -->
+        <div v-if="$page.component === 'Home'" class="pb-3 pt-2 sm:hidden">
+          <div class="flex gap-2">
+            <div class="group relative flex-1">
+              <div
+                class="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 transition-colors"
+              >
+                <Search class="h-4 w-4 text-muted-foreground group-focus-within:text-primary" />
+              </div>
+              <input
+                type="text"
+                v-model="search"
+                placeholder="Cari gadget..."
+                class="w-full rounded-xl border-transparent bg-muted/60 py-2 pl-10 pr-4 text-sm transition-all duration-100 placeholder:text-muted-foreground/70 focus:border-border focus:bg-background focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <button
+              @click="filterModalOpen = true"
+              class="group relative rounded-xl bg-muted/60 p-2 text-muted-foreground transition-all hover:bg-accent hover:text-primary"
+              title="Filter Pencarian"
+            >
+              <SlidersHorizontal class="h-5 w-5" />
+              <span
+                v-if="hasActiveFilters()"
+                class="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full border-2 border-background bg-primary"
+              ></span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Responsive Navigation Menu -->
@@ -323,26 +353,6 @@ onMounted(() => {
         :class="{ block: showingNavigationDropdown, hidden: !showingNavigationDropdown }"
         class="border-t border-border bg-background shadow-xl sm:hidden"
       >
-        <div class="flex gap-2 border-b border-border p-4">
-          <div class="relative flex-1">
-            <div class="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3">
-              <Search class="h-4 w-4 text-muted-foreground" />
-            </div>
-            <input
-              type="text"
-              v-model="search"
-              placeholder="Cari gadget..."
-              class="w-full rounded-xl border-none bg-muted py-2 pl-10 pr-4 text-sm transition-all focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <button
-            @click="filterModalOpen = true"
-            class="rounded-xl bg-muted p-2 text-muted-foreground"
-          >
-            <SlidersHorizontal class="h-5 w-5" />
-          </button>
-        </div>
-
         <div class="space-y-1 pb-3 pt-2">
           <ResponsiveNavLink :href="route('home')" :active="route().current('home')">
             <div class="flex items-center gap-2"><Home class="h-4 w-4" /> Home</div>
@@ -415,7 +425,7 @@ onMounted(() => {
 
     <!-- Global Filter Modal -->
     <Modal :show="filterModalOpen" @close="filterModalOpen = false">
-      <div class="bg-background p-6 text-foreground transition-colors">
+      <div class="bg-background p-6 text-foreground transition-colors duration-100">
         <div class="mb-6 flex items-center justify-between border-b border-border pb-4">
           <div>
             <h2 class="text-xl font-bold">Filter Pencarian</h2>
@@ -423,7 +433,7 @@ onMounted(() => {
           </div>
           <button
             @click="filterModalOpen = false"
-            class="rounded-full bg-muted p-2 text-muted-foreground transition hover:bg-accent"
+            class="rounded-full bg-muted p-2 text-muted-foreground transition-colors hover:bg-accent"
           >
             <X class="h-5 w-5" />
           </button>
@@ -444,7 +454,7 @@ onMounted(() => {
                 class="peer sr-only"
               />
               <div
-                class="rounded-xl border border-border px-3 py-2.5 text-center text-xs font-bold transition-all peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground"
+                class="rounded-xl border border-border px-3 py-2.5 text-center text-xs font-bold transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground"
               >
                 {{ cat.name }}
               </div>
@@ -452,7 +462,7 @@ onMounted(() => {
             <label class="group relative cursor-pointer">
               <input type="radio" v-model="filterParams.category" value="" class="peer sr-only" />
               <div
-                class="rounded-xl border border-border px-3 py-2.5 text-center text-xs font-bold transition-all peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground"
+                class="rounded-xl border border-border px-3 py-2.5 text-center text-xs font-bold transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground"
               >
                 Semua
               </div>
@@ -474,7 +484,7 @@ onMounted(() => {
             >
               <input type="radio" v-model="filterParams.ram" :value="ram" class="peer sr-only" />
               <span
-                class="rounded-lg border border-border bg-background px-3 py-1.5 text-[10px] font-bold transition-all peer-checked:bg-primary peer-checked:text-primary-foreground"
+                class="rounded-lg border border-border bg-background px-3 py-1.5 text-[10px] font-bold transition-colors peer-checked:bg-primary peer-checked:text-primary-foreground"
               >
                 {{ ram }}
               </span>
@@ -501,7 +511,7 @@ onMounted(() => {
                 class="peer sr-only"
               />
               <span
-                class="rounded-lg border border-border bg-background px-3 py-1.5 text-[10px] font-bold transition-all peer-checked:bg-primary peer-checked:text-primary-foreground"
+                class="rounded-lg border border-border bg-background px-3 py-1.5 text-[10px] font-bold transition-colors peer-checked:bg-primary peer-checked:text-primary-foreground"
               >
                 {{ storage }}
               </span>
@@ -519,7 +529,7 @@ onMounted(() => {
             <label class="group relative cursor-pointer">
               <input type="radio" v-model="filterParams.sort" value="latest" class="peer sr-only" />
               <div
-                class="rounded-xl border border-border px-3 py-2.5 text-center text-[10px] font-bold transition-all peer-checked:bg-primary peer-checked:text-primary-foreground"
+                class="rounded-xl border border-border px-3 py-2.5 text-center text-[10px] font-bold transition-colors peer-checked:bg-primary peer-checked:text-primary-foreground"
               >
                 Terbaru
               </div>
@@ -527,7 +537,7 @@ onMounted(() => {
             <label class="group relative cursor-pointer">
               <input type="radio" v-model="filterParams.sort" value="oldest" class="peer sr-only" />
               <div
-                class="rounded-xl border border-border px-3 py-2.5 text-center text-[10px] font-bold transition-all peer-checked:bg-primary peer-checked:text-primary-foreground"
+                class="rounded-xl border border-border px-3 py-2.5 text-center text-[10px] font-bold transition-colors peer-checked:bg-primary peer-checked:text-primary-foreground"
               >
                 Terlama
               </div>
@@ -544,7 +554,7 @@ onMounted(() => {
           </button>
           <button
             @click="applyFilters"
-            class="rounded-xl bg-primary px-8 py-2 text-sm font-black text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90"
+            class="rounded-xl bg-primary px-8 py-2 text-sm font-black text-primary-foreground shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90"
           >
             Terapkan
           </button>

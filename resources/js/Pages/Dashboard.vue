@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, shallowRef, onMounted, onUnmounted, watch } from 'vue'
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3'
 import axios from 'axios'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { useIntersectionObserver } from '@vueuse/core'
 import {
   LayoutDashboard,
   Settings,
@@ -37,10 +38,10 @@ const props = defineProps({
 const tab = ref('overview')
 const loading = ref(false)
 
-const allMyProducts = ref([...props.myProducts.data])
+// Use shallowRef to avoid massive reactivity tracking on product array
+const allMyProducts = shallowRef([...props.myProducts.data])
 const nextUrl = ref(props.myProducts.next_page_url)
 const loadMoreTrigger = ref(null)
-let observer = null
 
 const loadMore = async () => {
   if (!nextUrl.value || loading.value || tab.value !== 'overview') return
@@ -57,7 +58,7 @@ const loadMore = async () => {
     })
 
     const newProducts = response.data.props.myProducts
-    allMyProducts.value.push(...newProducts.data)
+    allMyProducts.value = [...allMyProducts.value, ...newProducts.data]
     nextUrl.value = newProducts.next_page_url
   } catch (error) {
     console.error('Error loading more dashboard products:', error)
@@ -66,24 +67,15 @@ const loadMore = async () => {
   }
 }
 
-onMounted(() => {
-  observer = new IntersectionObserver(
-    (entries) => {
-      if (entries[0].isIntersecting) {
-        loadMore()
-      }
-    },
-    { rootMargin: '200px' }
-  )
-
-  if (loadMoreTrigger.value) {
-    observer.observe(loadMoreTrigger.value)
-  }
-})
-
-onUnmounted(() => {
-  if (observer) observer.disconnect()
-})
+useIntersectionObserver(
+  loadMoreTrigger,
+  ([{ isIntersecting }]) => {
+    if (isIntersecting) {
+      loadMore()
+    }
+  },
+  { rootMargin: '400px 0px' }
+)
 
 watch(
   () => props.myProducts,
@@ -93,7 +85,7 @@ watch(
     }
     nextUrl.value = newVal.next_page_url
   },
-  { deep: true }
+  { deep: false }
 )
 
 const confirmProductDeletion = ref(false)

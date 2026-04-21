@@ -1,7 +1,7 @@
 import { computed, withCtx, unref, createTextVNode, createVNode, createBlock, createCommentVNode, openBlock, withModifiers, useSSRContext } from "vue";
 import { ssrRenderComponent } from "vue/server-renderer";
-import { _ as _sfc_main$1 } from "./GuestLayout-DqpGDuOc.js";
-import { _ as _sfc_main$2 } from "./PrimaryButton-b74eHQMS.js";
+import { _ as _sfc_main$1 } from "./GuestLayout-BwVHXVA6.js";
+import { _ as _sfc_main$2 } from "./PrimaryButton-Chd5xZL9.js";
 import { useForm, Head, Link } from "@inertiajs/vue3";
 import "./ApplicationLogo-5BXBKbkR.js";
 const _sfc_main = {
@@ -26,7 +26,7 @@ const _sfc_main = {
             _push2(ssrRenderComponent(unref(Head), { title: "Email Verification" }, null, _parent2, _scopeId));
             _push2(`<div class="mb-4 text-sm text-muted-foreground"${_scopeId}> Terima kasih telah mendaftar! Sebelum memulai, bisakah Anda memverifikasi alamat email Anda dengan mengeklik tautan yang baru saja kami kirimkan melalui email kepada Anda? Jika Anda tidak menerima email tersebut, kami dengan senang hati akan mengirimkan email lainnya kepada Anda. </div>`);
             if (verificationLinkSent.value) {
-              _push2(`<div class="mb-4 font-medium text-sm text-green-600"${_scopeId}> Tautan verifikasi baru telah dikirim ke alamat email yang Anda berikan saat pendaftaran. </div>`);
+              _push2(`<div class="mb-4 text-sm font-medium text-green-600"${_scopeId}> Tautan verifikasi baru telah dikirim ke alamat email yang Anda berikan saat pendaftaran. </div>`);
             } else {
               _push2(`<!---->`);
             }
@@ -50,7 +50,7 @@ const _sfc_main = {
               href: _ctx.route("logout"),
               method: "post",
               as: "button",
-              class: "underline text-sm text-muted-foreground hover:text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              class: "rounded-md text-sm text-muted-foreground underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             }, {
               default: withCtx((_2, _push3, _parent3, _scopeId2) => {
                 if (_push3) {
@@ -70,7 +70,7 @@ const _sfc_main = {
               createVNode("div", { class: "mb-4 text-sm text-muted-foreground" }, " Terima kasih telah mendaftar! Sebelum memulai, bisakah Anda memverifikasi alamat email Anda dengan mengeklik tautan yang baru saja kami kirimkan melalui email kepada Anda? Jika Anda tidak menerima email tersebut, kami dengan senang hati akan mengirimkan email lainnya kepada Anda. "),
               verificationLinkSent.value ? (openBlock(), createBlock("div", {
                 key: 0,
-                class: "mb-4 font-medium text-sm text-green-600"
+                class: "mb-4 text-sm font-medium text-green-600"
               }, " Tautan verifikasi baru telah dikirim ke alamat email yang Anda berikan saat pendaftaran. ")) : createCommentVNode("", true),
               createVNode("form", {
                 onSubmit: withModifiers(submit, ["prevent"])
@@ -89,7 +89,7 @@ const _sfc_main = {
                     href: _ctx.route("logout"),
                     method: "post",
                     as: "button",
-                    class: "underline text-sm text-muted-foreground hover:text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                    class: "rounded-md text-sm text-muted-foreground underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                   }, {
                     default: withCtx(() => [
                       createTextVNode("Log Out")

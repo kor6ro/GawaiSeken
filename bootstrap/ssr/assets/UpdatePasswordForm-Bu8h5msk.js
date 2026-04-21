@@ -1,7 +1,7 @@
 import { ref, unref, withCtx, createTextVNode, useSSRContext } from "vue";
 import { ssrRenderAttrs, ssrRenderComponent } from "vue/server-renderer";
-import { _ as _sfc_main$1, a as _sfc_main$2, b as _sfc_main$3 } from "./TextInput-ivY_q2i2.js";
-import { _ as _sfc_main$4 } from "./PrimaryButton-b74eHQMS.js";
+import { _ as _sfc_main$1, a as _sfc_main$2, b as _sfc_main$3 } from "./TextInput-C__yGyCx.js";
+import { _ as _sfc_main$4 } from "./PrimaryButton-Chd5xZL9.js";
 import { useForm } from "@inertiajs/vue3";
 const _sfc_main = {
   __name: "UpdatePasswordForm",
@@ -15,7 +15,7 @@ const _sfc_main = {
       password_confirmation: ""
     });
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<section${ssrRenderAttrs(_attrs)}><header><h2 class="text-lg font-medium">Perbarui Password</h2><p class="mt-1 text-sm text-muted-foreground">Pastikan akun Anda menggunakan kata sandi acak yang panjang untuk tetap aman.</p></header><form class="mt-6 space-y-6"><div>`);
+      _push(`<section${ssrRenderAttrs(_attrs)}><header><h2 class="text-lg font-medium">Perbarui Password</h2><p class="mt-1 text-sm text-muted-foreground"> Pastikan akun Anda menggunakan kata sandi acak yang panjang untuk tetap aman. </p></header><form class="mt-6 space-y-6"><div>`);
       _push(ssrRenderComponent(_sfc_main$1, {
         for: "current_password",
         value: "Password Saat Ini"
@@ -86,7 +86,7 @@ const _sfc_main = {
         _: 1
       }, _parent));
       if (unref(form).recentlySuccessful) {
-        _push(`<p class="text-sm text-green-600 dark:text-green-400 font-bold">Tersimpan.</p>`);
+        _push(`<p class="text-sm font-bold text-green-600 dark:text-green-400"> Tersimpan. </p>`);
       } else {
         _push(`<!---->`);
       }

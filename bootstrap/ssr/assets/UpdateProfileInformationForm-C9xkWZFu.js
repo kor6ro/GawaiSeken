@@ -1,7 +1,7 @@
 import { unref, withCtx, createTextVNode, useSSRContext } from "vue";
 import { ssrRenderAttrs, ssrRenderComponent, ssrRenderStyle } from "vue/server-renderer";
-import { _ as _sfc_main$1, a as _sfc_main$2, b as _sfc_main$3 } from "./TextInput-ivY_q2i2.js";
-import { _ as _sfc_main$4 } from "./PrimaryButton-b74eHQMS.js";
+import { _ as _sfc_main$1, a as _sfc_main$2, b as _sfc_main$3 } from "./TextInput-C__yGyCx.js";
+import { _ as _sfc_main$4 } from "./PrimaryButton-Chd5xZL9.js";
 import { usePage, useForm, Link } from "@inertiajs/vue3";
 const _sfc_main = {
   __name: "UpdateProfileInformationForm",
@@ -21,7 +21,7 @@ const _sfc_main = {
       email: user.email
     });
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<section${ssrRenderAttrs(_attrs)}><header><h2 class="text-lg font-medium">Informasi Profil</h2><p class="mt-1 text-sm text-muted-foreground">Perbarui informasi profil dan alamat email akun Anda.</p></header><form class="mt-6 space-y-6"><div>`);
+      _push(`<section${ssrRenderAttrs(_attrs)}><header><h2 class="text-lg font-medium">Informasi Profil</h2><p class="mt-1 text-sm text-muted-foreground"> Perbarui informasi profil dan alamat email akun Anda. </p></header><form class="mt-6 space-y-6"><div>`);
       _push(ssrRenderComponent(_sfc_main$1, {
         for: "name",
         value: "Nama"
@@ -60,12 +60,12 @@ const _sfc_main = {
       }, null, _parent));
       _push(`</div>`);
       if (__props.mustVerifyEmail && unref(user).email_verified_at === null) {
-        _push(`<div><p class="text-sm mt-2 text-foreground">Alamat email Anda tidak terverifikasi. `);
+        _push(`<div><p class="mt-2 text-sm text-foreground"> Alamat email Anda tidak terverifikasi. `);
         _push(ssrRenderComponent(unref(Link), {
           href: _ctx.route("verification.send"),
           method: "post",
           as: "button",
-          class: "underline text-sm text-muted-foreground hover:text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          class: "rounded-md text-sm text-muted-foreground underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
         }, {
           default: withCtx((_, _push2, _parent2, _scopeId) => {
             if (_push2) {
@@ -78,7 +78,7 @@ const _sfc_main = {
           }),
           _: 1
         }, _parent));
-        _push(`</p><div class="mt-2 font-medium text-sm text-green-600" style="${ssrRenderStyle(__props.status === "verification-link-sent" ? null : { display: "none" })}">Tautan verifikasi baru telah dikirim ke alamat email Anda.</div></div>`);
+        _push(`</p><div class="mt-2 text-sm font-medium text-green-600" style="${ssrRenderStyle(__props.status === "verification-link-sent" ? null : { display: "none" })}"> Tautan verifikasi baru telah dikirim ke alamat email Anda. </div></div>`);
       } else {
         _push(`<!---->`);
       }
@@ -98,7 +98,7 @@ const _sfc_main = {
         _: 1
       }, _parent));
       if (unref(form).recentlySuccessful) {
-        _push(`<p class="text-sm text-green-600 dark:text-green-400 font-bold">Tersimpan.</p>`);
+        _push(`<p class="text-sm font-bold text-green-600 dark:text-green-400"> Tersimpan. </p>`);
       } else {
         _push(`<!---->`);
       }

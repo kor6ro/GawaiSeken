@@ -1,8 +1,8 @@
 import { computed, mergeProps, useSSRContext, withCtx, unref, createTextVNode, createVNode, createBlock, createCommentVNode, openBlock, toDisplayString, withModifiers } from "vue";
 import { ssrRenderAttrs, ssrLooseContain, ssrGetDynamicModelProps, ssrRenderComponent, ssrInterpolate } from "vue/server-renderer";
-import { _ as _sfc_main$2 } from "./GuestLayout-DqpGDuOc.js";
-import { _ as _sfc_main$3, a as _sfc_main$4, b as _sfc_main$5 } from "./TextInput-ivY_q2i2.js";
-import { _ as _sfc_main$6 } from "./PrimaryButton-b74eHQMS.js";
+import { _ as _sfc_main$2 } from "./GuestLayout-BwVHXVA6.js";
+import { _ as _sfc_main$3, a as _sfc_main$4, b as _sfc_main$5 } from "./TextInput-C__yGyCx.js";
+import { _ as _sfc_main$6 } from "./PrimaryButton-Chd5xZL9.js";
 import { useForm, Head, Link } from "@inertiajs/vue3";
 import "./ApplicationLogo-5BXBKbkR.js";
 const _sfc_main$1 = {
@@ -35,7 +35,7 @@ const _sfc_main$1 = {
         type: "checkbox",
         value: __props.value,
         checked: Array.isArray(proxyChecked.value) ? ssrLooseContain(proxyChecked.value, __props.value) : proxyChecked.value,
-        class: "rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-primary shadow-sm focus:ring-primary"
+        class: "rounded border-gray-300 text-primary shadow-sm focus:ring-primary dark:border-gray-700 dark:bg-gray-900"
       }, _attrs), mergeProps(_temp0, ssrGetDynamicModelProps(_temp0, proxyChecked.value))))}>`);
     };
   }
@@ -74,7 +74,7 @@ const _sfc_main = {
           if (_push2) {
             _push2(ssrRenderComponent(unref(Head), { title: "Log in" }, null, _parent2, _scopeId));
             if (__props.status) {
-              _push2(`<div class="mb-4 font-medium text-sm text-green-600"${_scopeId}>${ssrInterpolate(__props.status)}</div>`);
+              _push2(`<div class="mb-4 text-sm font-medium text-green-600"${_scopeId}>${ssrInterpolate(__props.status)}</div>`);
             } else {
               _push2(`<!---->`);
             }
@@ -115,17 +115,17 @@ const _sfc_main = {
               class: "mt-2",
               message: unref(form).errors.password
             }, null, _parent2, _scopeId));
-            _push2(`</div><div class="block mt-4"${_scopeId}><label class="flex items-center"${_scopeId}>`);
+            _push2(`</div><div class="mt-4 block"${_scopeId}><label class="flex items-center"${_scopeId}>`);
             _push2(ssrRenderComponent(_sfc_main$1, {
               name: "remember",
               checked: unref(form).remember,
               "onUpdate:checked": ($event) => unref(form).remember = $event
             }, null, _parent2, _scopeId));
-            _push2(`<span class="ms-2 text-sm text-muted-foreground"${_scopeId}>Ingat saya</span></label></div><div class="flex items-center justify-end mt-4 gap-4"${_scopeId}>`);
+            _push2(`<span class="ms-2 text-sm text-muted-foreground"${_scopeId}>Ingat saya</span></label></div><div class="mt-4 flex items-center justify-end gap-4"${_scopeId}>`);
             if (__props.canResetPassword) {
               _push2(ssrRenderComponent(unref(Link), {
                 href: _ctx.route("password.request"),
-                class: "underline text-sm text-muted-foreground hover:text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                class: "rounded-md text-sm text-muted-foreground underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               }, {
                 default: withCtx((_2, _push3, _parent3, _scopeId2) => {
                   if (_push3) {
@@ -156,10 +156,10 @@ const _sfc_main = {
               }),
               _: 1
             }, _parent2, _scopeId));
-            _push2(`</div><div class="mt-8 pt-6 border-t border-border text-center"${_scopeId}><p class="text-sm text-muted-foreground"${_scopeId}> Belum punya akun? `);
+            _push2(`</div><div class="mt-8 border-t border-border pt-6 text-center"${_scopeId}><p class="text-sm text-muted-foreground"${_scopeId}> Belum punya akun? `);
             _push2(ssrRenderComponent(unref(Link), {
               href: _ctx.route("register"),
-              class: "text-primary font-bold hover:underline"
+              class: "font-bold text-primary hover:underline"
             }, {
               default: withCtx((_2, _push3, _parent3, _scopeId2) => {
                 if (_push3) {
@@ -178,7 +178,7 @@ const _sfc_main = {
               createVNode(unref(Head), { title: "Log in" }),
               __props.status ? (openBlock(), createBlock("div", {
                 key: 0,
-                class: "mb-4 font-medium text-sm text-green-600"
+                class: "mb-4 text-sm font-medium text-green-600"
               }, toDisplayString(__props.status), 1)) : createCommentVNode("", true),
               createVNode("form", {
                 onSubmit: withModifiers(submit, ["prevent"])
@@ -222,7 +222,7 @@ const _sfc_main = {
                     message: unref(form).errors.password
                   }, null, 8, ["message"])
                 ]),
-                createVNode("div", { class: "block mt-4" }, [
+                createVNode("div", { class: "mt-4 block" }, [
                   createVNode("label", { class: "flex items-center" }, [
                     createVNode(_sfc_main$1, {
                       name: "remember",
@@ -232,11 +232,11 @@ const _sfc_main = {
                     createVNode("span", { class: "ms-2 text-sm text-muted-foreground" }, "Ingat saya")
                   ])
                 ]),
-                createVNode("div", { class: "flex items-center justify-end mt-4 gap-4" }, [
+                createVNode("div", { class: "mt-4 flex items-center justify-end gap-4" }, [
                   __props.canResetPassword ? (openBlock(), createBlock(unref(Link), {
                     key: 0,
                     href: _ctx.route("password.request"),
-                    class: "underline text-sm text-muted-foreground hover:text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                    class: "rounded-md text-sm text-muted-foreground underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                   }, {
                     default: withCtx(() => [
                       createTextVNode(" Lupa password? ")
@@ -253,12 +253,12 @@ const _sfc_main = {
                     _: 1
                   }, 8, ["class", "disabled"])
                 ]),
-                createVNode("div", { class: "mt-8 pt-6 border-t border-border text-center" }, [
+                createVNode("div", { class: "mt-8 border-t border-border pt-6 text-center" }, [
                   createVNode("p", { class: "text-sm text-muted-foreground" }, [
                     createTextVNode(" Belum punya akun? "),
                     createVNode(unref(Link), {
                       href: _ctx.route("register"),
-                      class: "text-primary font-bold hover:underline"
+                      class: "font-bold text-primary hover:underline"
                     }, {
                       default: withCtx(() => [
                         createTextVNode("Daftar Sekarang")

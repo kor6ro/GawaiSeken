@@ -1,8 +1,8 @@
 import { withCtx, unref, createTextVNode, createVNode, createBlock, createCommentVNode, openBlock, toDisplayString, withModifiers, useSSRContext } from "vue";
 import { ssrRenderComponent, ssrInterpolate } from "vue/server-renderer";
-import { _ as _sfc_main$1 } from "./GuestLayout-DqpGDuOc.js";
-import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4 } from "./TextInput-ivY_q2i2.js";
-import { _ as _sfc_main$5 } from "./PrimaryButton-b74eHQMS.js";
+import { _ as _sfc_main$1 } from "./GuestLayout-BwVHXVA6.js";
+import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4 } from "./TextInput-C__yGyCx.js";
+import { _ as _sfc_main$5 } from "./PrimaryButton-Chd5xZL9.js";
 import { useForm, Head } from "@inertiajs/vue3";
 import "./ApplicationLogo-5BXBKbkR.js";
 const _sfc_main = {
@@ -27,7 +27,7 @@ const _sfc_main = {
             _push2(ssrRenderComponent(unref(Head), { title: "Forgot Password" }, null, _parent2, _scopeId));
             _push2(`<div class="mb-4 text-sm text-muted-foreground"${_scopeId}> Lupa password? Tidak masalah. Beri tahu kami alamat email Anda dan kami akan mengirimkan tautan reset password yang memungkinkan Anda memilih yang baru. </div>`);
             if (__props.status) {
-              _push2(`<div class="mb-4 font-medium text-sm text-green-600"${_scopeId}>${ssrInterpolate(__props.status)}</div>`);
+              _push2(`<div class="mb-4 text-sm font-medium text-green-600"${_scopeId}>${ssrInterpolate(__props.status)}</div>`);
             } else {
               _push2(`<!---->`);
             }
@@ -50,7 +50,7 @@ const _sfc_main = {
               class: "mt-2",
               message: unref(form).errors.email
             }, null, _parent2, _scopeId));
-            _push2(`</div><div class="flex items-center justify-end mt-4"${_scopeId}>`);
+            _push2(`</div><div class="mt-4 flex items-center justify-end"${_scopeId}>`);
             _push2(ssrRenderComponent(_sfc_main$5, {
               class: { "opacity-25": unref(form).processing },
               disabled: unref(form).processing
@@ -73,7 +73,7 @@ const _sfc_main = {
               createVNode("div", { class: "mb-4 text-sm text-muted-foreground" }, " Lupa password? Tidak masalah. Beri tahu kami alamat email Anda dan kami akan mengirimkan tautan reset password yang memungkinkan Anda memilih yang baru. "),
               __props.status ? (openBlock(), createBlock("div", {
                 key: 0,
-                class: "mb-4 font-medium text-sm text-green-600"
+                class: "mb-4 text-sm font-medium text-green-600"
               }, toDisplayString(__props.status), 1)) : createCommentVNode("", true),
               createVNode("form", {
                 onSubmit: withModifiers(submit, ["prevent"])
@@ -98,7 +98,7 @@ const _sfc_main = {
                     message: unref(form).errors.email
                   }, null, 8, ["message"])
                 ]),
-                createVNode("div", { class: "flex items-center justify-end mt-4" }, [
+                createVNode("div", { class: "mt-4 flex items-center justify-end" }, [
                   createVNode(_sfc_main$5, {
                     class: { "opacity-25": unref(form).processing },
                     disabled: unref(form).processing

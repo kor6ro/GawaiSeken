@@ -27,15 +27,19 @@ const _sfc_main = {
     const messagesEnd = ref(null);
     ref(null);
     ref(null);
-    const opponent = computed(() => auth.user.id === props.chat.buyer_id ? props.chat.seller : props.chat.buyer);
+    const opponent = computed(
+      () => auth.user.id === props.chat.buyer_id ? props.chat.seller : props.chat.buyer
+    );
     const oppName = computed(() => {
       var _a2;
       return ((_a2 = opponent.value.profile) == null ? void 0 : _a2.store_name) || opponent.value.name;
     });
-    const oppAvatar = computed(() => {
-      var _a2;
-      return ((_a2 = opponent.value.profile) == null ? void 0 : _a2.avatar) ? `/storage/${opponent.value.profile.avatar}` : null;
-    });
+    const oppAvatar = computed(
+      () => {
+        var _a2;
+        return ((_a2 = opponent.value.profile) == null ? void 0 : _a2.avatar) ? `/storage/${opponent.value.profile.avatar}` : null;
+      }
+    );
     const oppInitial = computed(() => oppName.value.charAt(0).toUpperCase());
     const product = props.chat.product;
     const productImage = (_b = (_a = product == null ? void 0 : product.images) == null ? void 0 : _a[0]) == null ? void 0 : _b.image_path;
@@ -60,9 +64,12 @@ const _sfc_main = {
         }
       });
     };
-    watch(() => messages.value.length, () => {
-      scrollToBottom();
-    });
+    watch(
+      () => messages.value.length,
+      () => {
+        scrollToBottom();
+      }
+    );
     const formatTime = (d) => {
       if (!d) return "";
       return new Date(d).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
@@ -128,19 +135,19 @@ const _sfc_main = {
       }
     });
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<div${ssrRenderAttrs(mergeProps({ class: "chat-view-root" }, _attrs))} data-v-9007ce65>`);
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "chat-view-root" }, _attrs))} data-v-0082b792>`);
       _push(ssrRenderComponent(unref(Head), { title: oppName.value }, null, _parent));
-      _push(`<header class="chat-header" data-v-9007ce65>`);
+      _push(`<header class="chat-header" data-v-0082b792>`);
       _push(ssrRenderComponent(unref(Link), {
         href: _ctx.route("chat.index"),
         class: "chat-header-back"
       }, {
         default: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(ssrRenderComponent(unref(ChevronLeft), { class: "w-5 h-5" }, null, _parent2, _scopeId));
+            _push2(ssrRenderComponent(unref(ChevronLeft), { class: "h-5 w-5" }, null, _parent2, _scopeId));
           } else {
             return [
-              createVNode(unref(ChevronLeft), { class: "w-5 h-5" })
+              createVNode(unref(ChevronLeft), { class: "h-5 w-5" })
             ];
           }
         }),
@@ -152,24 +159,27 @@ const _sfc_main = {
       }, {
         default: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<div class="chat-header-avatar-wrap" data-v-9007ce65${_scopeId}>`);
+            _push2(`<div class="chat-header-avatar-wrap" data-v-0082b792${_scopeId}>`);
             if (oppAvatar.value) {
-              _push2(`<img${ssrRenderAttr("src", oppAvatar.value)} class="chat-header-avatar" data-v-9007ce65${_scopeId}>`);
+              _push2(`<img${ssrRenderAttr("src", oppAvatar.value)} loading="lazy" class="chat-header-avatar" data-v-0082b792${_scopeId}>`);
             } else {
-              _push2(`<div class="chat-header-avatar-fallback" style="${ssrRenderStyle({ background: oppAvatarGradient.value })}" data-v-9007ce65${_scopeId}>${ssrInterpolate(oppInitial.value)}</div>`);
+              _push2(`<div class="chat-header-avatar-fallback" style="${ssrRenderStyle({ background: oppAvatarGradient.value })}" data-v-0082b792${_scopeId}>${ssrInterpolate(oppInitial.value)}</div>`);
             }
             if (isOpponentOnline.value) {
-              _push2(`<span class="chat-header-online-dot" data-v-9007ce65${_scopeId}></span>`);
+              _push2(`<span class="chat-header-online-dot" data-v-0082b792${_scopeId}></span>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`</div><div class="min-w-0 flex-1" data-v-9007ce65${_scopeId}><h3 class="chat-header-name" data-v-9007ce65${_scopeId}>${ssrInterpolate(oppName.value)}</h3><p class="${ssrRenderClass([isTyping.value ? "text-primary" : isOpponentOnline.value ? "text-green-500" : "text-muted-foreground", "chat-header-status"])}" data-v-9007ce65${_scopeId}>`);
+            _push2(`</div><div class="min-w-0 flex-1" data-v-0082b792${_scopeId}><h3 class="chat-header-name" data-v-0082b792${_scopeId}>${ssrInterpolate(oppName.value)}</h3><p class="${ssrRenderClass([
+              isTyping.value ? "text-primary" : isOpponentOnline.value ? "text-green-500" : "text-muted-foreground",
+              "chat-header-status"
+            ])}" data-v-0082b792${_scopeId}>`);
             if (isTyping.value) {
-              _push2(`<span class="flex items-center gap-1" data-v-9007ce65${_scopeId}><span class="typing-dots" data-v-9007ce65${_scopeId}><span data-v-9007ce65${_scopeId}></span><span data-v-9007ce65${_scopeId}></span><span data-v-9007ce65${_scopeId}></span></span> sedang mengetik... </span>`);
+              _push2(`<span class="flex items-center gap-1" data-v-0082b792${_scopeId}><span class="typing-dots" data-v-0082b792${_scopeId}><span data-v-0082b792${_scopeId}></span><span data-v-0082b792${_scopeId}></span><span data-v-0082b792${_scopeId}></span></span> sedang mengetik... </span>`);
             } else if (isOpponentOnline.value) {
-              _push2(`<span data-v-9007ce65${_scopeId}>Online</span>`);
+              _push2(`<span data-v-0082b792${_scopeId}>Online</span>`);
             } else {
-              _push2(`<span data-v-9007ce65${_scopeId}>${ssrInterpolate(unref(auth).user.id === __props.chat.buyer_id ? "Penjual" : "Pembeli")}</span>`);
+              _push2(`<span data-v-0082b792${_scopeId}>${ssrInterpolate(unref(auth).user.id === __props.chat.buyer_id ? "Penjual" : "Pembeli")}</span>`);
             }
             _push2(`</p></div>`);
           } else {
@@ -178,6 +188,7 @@ const _sfc_main = {
                 oppAvatar.value ? (openBlock(), createBlock("img", {
                   key: 0,
                   src: oppAvatar.value,
+                  loading: "lazy",
                   class: "chat-header-avatar"
                 }, null, 8, ["src"])) : (openBlock(), createBlock("div", {
                   key: 1,
@@ -192,7 +203,10 @@ const _sfc_main = {
               createVNode("div", { class: "min-w-0 flex-1" }, [
                 createVNode("h3", { class: "chat-header-name" }, toDisplayString(oppName.value), 1),
                 createVNode("p", {
-                  class: ["chat-header-status", isTyping.value ? "text-primary" : isOpponentOnline.value ? "text-green-500" : "text-muted-foreground"]
+                  class: [
+                    "chat-header-status",
+                    isTyping.value ? "text-primary" : isOpponentOnline.value ? "text-green-500" : "text-muted-foreground"
+                  ]
                 }, [
                   isTyping.value ? (openBlock(), createBlock("span", {
                     key: 0,
@@ -212,7 +226,7 @@ const _sfc_main = {
         }),
         _: 1
       }, _parent));
-      _push(`<div class="flex items-center gap-1 flex-shrink-0" data-v-9007ce65>`);
+      _push(`<div class="flex flex-shrink-0 items-center gap-1" data-v-0082b792>`);
       if (unref(product)) {
         _push(ssrRenderComponent(unref(Link), {
           href: _ctx.route("products.show", unref(product).slug),
@@ -222,10 +236,10 @@ const _sfc_main = {
           default: withCtx((_, _push2, _parent2, _scopeId) => {
             if (_push2) {
               if (unref(productImage)) {
-                _push2(`<img${ssrRenderAttr("src", "/storage/" + unref(productImage))} class="w-full h-full object-cover" data-v-9007ce65${_scopeId}>`);
+                _push2(`<img${ssrRenderAttr("src", "/storage/" + unref(productImage))} loading="lazy" class="h-full w-full object-cover" data-v-0082b792${_scopeId}>`);
               } else {
-                _push2(`<div class="w-full h-full bg-muted flex items-center justify-center" data-v-9007ce65${_scopeId}>`);
-                _push2(ssrRenderComponent(unref(Package), { class: "w-4 h-4 text-muted-foreground" }, null, _parent2, _scopeId));
+                _push2(`<div class="flex h-full w-full items-center justify-center bg-muted" data-v-0082b792${_scopeId}>`);
+                _push2(ssrRenderComponent(unref(Package), { class: "h-4 w-4 text-muted-foreground" }, null, _parent2, _scopeId));
                 _push2(`</div>`);
               }
             } else {
@@ -233,12 +247,13 @@ const _sfc_main = {
                 unref(productImage) ? (openBlock(), createBlock("img", {
                   key: 0,
                   src: "/storage/" + unref(productImage),
-                  class: "w-full h-full object-cover"
+                  loading: "lazy",
+                  class: "h-full w-full object-cover"
                 }, null, 8, ["src"])) : (openBlock(), createBlock("div", {
                   key: 1,
-                  class: "w-full h-full bg-muted flex items-center justify-center"
+                  class: "flex h-full w-full items-center justify-center bg-muted"
                 }, [
-                  createVNode(unref(Package), { class: "w-4 h-4 text-muted-foreground" })
+                  createVNode(unref(Package), { class: "h-4 w-4 text-muted-foreground" })
                 ]))
               ];
             }
@@ -248,40 +263,43 @@ const _sfc_main = {
       } else {
         _push(`<!---->`);
       }
-      _push(`</div></header><main class="chat-messages-area" style="${ssrRenderStyle({ backgroundColor: isDark.value ? "#0b141a" : "#eae6df" })}" data-v-9007ce65><div class="chat-pattern-overlay" data-v-9007ce65></div><div class="chat-messages-inner" data-v-9007ce65><div class="flex-grow" data-v-9007ce65></div><!--[-->`);
+      _push(`</div></header><main class="chat-messages-area" style="${ssrRenderStyle({ backgroundColor: isDark.value ? "#0b141a" : "#eae6df" })}" data-v-0082b792><div class="chat-pattern-overlay" data-v-0082b792></div><div class="chat-messages-inner" data-v-0082b792><div class="flex-grow" data-v-0082b792></div><!--[-->`);
       ssrRenderList(messages.value, (msg, index) => {
         _push(`<!--[-->`);
         if (showDateSeparator(index)) {
-          _push(`<div class="chat-date-separator" data-v-9007ce65><span class="chat-date-pill" data-v-9007ce65>${ssrInterpolate(formatDate(msg.created_at))}</span></div>`);
+          _push(`<div class="chat-date-separator" data-v-0082b792><span class="chat-date-pill" data-v-0082b792>${ssrInterpolate(formatDate(msg.created_at))}</span></div>`);
         } else {
           _push(`<!---->`);
         }
-        _push(`<div class="${ssrRenderClass([msg.sender_id === unref(auth).user.id ? "justify-end" : "justify-start", "chat-msg-row"])}" data-v-9007ce65>`);
+        _push(`<div class="${ssrRenderClass([msg.sender_id === unref(auth).user.id ? "justify-end" : "justify-start", "chat-msg-row"])}" data-v-0082b792>`);
         if (msg.type === "image") {
-          _push(`<div class="${ssrRenderClass([msg.sender_id === unref(auth).user.id ? "chat-bubble-image--mine" : "chat-bubble-image--theirs", "chat-bubble-image"])}" data-v-9007ce65><img${ssrRenderAttr("src", msg.image_url)} class="chat-bubble-image-content" data-v-9007ce65>`);
+          _push(`<div class="${ssrRenderClass([
+            msg.sender_id === unref(auth).user.id ? "chat-bubble-image--mine" : "chat-bubble-image--theirs",
+            "chat-bubble-image"
+          ])}" data-v-0082b792><img${ssrRenderAttr("src", msg.image_url)} loading="lazy" class="chat-bubble-image-content" data-v-0082b792>`);
           if (msg.status === "sending") {
-            _push(`<div class="chat-bubble-sending-overlay" data-v-9007ce65><div class="uploading-spinner" data-v-9007ce65></div></div>`);
+            _push(`<div class="chat-bubble-sending-overlay" data-v-0082b792><div class="uploading-spinner" data-v-0082b792></div></div>`);
           } else {
             _push(`<!---->`);
           }
           if (msg.status === "error") {
-            _push(`<div class="chat-bubble-sending-overlay bg-red-500/20" data-v-9007ce65>`);
-            _push(ssrRenderComponent(unref(AlertTriangle), { class: "w-8 h-8 text-white" }, null, _parent));
+            _push(`<div class="chat-bubble-sending-overlay bg-red-500/20" data-v-0082b792>`);
+            _push(ssrRenderComponent(unref(AlertTriangle), { class: "h-8 w-8 text-white" }, null, _parent));
             _push(`</div>`);
           } else {
             _push(`<!---->`);
           }
-          _push(`<div class="chat-bubble-image-meta" data-v-9007ce65><span class="text-[10px] text-white/90 font-medium" data-v-9007ce65>${ssrInterpolate(formatTime(msg.created_at))}</span>`);
+          _push(`<div class="chat-bubble-image-meta" data-v-0082b792><span class="text-[10px] font-medium text-white/90" data-v-0082b792>${ssrInterpolate(formatTime(msg.created_at))}</span>`);
           if (msg.sender_id === unref(auth).user.id) {
             _push(`<!--[-->`);
             if (msg.status !== "sending" && msg.status !== "error" && msg.read_at) {
-              _push(ssrRenderComponent(unref(CheckCheck), { class: "w-3.5 h-3.5 text-blue-300" }, null, _parent));
+              _push(ssrRenderComponent(unref(CheckCheck), { class: "h-3.5 w-3.5 text-blue-300" }, null, _parent));
             } else if (msg.status !== "sending" && msg.status !== "error") {
-              _push(ssrRenderComponent(unref(CheckCheck), { class: "w-3.5 h-3.5 text-white/60" }, null, _parent));
+              _push(ssrRenderComponent(unref(CheckCheck), { class: "h-3.5 w-3.5 text-white/60" }, null, _parent));
             } else if (msg.status === "sending") {
-              _push(ssrRenderComponent(unref(Clock), { class: "w-3 h-3 text-white/60 animate-spin" }, null, _parent));
+              _push(ssrRenderComponent(unref(Clock), { class: "h-3 w-3 animate-spin text-white/60" }, null, _parent));
             } else {
-              _push(ssrRenderComponent(unref(AlertTriangle), { class: "w-3.5 h-3.5 text-red-400" }, null, _parent));
+              _push(ssrRenderComponent(unref(AlertTriangle), { class: "h-3.5 w-3.5 text-red-400" }, null, _parent));
             }
             _push(`<!--]-->`);
           } else {
@@ -289,17 +307,20 @@ const _sfc_main = {
           }
           _push(`</div></div>`);
         } else {
-          _push(`<div class="${ssrRenderClass([msg.sender_id === unref(auth).user.id ? "chat-bubble--mine" : "chat-bubble--theirs", "chat-bubble"])}" data-v-9007ce65><p class="chat-bubble-text" data-v-9007ce65>${ssrInterpolate(msg.message)}</p><div class="chat-bubble-meta" data-v-9007ce65><span class="${ssrRenderClass([msg.sender_id === unref(auth).user.id ? "text-white/60" : "text-slate-500 dark:text-slate-400", "chat-bubble-time"])}" data-v-9007ce65>${ssrInterpolate(formatTime(msg.created_at))}</span>`);
+          _push(`<div class="${ssrRenderClass([msg.sender_id === unref(auth).user.id ? "chat-bubble--mine" : "chat-bubble--theirs", "chat-bubble"])}" data-v-0082b792><p class="chat-bubble-text" data-v-0082b792>${ssrInterpolate(msg.message)}</p><div class="chat-bubble-meta" data-v-0082b792><span class="${ssrRenderClass([
+            msg.sender_id === unref(auth).user.id ? "text-white/60" : "text-slate-500 dark:text-slate-400",
+            "chat-bubble-time"
+          ])}" data-v-0082b792>${ssrInterpolate(formatTime(msg.created_at))}</span>`);
           if (msg.sender_id === unref(auth).user.id) {
             _push(`<!--[-->`);
             if (msg.status === "sending") {
-              _push(ssrRenderComponent(unref(Clock), { class: "w-3 h-3 text-white/50 animate-spin" }, null, _parent));
+              _push(ssrRenderComponent(unref(Clock), { class: "h-3 w-3 animate-spin text-white/50" }, null, _parent));
             } else if (msg.read_at) {
-              _push(ssrRenderComponent(unref(CheckCheck), { class: "w-3.5 h-3.5 text-blue-300" }, null, _parent));
+              _push(ssrRenderComponent(unref(CheckCheck), { class: "h-3.5 w-3.5 text-blue-300" }, null, _parent));
             } else if (msg.status === "error") {
-              _push(ssrRenderComponent(unref(AlertTriangle), { class: "w-3.5 h-3.5 text-red-400" }, null, _parent));
+              _push(ssrRenderComponent(unref(AlertTriangle), { class: "h-3.5 w-3.5 text-red-400" }, null, _parent));
             } else {
-              _push(ssrRenderComponent(unref(CheckCheck), { class: "w-3.5 h-3.5 text-white/50" }, null, _parent));
+              _push(ssrRenderComponent(unref(CheckCheck), { class: "h-3.5 w-3.5 text-white/50" }, null, _parent));
             }
             _push(`<!--]-->`);
           } else {
@@ -311,22 +332,22 @@ const _sfc_main = {
       });
       _push(`<!--]-->`);
       if (isTyping.value) {
-        _push(`<div class="chat-msg-row justify-start" data-v-9007ce65><div class="chat-bubble chat-bubble--theirs" data-v-9007ce65><div class="typing-indicator" data-v-9007ce65><span data-v-9007ce65></span><span data-v-9007ce65></span><span data-v-9007ce65></span></div></div></div>`);
+        _push(`<div class="chat-msg-row justify-start" data-v-0082b792><div class="chat-bubble chat-bubble--theirs" data-v-0082b792><div class="typing-indicator" data-v-0082b792><span data-v-0082b792></span><span data-v-0082b792></span><span data-v-0082b792></span></div></div></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`<div class="h-px" data-v-9007ce65></div></div></main><footer class="chat-input-bar" data-v-9007ce65><div class="chat-input-inner" data-v-9007ce65><input type="file" class="hidden" accept="image/*" data-v-9007ce65><button type="button" class="chat-input-attach" data-v-9007ce65>`);
-      _push(ssrRenderComponent(unref(ImageIcon), { class: "w-5 h-5" }, null, _parent));
-      _push(`</button><div class="chat-input-field-wrap" data-v-9007ce65><textarea class="chat-input-field" placeholder="Ketik pesan..." rows="1" data-v-9007ce65>${ssrInterpolate(newMessage.value)}</textarea></div><button${ssrIncludeBooleanAttr(!newMessage.value.trim()) ? " disabled" : ""} class="${ssrRenderClass([newMessage.value.trim() ? "chat-send-btn--active" : "chat-send-btn--disabled", "chat-send-btn"])}" data-v-9007ce65>`);
-      _push(ssrRenderComponent(unref(Send), { class: "w-5 h-5" }, null, _parent));
+      _push(`<div class="h-px" data-v-0082b792></div></div></main><footer class="chat-input-bar" data-v-0082b792><div class="chat-input-inner" data-v-0082b792><input type="file" class="hidden" accept="image/*" data-v-0082b792><button type="button" class="chat-input-attach" data-v-0082b792>`);
+      _push(ssrRenderComponent(unref(ImageIcon), { class: "h-5 w-5" }, null, _parent));
+      _push(`</button><div class="chat-input-field-wrap" data-v-0082b792><textarea class="chat-input-field" placeholder="Ketik pesan..." rows="1" data-v-0082b792>${ssrInterpolate(newMessage.value)}</textarea></div><button${ssrIncludeBooleanAttr(!newMessage.value.trim()) ? " disabled" : ""} class="${ssrRenderClass([newMessage.value.trim() ? "chat-send-btn--active" : "chat-send-btn--disabled", "chat-send-btn"])}" data-v-0082b792>`);
+      _push(ssrRenderComponent(unref(Send), { class: "h-5 w-5" }, null, _parent));
       _push(`</button></div></footer>`);
       ssrRenderTeleport(_push, (_push2) => {
         if (lightboxUrl.value) {
-          _push2(`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md" data-v-9007ce65><div class="absolute top-0 inset-x-0 flex items-center justify-between px-4 py-4" data-v-9007ce65><button class="p-2.5 rounded-full bg-white/10 text-white hover:bg-white/20 active:scale-90 transition-all" data-v-9007ce65>`);
-          _push2(ssrRenderComponent(unref(X), { class: "w-5 h-5" }, null, _parent));
-          _push2(`</button><button class="p-2.5 rounded-full bg-white/10 text-white hover:bg-white/20 active:scale-90 transition-all" data-v-9007ce65>`);
-          _push2(ssrRenderComponent(unref(Download), { class: "w-5 h-5" }, null, _parent));
-          _push2(`</button></div><img${ssrRenderAttr("src", lightboxUrl.value)} class="max-w-[95vw] max-h-[88vh] object-contain rounded-lg shadow-2xl" data-v-9007ce65></div>`);
+          _push2(`<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md" data-v-0082b792><div class="absolute inset-x-0 top-0 flex items-center justify-between px-4 py-4" data-v-0082b792><button class="rounded-full bg-white/10 p-2.5 text-white transition-all hover:bg-white/20 active:scale-90" data-v-0082b792>`);
+          _push2(ssrRenderComponent(unref(X), { class: "h-5 w-5" }, null, _parent));
+          _push2(`</button><button class="rounded-full bg-white/10 p-2.5 text-white transition-all hover:bg-white/20 active:scale-90" data-v-0082b792>`);
+          _push2(ssrRenderComponent(unref(Download), { class: "h-5 w-5" }, null, _parent));
+          _push2(`</button></div><img${ssrRenderAttr("src", lightboxUrl.value)} class="max-h-[88vh] max-w-[95vw] rounded-lg object-contain shadow-2xl" data-v-0082b792></div>`);
         } else {
           _push2(`<!---->`);
         }
@@ -341,7 +362,7 @@ _sfc_main.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("resources/js/Pages/Chat/Show.vue");
   return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
 };
-const Show = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-9007ce65"]]);
+const Show = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-0082b792"]]);
 export {
   Show as default
 };

@@ -1,8 +1,8 @@
 import { ref, mergeProps, withCtx, createTextVNode, unref, createVNode, withKeys, useSSRContext } from "vue";
 import { ssrRenderAttrs, ssrRenderComponent } from "vue/server-renderer";
-import { _ as _sfc_main$1, a as _sfc_main$6 } from "./DangerButton-Cmx7G8Fd.js";
-import { _ as _sfc_main$3, a as _sfc_main$4, b as _sfc_main$5 } from "./TextInput-ivY_q2i2.js";
-import { _ as _sfc_main$2 } from "./Modal-Cw8mmzBN.js";
+import { _ as _sfc_main$1, a as _sfc_main$6 } from "./DangerButton-COhGmvyd.js";
+import { _ as _sfc_main$3, a as _sfc_main$4, b as _sfc_main$5 } from "./TextInput-C__yGyCx.js";
+import { _ as _sfc_main$2 } from "./Modal-C0YBTj_6.js";
 import { useForm } from "@inertiajs/vue3";
 const _sfc_main = {
   __name: "DeleteUserForm",
@@ -29,7 +29,7 @@ const _sfc_main = {
       form.reset();
     };
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<section${ssrRenderAttrs(mergeProps({ class: "space-y-6" }, _attrs))}><header><h2 class="text-lg font-medium text-foreground">Hapus Akun</h2><p class="mt-1 text-sm text-muted-foreground">Setelah akun Anda dihapus, semua sumber daya dan datanya akan dihapus secara permanen. Sebelum menghapus akun Anda, harap unduh data atau informasi apa pun yang ingin Anda simpan.</p></header>`);
+      _push(`<section${ssrRenderAttrs(mergeProps({ class: "space-y-6" }, _attrs))}><header><h2 class="text-lg font-medium text-foreground">Hapus Akun</h2><p class="mt-1 text-sm text-muted-foreground"> Setelah akun Anda dihapus, semua sumber daya dan datanya akan dihapus secara permanen. Sebelum menghapus akun Anda, harap unduh data atau informasi apa pun yang ingin Anda simpan. </p></header>`);
       _push(ssrRenderComponent(_sfc_main$1, { onClick: confirmUserDeletion }, {
         default: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
@@ -48,7 +48,7 @@ const _sfc_main = {
       }, {
         default: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<div class="p-6"${_scopeId}><h2 class="text-lg font-medium text-foreground"${_scopeId}>Apakah Anda yakin ingin menghapus akun Anda?</h2><p class="mt-1 text-sm text-muted-foreground"${_scopeId}>Setelah akun Anda dihapus, semua sumber daya dan datanya akan dihapus secara permanen. Masukkan kata sandi Anda untuk mengonfirmasi bahwa Anda ingin menghapus akun Anda secara permanen.</p><div class="mt-6"${_scopeId}>`);
+            _push2(`<div class="p-6"${_scopeId}><h2 class="text-lg font-medium text-foreground"${_scopeId}> Apakah Anda yakin ingin menghapus akun Anda? </h2><p class="mt-1 text-sm text-muted-foreground"${_scopeId}> Setelah akun Anda dihapus, semua sumber daya dan datanya akan dihapus secara permanen. Masukkan kata sandi Anda untuk mengonfirmasi bahwa Anda ingin menghapus akun Anda secara permanen. </p><div class="mt-6"${_scopeId}>`);
             _push2(ssrRenderComponent(_sfc_main$3, {
               for: "password",
               value: "Password",
@@ -102,8 +102,8 @@ const _sfc_main = {
           } else {
             return [
               createVNode("div", { class: "p-6" }, [
-                createVNode("h2", { class: "text-lg font-medium text-foreground" }, "Apakah Anda yakin ingin menghapus akun Anda?"),
-                createVNode("p", { class: "mt-1 text-sm text-muted-foreground" }, "Setelah akun Anda dihapus, semua sumber daya dan datanya akan dihapus secara permanen. Masukkan kata sandi Anda untuk mengonfirmasi bahwa Anda ingin menghapus akun Anda secara permanen."),
+                createVNode("h2", { class: "text-lg font-medium text-foreground" }, " Apakah Anda yakin ingin menghapus akun Anda? "),
+                createVNode("p", { class: "mt-1 text-sm text-muted-foreground" }, " Setelah akun Anda dihapus, semua sumber daya dan datanya akan dihapus secara permanen. Masukkan kata sandi Anda untuk mengonfirmasi bahwa Anda ingin menghapus akun Anda secara permanen. "),
                 createVNode("div", { class: "mt-6" }, [
                   createVNode(_sfc_main$3, {
                     for: "password",

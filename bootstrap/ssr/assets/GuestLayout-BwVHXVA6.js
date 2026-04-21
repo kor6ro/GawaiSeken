@@ -11,14 +11,14 @@ const _sfc_main = {
       isDark.value = document.documentElement.classList.contains("dark");
     });
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<div${ssrRenderAttrs(mergeProps({ class: "min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-background text-foreground transition-colors duration-300 font-sans antialiased" }, _attrs))}><div class="w-full sm:max-w-md mt-6 px-6 py-8 bg-card text-card-foreground border border-border shadow-xl sm:rounded-3xl"><div class="flex justify-center mb-8">`);
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "flex min-h-screen flex-col items-center bg-background pt-6 font-sans text-foreground antialiased transition-colors duration-300 sm:justify-center sm:pt-0" }, _attrs))}><div class="mt-6 w-full border border-border bg-card px-6 py-8 text-card-foreground shadow-xl sm:max-w-md sm:rounded-3xl"><div class="mb-8 flex justify-center">`);
       _push(ssrRenderComponent(unref(Link), { href: "/" }, {
         default: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(ssrRenderComponent(_sfc_main$1, { class: "w-32 h-auto text-primary" }, null, _parent2, _scopeId));
+            _push2(ssrRenderComponent(_sfc_main$1, { class: "h-auto w-32 text-primary" }, null, _parent2, _scopeId));
           } else {
             return [
-              createVNode(_sfc_main$1, { class: "w-32 h-auto text-primary" })
+              createVNode(_sfc_main$1, { class: "h-auto w-32 text-primary" })
             ];
           }
         }),
@@ -26,7 +26,7 @@ const _sfc_main = {
       }, _parent));
       _push(`</div>`);
       ssrRenderSlot(_ctx.$slots, "default", {}, null, _push, _parent);
-      _push(`</div><div class="mt-8"><button class="text-xs font-medium text-muted-foreground hover:text-foreground hover:underline transition-colors">`);
+      _push(`</div><div class="mt-8"><button class="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline">`);
       if (!isDark.value) {
         _push(`<span>Mode Gelap</span>`);
       } else {
