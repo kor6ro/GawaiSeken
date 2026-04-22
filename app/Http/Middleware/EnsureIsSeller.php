@@ -18,7 +18,7 @@ class EnsureIsSeller
             return $next($request);
         }
 
-        // Jika bukan seller, kembalikan ke home dengan pesan error
-        return redirect('/')->with('error', 'Anda tidak memiliki akses ke halaman penjual.');
+        // Jika bukan seller, kembalikan ke home tanpa pesan error
+        return redirect('/');
     }
 }

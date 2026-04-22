@@ -31,7 +31,8 @@ class StoreController extends Controller
                         ->withAvg('reviewsAsSeller', 'rating');
                 },
             ])
-            ->where('status', 'available')
+            ->where('availability', 'available')
+            ->where('status', 'active')
             ->latest()
             ->paginate($perPage);
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
@@ -8,6 +9,21 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StoreController;
 use App\Models\Product;
 use Illuminate\Support\Facades\Route;
+
+Route::post('/midtrans/callback', [\App\Http\Controllers\TransactionController::class, 'callback'])->name('midtrans.callback');
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/products', [AdminController::class, 'products'])->name('products.index');
+    Route::post('/products/{product}/status', [AdminController::class, 'updateProductStatus'])->name('products.update-status');
+    Route::post('/verifications/{verification}/approve', [AdminController::class, 'approveVerification'])->name('verifications.approve');
+    Route::post('/verifications/{verification}/reject', [AdminController::class, 'rejectVerification'])->name('verifications.reject');
+
+    // Dispute Management
+    Route::get('/disputes', [AdminController::class, 'disputes'])->name('disputes.index');
+    Route::get('/disputes/{dispute}', [AdminController::class, 'showDispute'])->name('disputes.show');
+    Route::post('/disputes/{dispute}/resolve', [AdminController::class, 'resolveDispute'])->name('disputes.resolve');
+});
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -26,6 +42,10 @@ Route::middleware('auth')->group(function () {
     // Route baru untuk update profil toko (Nama Toko, Bio, Avatar)
     Route::patch('/store/settings', [StoreController::class, 'update'])->name('store.update');
 
+    // --- FITUR VERIFIKASI SELLER (KYC) ---
+    Route::get('/seller/verify', [\App\Http\Controllers\SellerVerificationController::class, 'create'])->name('seller.verification.create');
+    Route::post('/seller/verify', [\App\Http\Controllers\SellerVerificationController::class, 'store'])->name('seller.verification.store');
+
     // --- FITUR PRODUK & CHAT ---
     Route::get('/gsmarena/search', [ProductController::class, 'searchGsmArena'])->name('gsmarena.search');
     Route::get('/gsmarena/details', [ProductController::class, 'getGsmArenaDetails'])->name('gsmarena.details');
@@ -43,6 +63,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/chats/{chat}/image', [ChatController::class, 'storeImage'])->name('chat.image');
     Route::post('/chats/{chat}/read', [ChatController::class, 'markAsRead'])->name('chat.read');
     Route::post('/chat/initiate/{product}', [ChatController::class, 'initiate'])->name('chat.initiate');
+
+    // --- TRANSACTION & DISPUTE ---
+    Route::post('/products/{product}/checkout', [\App\Http\Controllers\TransactionController::class, 'checkout'])->name('transactions.checkout');
+    Route::get('/profile/orders', [\App\Http\Controllers\TransactionController::class, 'orders'])->name('profile.orders');
+    Route::post('/transactions/{transaction}/status', [\App\Http\Controllers\TransactionController::class, 'updateStatus'])->name('transactions.update-status');
+    Route::post('/transactions/{transaction}/repay', [\App\Http\Controllers\TransactionController::class, 'repay'])->name('transactions.repay');
+    Route::post('/transactions/{transaction}/dispute', [\App\Http\Controllers\TransactionController::class, 'storeDispute'])->name('transactions.dispute');
 });
 
 // --- PUBLIC PRODUCT DETAIL (Moved here to avoid conflict with /products/create) ---

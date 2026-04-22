@@ -19,6 +19,8 @@ class UserProfile extends Model
         'city',
         'is_ktp_verified',
         'bio',
+        'date_of_birth',
+        'gender',
     ];
 
     protected $casts = [

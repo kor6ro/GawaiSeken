@@ -60,7 +60,8 @@ class ProductController extends Controller
                 'reference_url' => $reference_url,
                 'description' => $request->description,
                 'price' => $request->price,
-                'status' => 'available',
+                'availability' => 'available',
+                'status' => 'pending',
                 'specifications' => $request->specifications,
             ]);
 
@@ -119,6 +120,12 @@ class ProductController extends Controller
             // Auto-generate title
             $title = trim($request->brand.' '.$request->type);
 
+            // Auto-pend jika judul atau deskripsi berubah
+            $newStatus = $product->status;
+            if ($product->title !== $title || $product->description !== $request->description) {
+                $newStatus = 'pending';
+            }
+
             // 1. Update Data Teks
             $product->update([
                 'title' => $title,
@@ -130,7 +137,8 @@ class ProductController extends Controller
                 'reference_url' => $reference_url,
                 'price' => $request->price,
                 'description' => $request->description,
-                'status' => $request->status,
+                'availability' => $request->availability,
+                'status' => $newStatus,
                 'specifications' => $request->specifications,
             ]);
 
@@ -174,6 +182,13 @@ class ProductController extends Controller
 
     public function show(Product $product): Response
     {
+        // Hanya tampilkan produk aktif ke publik, kecuali pemilik atau admin
+        if ($product->status !== 'active' && 
+            (!Auth::check() || (Auth::id() !== $product->user_id && !Auth::user()->isAdmin()))
+        ) {
+            abort(404, 'Produk sedang dalam moderasi atau tidak tersedia.');
+        }
+
         // Pastikan load relasi store/toko agar bisa menampilkan info penjual
         $product->load(['store.profile', 'images', 'category']);
 
@@ -332,10 +347,10 @@ class ProductController extends Controller
     {
         Gate::authorize('update', $product);
 
-        $newStatus = $product->status === 'available' ? 'sold' : 'available';
-        $product->update(['status' => $newStatus]);
+        $newAvailability = $product->availability === 'available' ? 'sold' : 'available';
+        $product->update(['availability' => $newAvailability]);
 
-        return back()->with('status', 'Status produk berhasil diperbarui.');
+        return back()->with('status', 'Status ketersediaan produk berhasil diperbarui.');
     }
 
     public function report(Request $request, Product $product)

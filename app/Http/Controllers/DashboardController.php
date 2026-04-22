@@ -15,9 +15,10 @@ class DashboardController extends Controller
     {
         $user = Auth::user()->load('profile');
 
-        // Data 1: Produk Aktif
+        // Data 1: Produk Aktif (Available & Approved)
         $productsCount = Product::where('user_id', $user->id)
-            ->where('status', 'available')
+            ->where('availability', 'available')
+            ->where('status', 'active')
             ->count();
 
         // Data 2: Barang Terjual
@@ -47,14 +48,20 @@ class DashboardController extends Controller
         $myProducts = Product::where('user_id', $user->id)
             ->with(['category', 'images', 'store'])
             ->latest()
-            ->paginate($perPage); // Tampilkan genap di mobile, 10 di desktop
+            ->paginate($perPage, ['*'], 'products');
 
-        return Inertia::render('Dashboard', compact(
-            'user',
-            'productsCount',
-            'transactionsCount',
-            'unreadMessagesCount',
-            'myProducts'
-        ));
+        $transactions = Transaction::where('seller_id', $user->id)
+            ->with(['product.images', 'buyer.profile', 'dispute'])
+            ->latest()
+            ->paginate($perPage, ['*'], 'transactions');
+
+        return Inertia::render('Dashboard', [
+            'user' => $user,
+            'productsCount' => $productsCount,
+            'transactionsCount' => $transactionsCount,
+            'unreadMessagesCount' => $unreadMessagesCount,
+            'myProducts' => $myProducts,
+            'transactions' => $transactions
+        ]);
     }
 }

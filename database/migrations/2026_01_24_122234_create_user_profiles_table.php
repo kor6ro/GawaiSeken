@@ -23,6 +23,8 @@ return new class extends Migration
             $table->string('city')->nullable();
             $table->boolean('is_ktp_verified')->default(false);
             $table->text('bio')->nullable();
+            $table->date('date_of_birth')->nullable();
+            $table->enum('gender', ['male', 'female', 'other'])->nullable();
 
             $table->timestamps();
         });

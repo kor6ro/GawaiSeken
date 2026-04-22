@@ -17,6 +17,7 @@ import {
   X,
   Flag,
   AlertTriangle,
+  Heart,
 } from 'lucide-vue-next'
 import Modal from '@/Components/Modal.vue'
 
@@ -317,16 +318,26 @@ const specifications = computed(() => {
 
                   <div v-if="auth.user">
                     <div class="flex gap-4">
-                      <Link
-                        v-if="auth.user.id !== product.user_id"
-                        :href="route('chat.initiate', product.slug)"
-                        method="post"
-                        as="button"
-                        class="flex flex-1 transform items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-black text-primary-foreground shadow-xl transition-all duration-300 hover:bg-primary/90 active:scale-95"
-                      >
-                        <MessageCircle class="h-5 w-5" />
-                        Chat Penjual
-                      </Link>
+                      <div v-if="auth.user.id !== product.user_id" class="flex flex-col gap-3 flex-1">
+                        <Link
+                          :href="route('transactions.checkout', product.slug)"
+                          method="post"
+                          as="button"
+                          class="flex w-full transform items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-black text-primary-foreground shadow-xl transition-all duration-300 hover:bg-primary/90 active:scale-95"
+                        >
+                          <ShoppingCart class="h-5 w-5" />
+                          Beli Sekarang
+                        </Link>
+                        <Link
+                          :href="route('chat.initiate', product.slug)"
+                          method="post"
+                          as="button"
+                          class="flex w-full transform items-center justify-center gap-2 rounded-2xl border-2 border-primary/20 bg-primary/5 py-4 text-sm font-black text-primary transition-all duration-300 hover:bg-primary/10 active:scale-95"
+                        >
+                          <MessageCircle class="h-5 w-5" />
+                          Chat Penjual
+                        </Link>
+                      </div>
                       <Link
                         v-else
                         :href="route('products.edit', product.slug)"
@@ -347,7 +358,7 @@ const specifications = computed(() => {
                         "
                       >
                         <X v-if="isFavorited" class="h-6 w-6" />
-                        <ShoppingCart v-else class="h-6 w-6" />
+                        <Heart v-else class="h-6 w-6" />
                       </button>
                     </div>
 

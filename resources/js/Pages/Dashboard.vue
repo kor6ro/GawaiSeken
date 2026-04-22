@@ -18,6 +18,7 @@ import {
   CheckCircle,
   Circle,
   Activity,
+  AlertTriangle,
 } from 'lucide-vue-next'
 import { router } from '@inertiajs/vue3'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
@@ -37,6 +38,7 @@ const props = defineProps({
   transactionsCount: Number,
   unreadMessagesCount: Number,
   myProducts: Object,
+  transactions: Object,
 })
 
 const tab = ref('overview')
@@ -188,6 +190,26 @@ const updateStoreSettings = () => {
       preserveScroll: true,
     })
 }
+
+const selectedDispute = ref(null)
+const showDisputeModal = ref(false)
+
+const openDisputeDetail = (transaction) => {
+  selectedDispute.value = transaction.dispute
+  showDisputeModal.value = true
+}
+
+const getStatusLabel = (status) => {
+  switch (status) {
+    case 'pending': return 'Menunggu Pembayaran'
+    case 'paid': return 'Dibayar'
+    case 'shipped': return 'Dikirim'
+    case 'completed': return 'Selesai'
+    case 'disputed': return 'Komplain'
+    case 'canceled': return 'Dibatalkan'
+    default: return status
+  }
+}
 </script>
 
 <template>
@@ -213,6 +235,18 @@ const updateStoreSettings = () => {
           >
             <LayoutDashboard class="h-4 w-4" />
             Ringkasan
+          </button>
+          <button
+            @click="tab = 'transactions'"
+            :class="
+              tab === 'transactions'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            "
+            class="flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-bold transition-all duration-200 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+          >
+            <ShoppingBag class="h-4 w-4" />
+            Pesanan
           </button>
           <button
             @click="tab = 'settings'"
@@ -485,7 +519,112 @@ const updateStoreSettings = () => {
           </div>
         </div>
 
-        <!-- TAB 2: SETTINGS -->
+        <!-- TAB 2: TRANSACTIONS (PESANAN) -->
+        <div v-show="tab === 'transactions'" class="transition-all duration-300">
+          <div
+            class="border border-border bg-card p-4 text-card-foreground shadow-sm sm:rounded-lg sm:p-8"
+          >
+            <div class="mb-6">
+              <h3 class="text-lg font-bold">Pesanan Masuk</h3>
+              <p class="text-sm text-muted-foreground">Kelola transaksi penjualan Anda.</p>
+            </div>
+
+            <div class="overflow-hidden border border-border shadow-sm sm:rounded-lg">
+              <table class="w-full text-left text-sm">
+                <thead class="border-b border-border bg-muted text-xs uppercase text-muted-foreground">
+                  <tr>
+                    <th scope="col" class="px-6 py-4 font-semibold">Transaksi</th>
+                    <th scope="col" class="px-6 py-4 font-semibold">Pembeli</th>
+                    <th scope="col" class="px-6 py-4 font-semibold">Total</th>
+                    <th scope="col" class="px-6 py-4 text-center font-semibold">Status</th>
+                    <th scope="col" class="px-6 py-4 text-right font-semibold">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-border">
+                  <tr v-for="order in transactions.data" :key="order.id" class="bg-card transition-colors hover:bg-muted">
+                    <td class="px-6 py-4">
+                      <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md border border-border bg-muted">
+                          <img v-if="order.product.images?.length > 0" :src="`/storage/${order.product.images[0].image_path}`" class="h-full w-full object-cover" />
+                        </div>
+                        <div>
+                          <div class="font-bold">#{{ order.reference_number }}</div>
+                          <div class="text-[10px] text-muted-foreground truncate max-w-[150px]">{{ order.product.title }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="text-sm font-medium">{{ order.buyer.name }}</div>
+                      <div class="text-[10px] text-muted-foreground">{{ order.buyer.email }}</div>
+                    </td>
+                    <td class="px-6 py-4 font-bold">
+                      Rp {{ new Intl.NumberFormat('id-ID').format(order.price) }}
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <span 
+                        class="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full border"
+                        :class="{
+                          'border-amber-200 bg-amber-50 text-amber-700': order.status === 'pending',
+                          'border-blue-200 bg-blue-50 text-blue-700': order.status === 'paid',
+                          'border-purple-200 bg-purple-50 text-purple-700': order.status === 'shipped',
+                          'border-emerald-200 bg-emerald-50 text-emerald-700': order.status === 'completed',
+                          'border-red-200 bg-red-50 text-red-700': order.status === 'disputed',
+                          'border-slate-200 bg-slate-50 text-slate-700': order.status === 'canceled',
+                        }"
+                      >
+                        {{ getStatusLabel(order.status) }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                      <div class="flex items-center justify-end gap-2">
+                        <button 
+                          v-if="order.status === 'pending'"
+                          @click="router.post(route('transactions.update-status', order.id), { status: 'paid' })"
+                          class="inline-flex items-center gap-1 px-3 py-1 bg-blue-500 text-white text-[10px] font-bold rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                          Tandai Dibayar
+                        </button>
+                        <button 
+                          v-if="order.status === 'paid'"
+                          @click="router.post(route('transactions.update-status', order.id), { status: 'shipped' })"
+                          class="inline-flex items-center gap-1 px-3 py-1 bg-purple-500 text-white text-[10px] font-bold rounded-lg hover:bg-purple-600 transition-colors"
+                        >
+                          Tandai Dikirim
+                        </button>
+                        <button 
+                          v-if="order.status === 'shipped'"
+                          @click="router.post(route('transactions.update-status', order.id), { status: 'completed' })"
+                          class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded-lg hover:bg-emerald-600 transition-colors"
+                        >
+                          Selesaikan
+                        </button>
+                        <button 
+                          v-if="order.status === 'disputed'"
+                          @click="openDisputeDetail(order)"
+                          class="inline-flex items-center gap-1 text-xs font-bold text-red-500 hover:underline"
+                        >
+                          <AlertTriangle class="h-3 w-3" />
+                          Detail Komplain
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-if="transactions.data.length === 0">
+                    <td colspan="5" class="px-6 py-12 text-center text-muted-foreground">
+                      Belum ada transaksi masuk.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mt-6">
+              <Pagination :links="transactions.links" />
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: SETTINGS -->
         <div v-show="tab === 'settings'" class="transition-all duration-300">
           <div
             class="border border-border bg-card p-4 text-card-foreground shadow-sm sm:rounded-lg sm:p-8"
@@ -751,6 +890,64 @@ const updateStoreSettings = () => {
               >
                 Ya, Hapus
               </DangerButton>
+            </div>
+          </div>
+        </Modal>
+
+        <!-- Dispute Detail Modal (Seller) -->
+        <Modal :show="showDisputeModal" @close="showDisputeModal = false" maxWidth="2xl">
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-6 border-b border-border pb-4">
+              <h3 class="text-xl font-bold flex items-center gap-2">
+                <AlertTriangle class="text-red-500 h-6 w-6" />
+                Detail Komplain Pembeli
+              </h3>
+              <button @click="showDisputeModal = false" class="text-muted-foreground hover:text-foreground">
+                <X class="h-6 w-6" />
+              </button>
+            </div>
+
+            <div v-if="selectedDispute" class="space-y-6">
+              <div class="bg-muted/50 p-4 rounded-xl border border-border">
+                <p class="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Alasan</p>
+                <p class="text-base font-bold text-foreground">
+                  {{ 
+                    selectedDispute.reason === 'not_delivered' ? 'Barang Belum Sampai' :
+                    selectedDispute.reason === 'not_as_described' ? 'Barang Tidak Sesuai Deskripsi' :
+                    selectedDispute.reason === 'damaged' ? 'Barang Rusak / Cacat' : 'Lainnya'
+                  }}
+                </p>
+              </div>
+
+              <div>
+                <p class="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Deskripsi Masalah</p>
+                <p class="text-sm leading-relaxed text-foreground whitespace-pre-line">{{ selectedDispute.description }}</p>
+              </div>
+
+              <div v-if="selectedDispute.evidence_images?.length > 0">
+                <p class="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Foto Bukti</p>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <a 
+                    v-for="(img, idx) in selectedDispute.evidence_images" 
+                    :key="idx" 
+                    :href="`/storage/${img}`" 
+                    target="_blank"
+                    class="aspect-square rounded-xl border border-border overflow-hidden hover:opacity-80 transition-opacity"
+                  >
+                    <img :src="`/storage/${img}`" class="h-full w-full object-cover" />
+                  </a>
+                </div>
+              </div>
+
+              <div class="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-200 dark:border-amber-800">
+                <p class="text-sm text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
+                  <strong>Catatan:</strong> Status transaksi telah berubah menjadi <strong>Disputed</strong>. Admin akan meninjau bukti yang ada dan memberikan keputusan segera. Dana Anda tertahan sementara di sistem.
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-8 flex justify-end border-t border-border pt-4">
+              <SecondaryButton @click="showDisputeModal = false">Tutup</SecondaryButton>
             </div>
           </div>
         </Modal>

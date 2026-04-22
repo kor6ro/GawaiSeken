@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\ResetPasswordNotification;
+
 
 class User extends Authenticatable
 {
@@ -47,6 +49,24 @@ class User extends Authenticatable
     }
 
     /**
+     * Helper to check user roles.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isSeller(): bool
+    {
+        return $this->role === 'seller';
+    }
+
+    public function isBuyer(): bool
+    {
+        return $this->role === 'buyer';
+    }
+
+    /**
      * Helper to check if a product is favorited.
      */
     public function isFavorite($productId): bool
@@ -60,6 +80,14 @@ class User extends Authenticatable
     public function profile(): HasOne
     {
         return $this->hasOne(UserProfile::class);
+    }
+
+    /**
+     * Relasi ke verifikasi seller.
+     */
+    public function sellerVerification(): HasOne
+    {
+        return $this->hasOne(SellerVerification::class);
     }
 
     /**
@@ -104,5 +132,33 @@ class User extends Authenticatable
         }
 
         return $this->transactionsAsSeller()->where('status', 'completed')->count() >= 5;
+    }
+
+    /**
+     * Send the email verification notification.
+     *
+     * @return void
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        $this->forceFill([
+            'verification_code' => $code,
+            'verification_code_expires_at' => now()->addMinutes(10),
+        ])->save();
+
+        $this->notify(new \App\Notifications\VerifyEmailCodeNotification($code));
+    }
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }

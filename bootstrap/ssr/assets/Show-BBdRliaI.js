@@ -1,0 +1,630 @@
+import { ref, computed, withCtx, unref, createVNode, createTextVNode, toDisplayString, createBlock, createCommentVNode, openBlock, Fragment, renderList, useSSRContext } from "vue";
+import { ssrRenderComponent, ssrInterpolate, ssrRenderAttr, ssrRenderList, ssrRenderClass } from "vue/server-renderer";
+import { usePage, Head, Link, router } from "@inertiajs/vue3";
+import { _ as _sfc_main$1 } from "./AppLayout-BDlcmPtd.js";
+import { Home, ChevronRight, ExternalLink, Globe, ArrowRight, ShieldCheck, MapPin, Store, ShoppingCart, MessageCircle, Edit3, X, Heart, Flag, AlertTriangle } from "lucide-vue-next";
+import { _ as _sfc_main$2 } from "./Modal-C0YBTj_6.js";
+import "./ApplicationLogo-5BXBKbkR.js";
+import "lodash/debounce.js";
+import "lodash/pickBy.js";
+import "./onlineState-BAtS9nBF.js";
+const _sfc_main = {
+  __name: "Show",
+  __ssrInlineRender: true,
+  props: {
+    product: Object
+  },
+  setup(__props) {
+    const props = __props;
+    const activeImage = ref(
+      props.product.images.length > 0 ? `/storage/${props.product.images[0].image_path}` : "/images/placeholder-product.png"
+    );
+    const showRemoveModal = ref(false);
+    const auth = usePage().props.auth;
+    const isFavorited = computed(() => {
+      var _a, _b;
+      return (_b = (_a = auth.user) == null ? void 0 : _a.favorites) == null ? void 0 : _b.includes(props.product.id);
+    });
+    const toggleFavorite = () => {
+      if (!auth.user) {
+        router.get(route("login"));
+        return;
+      }
+      if (isFavorited.value) {
+        showRemoveModal.value = true;
+      } else {
+        submitToggle();
+      }
+    };
+    const submitToggle = () => {
+      showRemoveModal.value = false;
+      router.post(
+        route("products.toggle-favorite", props.product.id),
+        {},
+        {
+          preserveScroll: true
+        }
+      );
+    };
+    const reportProduct = () => {
+      if (!auth.user) {
+        router.get(route("login"));
+        return;
+      }
+      const reason = prompt("Alasan melaporkan produk ini?");
+      if (reason) {
+        router.post(
+          route("products.report", props.product.id),
+          { reason },
+          {
+            preserveScroll: true
+          }
+        );
+      }
+    };
+    computed(() => {
+      return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0
+      }).format(props.product.price);
+    });
+    const specifications = computed(() => {
+      if (!props.product.specifications) return [];
+      return Object.entries(props.product.specifications).filter(([key, value]) => value !== null && value !== "").map(([key, value]) => ({
+        label: key.replace(/_/g, " "),
+        value
+      }));
+    });
+    return (_ctx, _push, _parent, _attrs) => {
+      _push(ssrRenderComponent(_sfc_main$1, _attrs, {
+        default: withCtx((_, _push2, _parent2, _scopeId) => {
+          var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D;
+          if (_push2) {
+            _push2(ssrRenderComponent(unref(Head), {
+              title: __props.product.title
+            }, null, _parent2, _scopeId));
+            _push2(`<div class="min-h-screen bg-background py-12"${_scopeId}><div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"${_scopeId}><nav class="mb-8 flex text-sm font-medium" aria-label="Breadcrumb"${_scopeId}><ol class="inline-flex items-center space-x-1 md:space-x-3"${_scopeId}><li class="inline-flex items-center"${_scopeId}>`);
+            _push2(ssrRenderComponent(unref(Link), {
+              href: _ctx.route("home"),
+              class: "flex items-center text-muted-foreground transition-colors hover:text-primary"
+            }, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(ssrRenderComponent(unref(Home), { class: "mr-2 h-4 w-4" }, null, _parent3, _scopeId2));
+                  _push3(` Beranda `);
+                } else {
+                  return [
+                    createVNode(unref(Home), { class: "mr-2 h-4 w-4" }),
+                    createTextVNode(" Beranda ")
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`</li><li${_scopeId}><div class="flex items-center"${_scopeId}>`);
+            _push2(ssrRenderComponent(unref(ChevronRight), { class: "h-4 w-4 text-muted-foreground" }, null, _parent2, _scopeId));
+            _push2(`<span class="ml-1 text-muted-foreground md:ml-2"${_scopeId}>${ssrInterpolate((_a = __props.product.category) == null ? void 0 : _a.name)}</span></div></li></ol></nav><div class="grid grid-cols-1 gap-12 lg:grid-cols-12"${_scopeId}><div class="space-y-6 lg:col-span-7"${_scopeId}><div class="relative aspect-square overflow-hidden rounded-[2.5rem] border border-border bg-card shadow-2xl transition-all duration-500 hover:shadow-primary/5 md:aspect-[4/3]"${_scopeId}><img${ssrRenderAttr("src", activeImage.value)}${ssrRenderAttr("alt", __props.product.title)} loading="lazy" class="h-full w-full object-cover transition-all duration-700"${_scopeId}><div class="absolute left-6 top-6 flex flex-col gap-2"${_scopeId}>`);
+            if (__props.product.reference_url) {
+              _push2(`<div class="flex"${_scopeId}><a${ssrRenderAttr("href", __props.product.reference_url)} target="_blank" class="flex items-center gap-2 rounded-xl bg-primary/90 px-4 py-2 text-[10px] font-black uppercase tracking-wider text-primary-foreground shadow-lg backdrop-blur-md transition-all hover:bg-primary"${_scopeId}>${ssrInterpolate(__props.product.brand)} `);
+              _push2(ssrRenderComponent(unref(ExternalLink), { class: "h-3 w-3" }, null, _parent2, _scopeId));
+              _push2(`</a></div>`);
+            } else {
+              _push2(`<span class="rounded-xl bg-primary/90 px-4 py-2 text-[10px] font-black uppercase tracking-wider text-primary-foreground shadow-lg backdrop-blur-md"${_scopeId}>${ssrInterpolate(__props.product.brand)}</span>`);
+            }
+            _push2(`</div></div>`);
+            if (__props.product.images.length > 1) {
+              _push2(`<div class="grid grid-cols-4 gap-4"${_scopeId}><!--[-->`);
+              ssrRenderList(__props.product.images, (image) => {
+                _push2(`<button class="${ssrRenderClass([
+                  activeImage.value === `/storage/${image.image_path}` ? "border-primary shadow-lg" : "border-transparent opacity-70 hover:border-muted-foreground/30 hover:opacity-100",
+                  "group relative aspect-square overflow-hidden rounded-2xl border-2 transition-all duration-300"
+                ])}"${_scopeId}><img${ssrRenderAttr("src", `/storage/${image.image_path}`)} loading="lazy" class="h-full w-full object-cover transition-transform group-hover:scale-110"${_scopeId}></button>`);
+              });
+              _push2(`<!--]--></div>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            _push2(`</div><div class="lg:col-span-5"${_scopeId}><div class="sticky top-8 rounded-[2.5rem] border border-border bg-card p-8 text-card-foreground shadow-xl md:p-10"${_scopeId}><div class="mb-8"${_scopeId}><div class="mb-4 flex flex-wrap items-center gap-3"${_scopeId}><span class="rounded-full bg-muted px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground"${_scopeId}>${ssrInterpolate((_b = __props.product.category) == null ? void 0 : _b.name)}</span><span class="${ssrRenderClass([
+              __props.product.condition_badge_color === "green" ? "bg-emerald-500" : __props.product.condition_badge_color === "yellow" ? "bg-amber-500" : "bg-slate-400",
+              "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white"
+            ])}"${_scopeId}>${ssrInterpolate(__props.product.condition_label)}</span>`);
+            if (__props.product.is_cod) {
+              _push2(`<span class="rounded-full bg-blue-500 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white"${_scopeId}>COD</span>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            if (__props.product.is_negotiable) {
+              _push2(`<span class="rounded-full bg-indigo-500 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white"${_scopeId}>Bisa Nego</span>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            _push2(`</div><h1 class="mb-4 text-3xl font-black leading-tight md:text-4xl"${_scopeId}>${ssrInterpolate(__props.product.title)}</h1><div class="flex items-baseline gap-2"${_scopeId}><span class="text-4xl font-black text-primary"${_scopeId}>Rp ${ssrInterpolate(new Intl.NumberFormat("id-ID").format(__props.product.price))}</span></div></div><div class="space-y-10"${_scopeId}>`);
+            if (specifications.value.length > 0) {
+              _push2(`<div class="grid grid-cols-2 gap-4"${_scopeId}><!--[-->`);
+              ssrRenderList(specifications.value, (spec) => {
+                _push2(`<div class="group rounded-2xl border border-border bg-muted/50 p-4 transition-colors hover:bg-muted"${_scopeId}><span class="mb-1 block text-[10px] font-bold uppercase tracking-tighter text-muted-foreground"${_scopeId}>${ssrInterpolate(spec.label)}</span><span class="block text-sm font-bold"${_scopeId}>${ssrInterpolate(spec.value)}</span></div>`);
+              });
+              _push2(`<!--]--></div>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            if (__props.product.reference_url) {
+              _push2(`<a${ssrRenderAttr("href", __props.product.reference_url)} target="_blank" class="group flex w-full items-center justify-center gap-3 rounded-2xl border border-border bg-muted py-4 text-sm font-black shadow-sm transition-all hover:bg-accent"${_scopeId}>`);
+              _push2(ssrRenderComponent(unref(Globe), { class: "h-5 w-5" }, null, _parent2, _scopeId));
+              _push2(` Lihat Referensi Eksternal `);
+              _push2(ssrRenderComponent(unref(ArrowRight), { class: "h-4 w-4 transition-transform group-hover:translate-x-1" }, null, _parent2, _scopeId));
+              _push2(`</a>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            _push2(`<div${_scopeId}><h3 class="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wider text-foreground"${_scopeId}><div class="h-4 w-1.5 rounded-full bg-primary"${_scopeId}></div> Deskripsi Produk </h3><div class="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground"${_scopeId}>${ssrInterpolate(__props.product.description)}</div></div><div class="group relative overflow-hidden rounded-3xl border border-border bg-muted/30 p-6"${_scopeId}><div class="absolute -bottom-8 -right-8 h-32 w-32 rounded-full bg-primary/5 blur-3xl transition-all duration-700 group-hover:scale-150"${_scopeId}></div><div class="relative z-10 mb-6 flex items-center justify-between"${_scopeId}><div class="flex items-center gap-4"${_scopeId}><div class="relative"${_scopeId}><div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-xl font-black text-primary-foreground shadow-xl transition-transform group-hover:scale-105"${_scopeId}>${ssrInterpolate((_c = __props.product.store) == null ? void 0 : _c.name.charAt(0).toUpperCase())}</div>`);
+            if (((_e = (_d = __props.product.store) == null ? void 0 : _d.profile) == null ? void 0 : _e.is_ktp_verified) && ((_f = __props.product.store) == null ? void 0 : _f.transactions_as_seller_count) >= 5) {
+              _push2(`<div class="absolute -bottom-1 -right-1 rounded-lg border-2 border-card bg-amber-400 p-1 text-white shadow-lg ring-1 ring-amber-500/20"${_scopeId}>`);
+              _push2(ssrRenderComponent(unref(ShieldCheck), { class: "h-4 w-4" }, null, _parent2, _scopeId));
+              _push2(`</div>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            _push2(`</div><div${_scopeId}><div class="flex items-center gap-2"${_scopeId}><h4 class="text-lg font-black"${_scopeId}>${ssrInterpolate(((_h = (_g = __props.product.store) == null ? void 0 : _g.profile) == null ? void 0 : _h.store_name) ?? ((_i = __props.product.store) == null ? void 0 : _i.name))}</h4>`);
+            if (((_k = (_j = __props.product.store) == null ? void 0 : _j.profile) == null ? void 0 : _k.is_ktp_verified) && ((_l = __props.product.store) == null ? void 0 : _l.transactions_as_seller_count) >= 5) {
+              _push2(`<div class="rounded bg-amber-400/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-600"${_scopeId}> Premium Seller </div>`);
+            } else {
+              _push2(`<!---->`);
+            }
+            _push2(`</div><div class="mt-1 flex items-center text-xs text-muted-foreground"${_scopeId}>`);
+            _push2(ssrRenderComponent(unref(MapPin), { class: "mr-1 h-3 w-3" }, null, _parent2, _scopeId));
+            _push2(` ${ssrInterpolate(((_n = (_m = __props.product.store) == null ? void 0 : _m.profile) == null ? void 0 : _n.city) || "Lokasi tidak diisi")}</div></div></div>`);
+            _push2(ssrRenderComponent(unref(Link), {
+              href: _ctx.route("store.show", ((_o = __props.product.store) == null ? void 0 : _o.id) ?? __props.product.user_id),
+              class: "rounded-xl border border-border bg-card p-3 shadow-sm transition-all hover:bg-accent group-hover:border-primary/30"
+            }, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(ssrRenderComponent(unref(Store), { class: "h-5 w-5 transition-transform group-hover:scale-110" }, null, _parent3, _scopeId2));
+                } else {
+                  return [
+                    createVNode(unref(Store), { class: "h-5 w-5 transition-transform group-hover:scale-110" })
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+            _push2(`</div>`);
+            if (unref(auth).user) {
+              _push2(`<div${_scopeId}><div class="flex gap-4"${_scopeId}>`);
+              if (unref(auth).user.id !== __props.product.user_id) {
+                _push2(`<div class="flex flex-col gap-3 flex-1"${_scopeId}>`);
+                _push2(ssrRenderComponent(unref(Link), {
+                  href: _ctx.route("transactions.checkout", __props.product.slug),
+                  method: "post",
+                  as: "button",
+                  class: "flex w-full transform items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-black text-primary-foreground shadow-xl transition-all duration-300 hover:bg-primary/90 active:scale-95"
+                }, {
+                  default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                    if (_push3) {
+                      _push3(ssrRenderComponent(unref(ShoppingCart), { class: "h-5 w-5" }, null, _parent3, _scopeId2));
+                      _push3(` Beli Sekarang `);
+                    } else {
+                      return [
+                        createVNode(unref(ShoppingCart), { class: "h-5 w-5" }),
+                        createTextVNode(" Beli Sekarang ")
+                      ];
+                    }
+                  }),
+                  _: 1
+                }, _parent2, _scopeId));
+                _push2(ssrRenderComponent(unref(Link), {
+                  href: _ctx.route("chat.initiate", __props.product.slug),
+                  method: "post",
+                  as: "button",
+                  class: "flex w-full transform items-center justify-center gap-2 rounded-2xl border-2 border-primary/20 bg-primary/5 py-4 text-sm font-black text-primary transition-all duration-300 hover:bg-primary/10 active:scale-95"
+                }, {
+                  default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                    if (_push3) {
+                      _push3(ssrRenderComponent(unref(MessageCircle), { class: "h-5 w-5" }, null, _parent3, _scopeId2));
+                      _push3(` Chat Penjual `);
+                    } else {
+                      return [
+                        createVNode(unref(MessageCircle), { class: "h-5 w-5" }),
+                        createTextVNode(" Chat Penjual ")
+                      ];
+                    }
+                  }),
+                  _: 1
+                }, _parent2, _scopeId));
+                _push2(`</div>`);
+              } else {
+                _push2(ssrRenderComponent(unref(Link), {
+                  href: _ctx.route("products.edit", __props.product.slug),
+                  class: "flex flex-1 items-center justify-center gap-2 rounded-2xl bg-accent py-4 text-sm font-black text-accent-foreground shadow-xl transition-all duration-300 hover:bg-accent/80"
+                }, {
+                  default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                    if (_push3) {
+                      _push3(ssrRenderComponent(unref(Edit3), { class: "h-5 w-5" }, null, _parent3, _scopeId2));
+                      _push3(` Edit Produk `);
+                    } else {
+                      return [
+                        createVNode(unref(Edit3), { class: "h-5 w-5" }),
+                        createTextVNode(" Edit Produk ")
+                      ];
+                    }
+                  }),
+                  _: 1
+                }, _parent2, _scopeId));
+              }
+              _push2(`<button class="${ssrRenderClass([
+                isFavorited.value ? "border-rose-200 bg-rose-50 text-rose-500 hover:bg-rose-100" : "border-border bg-background text-muted-foreground hover:border-blue-200 hover:text-blue-500",
+                "flex transform items-center justify-center rounded-2xl border-2 p-4 shadow-lg transition-all duration-300 active:scale-90"
+              ])}"${_scopeId}>`);
+              if (isFavorited.value) {
+                _push2(ssrRenderComponent(unref(X), { class: "h-6 w-6" }, null, _parent2, _scopeId));
+              } else {
+                _push2(ssrRenderComponent(unref(Heart), { class: "h-6 w-6" }, null, _parent2, _scopeId));
+              }
+              _push2(`</button></div>`);
+              if (unref(auth).user.id !== __props.product.user_id) {
+                _push2(`<button class="mt-4 flex w-full items-center justify-center gap-2 py-2 text-xs font-bold text-muted-foreground transition-colors hover:text-amber-600"${_scopeId}>`);
+                _push2(ssrRenderComponent(unref(Flag), { class: "h-3.5 w-3.5" }, null, _parent2, _scopeId));
+                _push2(` Laporkan masalah pada produk ini </button>`);
+              } else {
+                _push2(`<!---->`);
+              }
+              _push2(`</div>`);
+            } else {
+              _push2(ssrRenderComponent(unref(Link), {
+                href: _ctx.route("login"),
+                class: "flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-black text-primary-foreground shadow-xl"
+              }, {
+                default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                  if (_push3) {
+                    _push3(` Login untuk Chat &amp; Keranjang `);
+                  } else {
+                    return [
+                      createTextVNode(" Login untuk Chat & Keranjang ")
+                    ];
+                  }
+                }),
+                _: 1
+              }, _parent2, _scopeId));
+            }
+            _push2(`</div></div></div></div></div></div></div>`);
+            _push2(ssrRenderComponent(_sfc_main$2, {
+              show: showRemoveModal.value,
+              onClose: ($event) => showRemoveModal.value = false,
+              maxWidth: "sm"
+            }, {
+              default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                if (_push3) {
+                  _push3(`<div class="rounded-2xl bg-white p-6 dark:bg-slate-900"${_scopeId2}><div class="mb-4 flex justify-center"${_scopeId2}><div class="rounded-full bg-red-100 p-3 text-red-500 dark:bg-red-500/20"${_scopeId2}>`);
+                  _push3(ssrRenderComponent(unref(AlertTriangle), { class: "h-8 w-8" }, null, _parent3, _scopeId2));
+                  _push3(`</div></div><h3 class="mb-2 text-center text-lg font-black text-slate-900 dark:text-white"${_scopeId2}> Hapus dari Keranjang? </h3><p class="mb-6 text-center text-sm text-slate-500 dark:text-slate-400"${_scopeId2}> Apakah Anda yakin ingin menghapus produk ini dari keranjang Anda? </p><div class="flex gap-3"${_scopeId2}><button class="flex-1 rounded-xl bg-slate-100 py-2.5 font-bold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"${_scopeId2}> Batal </button><button class="flex-1 rounded-xl bg-red-500 py-2.5 font-bold text-white shadow-lg shadow-red-500/20 transition hover:bg-red-600"${_scopeId2}> Ya, Hapus </button></div></div>`);
+                } else {
+                  return [
+                    createVNode("div", { class: "rounded-2xl bg-white p-6 dark:bg-slate-900" }, [
+                      createVNode("div", { class: "mb-4 flex justify-center" }, [
+                        createVNode("div", { class: "rounded-full bg-red-100 p-3 text-red-500 dark:bg-red-500/20" }, [
+                          createVNode(unref(AlertTriangle), { class: "h-8 w-8" })
+                        ])
+                      ]),
+                      createVNode("h3", { class: "mb-2 text-center text-lg font-black text-slate-900 dark:text-white" }, " Hapus dari Keranjang? "),
+                      createVNode("p", { class: "mb-6 text-center text-sm text-slate-500 dark:text-slate-400" }, " Apakah Anda yakin ingin menghapus produk ini dari keranjang Anda? "),
+                      createVNode("div", { class: "flex gap-3" }, [
+                        createVNode("button", {
+                          onClick: ($event) => showRemoveModal.value = false,
+                          class: "flex-1 rounded-xl bg-slate-100 py-2.5 font-bold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                        }, " Batal ", 8, ["onClick"]),
+                        createVNode("button", {
+                          onClick: submitToggle,
+                          class: "flex-1 rounded-xl bg-red-500 py-2.5 font-bold text-white shadow-lg shadow-red-500/20 transition hover:bg-red-600"
+                        }, " Ya, Hapus ")
+                      ])
+                    ])
+                  ];
+                }
+              }),
+              _: 1
+            }, _parent2, _scopeId));
+          } else {
+            return [
+              createVNode(unref(Head), {
+                title: __props.product.title
+              }, null, 8, ["title"]),
+              createVNode("div", { class: "min-h-screen bg-background py-12" }, [
+                createVNode("div", { class: "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" }, [
+                  createVNode("nav", {
+                    class: "mb-8 flex text-sm font-medium",
+                    "aria-label": "Breadcrumb"
+                  }, [
+                    createVNode("ol", { class: "inline-flex items-center space-x-1 md:space-x-3" }, [
+                      createVNode("li", { class: "inline-flex items-center" }, [
+                        createVNode(unref(Link), {
+                          href: _ctx.route("home"),
+                          class: "flex items-center text-muted-foreground transition-colors hover:text-primary"
+                        }, {
+                          default: withCtx(() => [
+                            createVNode(unref(Home), { class: "mr-2 h-4 w-4" }),
+                            createTextVNode(" Beranda ")
+                          ]),
+                          _: 1
+                        }, 8, ["href"])
+                      ]),
+                      createVNode("li", null, [
+                        createVNode("div", { class: "flex items-center" }, [
+                          createVNode(unref(ChevronRight), { class: "h-4 w-4 text-muted-foreground" }),
+                          createVNode("span", { class: "ml-1 text-muted-foreground md:ml-2" }, toDisplayString((_p = __props.product.category) == null ? void 0 : _p.name), 1)
+                        ])
+                      ])
+                    ])
+                  ]),
+                  createVNode("div", { class: "grid grid-cols-1 gap-12 lg:grid-cols-12" }, [
+                    createVNode("div", { class: "space-y-6 lg:col-span-7" }, [
+                      createVNode("div", { class: "relative aspect-square overflow-hidden rounded-[2.5rem] border border-border bg-card shadow-2xl transition-all duration-500 hover:shadow-primary/5 md:aspect-[4/3]" }, [
+                        createVNode("img", {
+                          src: activeImage.value,
+                          alt: __props.product.title,
+                          loading: "lazy",
+                          class: "h-full w-full object-cover transition-all duration-700"
+                        }, null, 8, ["src", "alt"]),
+                        createVNode("div", { class: "absolute left-6 top-6 flex flex-col gap-2" }, [
+                          __props.product.reference_url ? (openBlock(), createBlock("div", {
+                            key: 0,
+                            class: "flex"
+                          }, [
+                            createVNode("a", {
+                              href: __props.product.reference_url,
+                              target: "_blank",
+                              class: "flex items-center gap-2 rounded-xl bg-primary/90 px-4 py-2 text-[10px] font-black uppercase tracking-wider text-primary-foreground shadow-lg backdrop-blur-md transition-all hover:bg-primary"
+                            }, [
+                              createTextVNode(toDisplayString(__props.product.brand) + " ", 1),
+                              createVNode(unref(ExternalLink), { class: "h-3 w-3" })
+                            ], 8, ["href"])
+                          ])) : (openBlock(), createBlock("span", {
+                            key: 1,
+                            class: "rounded-xl bg-primary/90 px-4 py-2 text-[10px] font-black uppercase tracking-wider text-primary-foreground shadow-lg backdrop-blur-md"
+                          }, toDisplayString(__props.product.brand), 1))
+                        ])
+                      ]),
+                      __props.product.images.length > 1 ? (openBlock(), createBlock("div", {
+                        key: 0,
+                        class: "grid grid-cols-4 gap-4"
+                      }, [
+                        (openBlock(true), createBlock(Fragment, null, renderList(__props.product.images, (image) => {
+                          return openBlock(), createBlock("button", {
+                            key: image.id,
+                            onClick: ($event) => activeImage.value = `/storage/${image.image_path}`,
+                            class: [
+                              "group relative aspect-square overflow-hidden rounded-2xl border-2 transition-all duration-300",
+                              activeImage.value === `/storage/${image.image_path}` ? "border-primary shadow-lg" : "border-transparent opacity-70 hover:border-muted-foreground/30 hover:opacity-100"
+                            ]
+                          }, [
+                            createVNode("img", {
+                              src: `/storage/${image.image_path}`,
+                              loading: "lazy",
+                              class: "h-full w-full object-cover transition-transform group-hover:scale-110"
+                            }, null, 8, ["src"])
+                          ], 10, ["onClick"]);
+                        }), 128))
+                      ])) : createCommentVNode("", true)
+                    ]),
+                    createVNode("div", { class: "lg:col-span-5" }, [
+                      createVNode("div", { class: "sticky top-8 rounded-[2.5rem] border border-border bg-card p-8 text-card-foreground shadow-xl md:p-10" }, [
+                        createVNode("div", { class: "mb-8" }, [
+                          createVNode("div", { class: "mb-4 flex flex-wrap items-center gap-3" }, [
+                            createVNode("span", { class: "rounded-full bg-muted px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground" }, toDisplayString((_q = __props.product.category) == null ? void 0 : _q.name), 1),
+                            createVNode("span", {
+                              class: [
+                                __props.product.condition_badge_color === "green" ? "bg-emerald-500" : __props.product.condition_badge_color === "yellow" ? "bg-amber-500" : "bg-slate-400",
+                                "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white"
+                              ]
+                            }, toDisplayString(__props.product.condition_label), 3),
+                            __props.product.is_cod ? (openBlock(), createBlock("span", {
+                              key: 0,
+                              class: "rounded-full bg-blue-500 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white"
+                            }, "COD")) : createCommentVNode("", true),
+                            __props.product.is_negotiable ? (openBlock(), createBlock("span", {
+                              key: 1,
+                              class: "rounded-full bg-indigo-500 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white"
+                            }, "Bisa Nego")) : createCommentVNode("", true)
+                          ]),
+                          createVNode("h1", { class: "mb-4 text-3xl font-black leading-tight md:text-4xl" }, toDisplayString(__props.product.title), 1),
+                          createVNode("div", { class: "flex items-baseline gap-2" }, [
+                            createVNode("span", { class: "text-4xl font-black text-primary" }, "Rp " + toDisplayString(new Intl.NumberFormat("id-ID").format(__props.product.price)), 1)
+                          ])
+                        ]),
+                        createVNode("div", { class: "space-y-10" }, [
+                          specifications.value.length > 0 ? (openBlock(), createBlock("div", {
+                            key: 0,
+                            class: "grid grid-cols-2 gap-4"
+                          }, [
+                            (openBlock(true), createBlock(Fragment, null, renderList(specifications.value, (spec) => {
+                              return openBlock(), createBlock("div", {
+                                key: spec.label,
+                                class: "group rounded-2xl border border-border bg-muted/50 p-4 transition-colors hover:bg-muted"
+                              }, [
+                                createVNode("span", { class: "mb-1 block text-[10px] font-bold uppercase tracking-tighter text-muted-foreground" }, toDisplayString(spec.label), 1),
+                                createVNode("span", { class: "block text-sm font-bold" }, toDisplayString(spec.value), 1)
+                              ]);
+                            }), 128))
+                          ])) : createCommentVNode("", true),
+                          __props.product.reference_url ? (openBlock(), createBlock("a", {
+                            key: 1,
+                            href: __props.product.reference_url,
+                            target: "_blank",
+                            class: "group flex w-full items-center justify-center gap-3 rounded-2xl border border-border bg-muted py-4 text-sm font-black shadow-sm transition-all hover:bg-accent"
+                          }, [
+                            createVNode(unref(Globe), { class: "h-5 w-5" }),
+                            createTextVNode(" Lihat Referensi Eksternal "),
+                            createVNode(unref(ArrowRight), { class: "h-4 w-4 transition-transform group-hover:translate-x-1" })
+                          ], 8, ["href"])) : createCommentVNode("", true),
+                          createVNode("div", null, [
+                            createVNode("h3", { class: "mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wider text-foreground" }, [
+                              createVNode("div", { class: "h-4 w-1.5 rounded-full bg-primary" }),
+                              createTextVNode(" Deskripsi Produk ")
+                            ]),
+                            createVNode("div", { class: "whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground" }, toDisplayString(__props.product.description), 1)
+                          ]),
+                          createVNode("div", { class: "group relative overflow-hidden rounded-3xl border border-border bg-muted/30 p-6" }, [
+                            createVNode("div", { class: "absolute -bottom-8 -right-8 h-32 w-32 rounded-full bg-primary/5 blur-3xl transition-all duration-700 group-hover:scale-150" }),
+                            createVNode("div", { class: "relative z-10 mb-6 flex items-center justify-between" }, [
+                              createVNode("div", { class: "flex items-center gap-4" }, [
+                                createVNode("div", { class: "relative" }, [
+                                  createVNode("div", { class: "flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-xl font-black text-primary-foreground shadow-xl transition-transform group-hover:scale-105" }, toDisplayString((_r = __props.product.store) == null ? void 0 : _r.name.charAt(0).toUpperCase()), 1),
+                                  ((_t = (_s = __props.product.store) == null ? void 0 : _s.profile) == null ? void 0 : _t.is_ktp_verified) && ((_u = __props.product.store) == null ? void 0 : _u.transactions_as_seller_count) >= 5 ? (openBlock(), createBlock("div", {
+                                    key: 0,
+                                    class: "absolute -bottom-1 -right-1 rounded-lg border-2 border-card bg-amber-400 p-1 text-white shadow-lg ring-1 ring-amber-500/20"
+                                  }, [
+                                    createVNode(unref(ShieldCheck), { class: "h-4 w-4" })
+                                  ])) : createCommentVNode("", true)
+                                ]),
+                                createVNode("div", null, [
+                                  createVNode("div", { class: "flex items-center gap-2" }, [
+                                    createVNode("h4", { class: "text-lg font-black" }, toDisplayString(((_w = (_v = __props.product.store) == null ? void 0 : _v.profile) == null ? void 0 : _w.store_name) ?? ((_x = __props.product.store) == null ? void 0 : _x.name)), 1),
+                                    ((_z = (_y = __props.product.store) == null ? void 0 : _y.profile) == null ? void 0 : _z.is_ktp_verified) && ((_A = __props.product.store) == null ? void 0 : _A.transactions_as_seller_count) >= 5 ? (openBlock(), createBlock("div", {
+                                      key: 0,
+                                      class: "rounded bg-amber-400/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-600"
+                                    }, " Premium Seller ")) : createCommentVNode("", true)
+                                  ]),
+                                  createVNode("div", { class: "mt-1 flex items-center text-xs text-muted-foreground" }, [
+                                    createVNode(unref(MapPin), { class: "mr-1 h-3 w-3" }),
+                                    createTextVNode(" " + toDisplayString(((_C = (_B = __props.product.store) == null ? void 0 : _B.profile) == null ? void 0 : _C.city) || "Lokasi tidak diisi"), 1)
+                                  ])
+                                ])
+                              ]),
+                              createVNode(unref(Link), {
+                                href: _ctx.route("store.show", ((_D = __props.product.store) == null ? void 0 : _D.id) ?? __props.product.user_id),
+                                class: "rounded-xl border border-border bg-card p-3 shadow-sm transition-all hover:bg-accent group-hover:border-primary/30"
+                              }, {
+                                default: withCtx(() => [
+                                  createVNode(unref(Store), { class: "h-5 w-5 transition-transform group-hover:scale-110" })
+                                ]),
+                                _: 1
+                              }, 8, ["href"])
+                            ]),
+                            unref(auth).user ? (openBlock(), createBlock("div", { key: 0 }, [
+                              createVNode("div", { class: "flex gap-4" }, [
+                                unref(auth).user.id !== __props.product.user_id ? (openBlock(), createBlock("div", {
+                                  key: 0,
+                                  class: "flex flex-col gap-3 flex-1"
+                                }, [
+                                  createVNode(unref(Link), {
+                                    href: _ctx.route("transactions.checkout", __props.product.slug),
+                                    method: "post",
+                                    as: "button",
+                                    class: "flex w-full transform items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-black text-primary-foreground shadow-xl transition-all duration-300 hover:bg-primary/90 active:scale-95"
+                                  }, {
+                                    default: withCtx(() => [
+                                      createVNode(unref(ShoppingCart), { class: "h-5 w-5" }),
+                                      createTextVNode(" Beli Sekarang ")
+                                    ]),
+                                    _: 1
+                                  }, 8, ["href"]),
+                                  createVNode(unref(Link), {
+                                    href: _ctx.route("chat.initiate", __props.product.slug),
+                                    method: "post",
+                                    as: "button",
+                                    class: "flex w-full transform items-center justify-center gap-2 rounded-2xl border-2 border-primary/20 bg-primary/5 py-4 text-sm font-black text-primary transition-all duration-300 hover:bg-primary/10 active:scale-95"
+                                  }, {
+                                    default: withCtx(() => [
+                                      createVNode(unref(MessageCircle), { class: "h-5 w-5" }),
+                                      createTextVNode(" Chat Penjual ")
+                                    ]),
+                                    _: 1
+                                  }, 8, ["href"])
+                                ])) : (openBlock(), createBlock(unref(Link), {
+                                  key: 1,
+                                  href: _ctx.route("products.edit", __props.product.slug),
+                                  class: "flex flex-1 items-center justify-center gap-2 rounded-2xl bg-accent py-4 text-sm font-black text-accent-foreground shadow-xl transition-all duration-300 hover:bg-accent/80"
+                                }, {
+                                  default: withCtx(() => [
+                                    createVNode(unref(Edit3), { class: "h-5 w-5" }),
+                                    createTextVNode(" Edit Produk ")
+                                  ]),
+                                  _: 1
+                                }, 8, ["href"])),
+                                createVNode("button", {
+                                  onClick: toggleFavorite,
+                                  class: [
+                                    "flex transform items-center justify-center rounded-2xl border-2 p-4 shadow-lg transition-all duration-300 active:scale-90",
+                                    isFavorited.value ? "border-rose-200 bg-rose-50 text-rose-500 hover:bg-rose-100" : "border-border bg-background text-muted-foreground hover:border-blue-200 hover:text-blue-500"
+                                  ]
+                                }, [
+                                  isFavorited.value ? (openBlock(), createBlock(unref(X), {
+                                    key: 0,
+                                    class: "h-6 w-6"
+                                  })) : (openBlock(), createBlock(unref(Heart), {
+                                    key: 1,
+                                    class: "h-6 w-6"
+                                  }))
+                                ], 2)
+                              ]),
+                              unref(auth).user.id !== __props.product.user_id ? (openBlock(), createBlock("button", {
+                                key: 0,
+                                onClick: reportProduct,
+                                class: "mt-4 flex w-full items-center justify-center gap-2 py-2 text-xs font-bold text-muted-foreground transition-colors hover:text-amber-600"
+                              }, [
+                                createVNode(unref(Flag), { class: "h-3.5 w-3.5" }),
+                                createTextVNode(" Laporkan masalah pada produk ini ")
+                              ])) : createCommentVNode("", true)
+                            ])) : (openBlock(), createBlock(unref(Link), {
+                              key: 1,
+                              href: _ctx.route("login"),
+                              class: "flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-black text-primary-foreground shadow-xl"
+                            }, {
+                              default: withCtx(() => [
+                                createTextVNode(" Login untuk Chat & Keranjang ")
+                              ]),
+                              _: 1
+                            }, 8, ["href"]))
+                          ])
+                        ])
+                      ])
+                    ])
+                  ])
+                ])
+              ]),
+              createVNode(_sfc_main$2, {
+                show: showRemoveModal.value,
+                onClose: ($event) => showRemoveModal.value = false,
+                maxWidth: "sm"
+              }, {
+                default: withCtx(() => [
+                  createVNode("div", { class: "rounded-2xl bg-white p-6 dark:bg-slate-900" }, [
+                    createVNode("div", { class: "mb-4 flex justify-center" }, [
+                      createVNode("div", { class: "rounded-full bg-red-100 p-3 text-red-500 dark:bg-red-500/20" }, [
+                        createVNode(unref(AlertTriangle), { class: "h-8 w-8" })
+                      ])
+                    ]),
+                    createVNode("h3", { class: "mb-2 text-center text-lg font-black text-slate-900 dark:text-white" }, " Hapus dari Keranjang? "),
+                    createVNode("p", { class: "mb-6 text-center text-sm text-slate-500 dark:text-slate-400" }, " Apakah Anda yakin ingin menghapus produk ini dari keranjang Anda? "),
+                    createVNode("div", { class: "flex gap-3" }, [
+                      createVNode("button", {
+                        onClick: ($event) => showRemoveModal.value = false,
+                        class: "flex-1 rounded-xl bg-slate-100 py-2.5 font-bold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                      }, " Batal ", 8, ["onClick"]),
+                      createVNode("button", {
+                        onClick: submitToggle,
+                        class: "flex-1 rounded-xl bg-red-500 py-2.5 font-bold text-white shadow-lg shadow-red-500/20 transition hover:bg-red-600"
+                      }, " Ya, Hapus ")
+                    ])
+                  ])
+                ]),
+                _: 1
+              }, 8, ["show", "onClose"])
+            ];
+          }
+        }),
+        _: 1
+      }, _parent));
+    };
+  }
+};
+const _sfc_setup = _sfc_main.setup;
+_sfc_main.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("resources/js/Pages/Products/Show.vue");
+  return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
+};
+export {
+  _sfc_main as default
+};

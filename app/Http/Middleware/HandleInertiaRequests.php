@@ -78,6 +78,7 @@ class HandleInertiaRequests extends Middleware
                 'kelengkapan' => $request->kelengkapan,
                 'sort' => $request->sort,
             ],
+            'midtrans_client_key' => config('services.midtrans.client_key'),
         ];
     }
 }

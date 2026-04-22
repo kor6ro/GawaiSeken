@@ -13,29 +13,31 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    /**
-     * Display the user's profile form.
-     */
     public function edit(Request $request): Response
     {
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
+            'profile' => $request->user()->profile,
         ]);
     }
 
-    /**
-     * Update the user's profile information (Name & Email Only).
-     */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $user->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
+
+        // Update profile data
+        $user->profile()->updateOrCreate(
+            ['user_id' => $user->id],
+            $request->only(['address', 'date_of_birth', 'gender'])
+        );
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }

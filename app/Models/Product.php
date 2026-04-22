@@ -25,7 +25,9 @@ class Product extends Model
         'reference_url',
         'description',
         'price',
+        'availability',
         'status',
+        'moderation_note',
         'specifications',
         'reports',
     ];

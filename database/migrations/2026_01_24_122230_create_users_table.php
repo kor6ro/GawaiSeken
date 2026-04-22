@@ -16,9 +16,11 @@ return new class extends Migration
             $table->id(); // bigint [cite: 38]
             $table->string('name'); // varchar [cite: 46]
             $table->string('email')->unique(); // varchar [cite: 52]
+            $table->string('verification_code')->nullable();
+            $table->timestamp('verification_code_expires_at')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password'); // varchar [cite: 58]
-            $table->string('role')->default('buyer'); // varchar [cite: 64] - Menentukan akses user
+            $table->enum('role', ['admin', 'seller', 'buyer'])->default('buyer'); // Menentukan akses user
             $table->json('favorites')->nullable(); // Pivot favorite (IDs array)
             $table->rememberToken();
             $table->softDeletes();

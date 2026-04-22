@@ -15,8 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
+        $middleware->validateCsrfTokens(except: [
+            '/midtrans/callback',
+        ]);
         $middleware->alias([
             'seller' => \App\Http\Middleware\EnsureIsSeller::class,
+            'admin' => \App\Http\Middleware\EnsureIsAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

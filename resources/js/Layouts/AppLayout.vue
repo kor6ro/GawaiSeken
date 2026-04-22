@@ -27,6 +27,7 @@ import {
   Package,
   ArrowUpDown,
   Store,
+  ShoppingBag,
 } from 'lucide-vue-next'
 import { router } from '@inertiajs/vue3'
 import debounce from 'lodash/debounce'
@@ -160,6 +161,14 @@ watch(
 onBeforeUnmount(() => {
   if (toastTimer) clearTimeout(toastTimer)
 })
+
+const upgradeToSeller = () => {
+  router.patch(route('profile.upgrade'), {}, {
+    onSuccess: () => {
+      window.location.reload()
+    },
+  })
+}
 </script>
 
 <template>
@@ -215,6 +224,20 @@ onBeforeUnmount(() => {
               </Link>
 
               <template v-if="auth.user">
+                <Link
+                  v-if="auth.user.role === 'admin'"
+                  :href="route('admin.dashboard')"
+                  :class="[
+                    route().current('admin.*')
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                  ]"
+                  class="group relative rounded-xl p-2 transition-all duration-100"
+                  title="Admin Panel"
+                >
+                  <LayoutDashboard class="h-5 w-5 transition-transform group-hover:scale-110" />
+                </Link>
+
                 <Link
                   v-if="auth.user.role === 'seller'"
                   :href="route('dashboard')"
@@ -345,14 +368,19 @@ onBeforeUnmount(() => {
                     <div class="truncate text-sm font-bold">{{ auth.user.name }}</div>
                     <div class="text-xs text-muted-foreground">{{ auth.user.role }}</div>
                   </div>
+                  <DropdownLink v-if="auth.user.role === 'admin'" :href="route('admin.dashboard')">
+                    <LayoutDashboard class="mr-2 inline h-4 w-4 text-primary" /> Admin Panel
+                  </DropdownLink>
+                  <DropdownLink :href="route('profile.orders')">
+                    <ShoppingBag class="mr-2 inline h-4 w-4" /> Pesanan Saya
+                  </DropdownLink>
                   <DropdownLink :href="route('profile.edit')">
                     <User class="mr-2 inline h-4 w-4" /> Profile
                   </DropdownLink>
                   <DropdownLink
                     v-if="auth.user.role === 'buyer'"
-                    :href="route('profile.upgrade')"
-                    method="patch"
                     as="button"
+                    @click="upgradeToSeller"
                   >
                     <Store class="mr-2 inline h-4 w-4 text-primary" /> Jadi Penjual
                   </DropdownLink>
@@ -480,6 +508,11 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <div class="mt-3 space-y-1">
+              <ResponsiveNavLink :href="route('profile.orders')">
+                <div class="flex items-center gap-2">
+                  <ShoppingBag class="h-4 w-4" /> Pesanan Saya
+                </div>
+              </ResponsiveNavLink>
               <ResponsiveNavLink :href="route('profile.edit')">
                 <div class="flex items-center gap-2">
                   <Settings class="h-4 w-4" /> Profile Settings
@@ -487,9 +520,8 @@ onBeforeUnmount(() => {
               </ResponsiveNavLink>
               <ResponsiveNavLink
                 v-if="auth.user.role === 'buyer'"
-                :href="route('profile.upgrade')"
-                method="patch"
                 as="button"
+                @click="upgradeToSeller"
               >
                 <div class="flex items-center gap-2 font-bold text-primary">
                   <Store class="h-4 w-4" /> Jadi Penjual

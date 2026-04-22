@@ -4,35 +4,38 @@
   ],
   "node_modules/laravel-vite-plugin/inertia-helpers/index.js": [],
   "node_modules/vue-advanced-cropper/dist/style.css": [
-    "/build/assets/Dashboard-B0CubsYp.js",
+    "/build/assets/Dashboard-D6OFr34n.js",
     "/build/assets/Dashboard-D2JBOGWk.css"
   ],
   "resources/js/Components/ApplicationLogo.vue": [
     "/build/assets/ApplicationLogo-5BXBKbkR.js"
   ],
   "resources/js/Components/Checkbox.vue": [
-    "/build/assets/Login-AqsGMumm.js"
+    "/build/assets/Login-D_Vgx7Z7.js"
   ],
   "resources/js/Components/CurrencyInput.vue": [
     "/build/assets/constants-CeaA9YUP.js"
   ],
   "resources/js/Components/DangerButton.vue": [
-    "/build/assets/DangerButton-COhGmvyd.js"
+    "/build/assets/DangerButton-Dpx20QNz.js"
   ],
   "resources/js/Components/Dropdown.vue": [
-    "/build/assets/AppLayout-x9cx5faw.js"
+    "/build/assets/AppLayout-BDlcmPtd.js"
   ],
   "resources/js/Components/DropdownLink.vue": [
-    "/build/assets/AppLayout-x9cx5faw.js"
+    "/build/assets/AppLayout-BDlcmPtd.js"
   ],
   "resources/js/Components/InputError.vue": [
-    "/build/assets/TextInput-C__yGyCx.js"
+    "/build/assets/InputError-DDbcJ_iI.js"
   ],
   "resources/js/Components/InputLabel.vue": [
-    "/build/assets/TextInput-C__yGyCx.js"
+    "/build/assets/InputError-DDbcJ_iI.js"
   ],
   "resources/js/Components/Modal.vue": [
     "/build/assets/Modal-C0YBTj_6.js"
+  ],
+  "resources/js/Components/Pagination.vue": [
+    "/build/assets/Pagination-brVOzIHZ.js"
   ],
   "resources/js/Components/PrimaryButton.vue": [
     "/build/assets/PrimaryButton-Chd5xZL9.js"
@@ -46,44 +49,59 @@
     "/build/assets/ProductCard-C2TXSfnc.css"
   ],
   "resources/js/Components/ResponsiveNavLink.vue": [
-    "/build/assets/AppLayout-x9cx5faw.js"
+    "/build/assets/AppLayout-BDlcmPtd.js"
   ],
   "resources/js/Components/SecondaryButton.vue": [
-    "/build/assets/DangerButton-COhGmvyd.js"
+    "/build/assets/SecondaryButton-BWOt3jtr.js"
   ],
   "resources/js/Components/TextInput.vue": [
-    "/build/assets/TextInput-C__yGyCx.js"
+    "/build/assets/TextInput-Cpy3OAqn.js"
   ],
   "resources/js/Layouts/AppLayout.vue": [
-    "/build/assets/AppLayout-x9cx5faw.js"
+    "/build/assets/AppLayout-BDlcmPtd.js"
   ],
   "resources/js/Layouts/GuestLayout.vue": [
     "/build/assets/GuestLayout-BwVHXVA6.js"
   ],
+  "resources/js/Pages/Admin/Dashboard.vue": [
+    "/build/assets/Dashboard-72vmOu0S.js"
+  ],
+  "resources/js/Pages/Admin/Disputes/Index.vue": [
+    "/build/assets/Index-BTrUL3Tl.js"
+  ],
+  "resources/js/Pages/Admin/Disputes/Show.vue": [
+    "/build/assets/Show-CxBuLPdz.js"
+  ],
+  "resources/js/Pages/Admin/Products/Index.vue": [
+    "/build/assets/Index-DfRXiqfx.js"
+  ],
   "resources/js/Pages/Auth/ConfirmPassword.vue": [
-    "/build/assets/ConfirmPassword-DUqaiff7.js"
+    "/build/assets/ConfirmPassword-Bq2K5uhm.js"
   ],
   "resources/js/Pages/Auth/ForgotPassword.vue": [
-    "/build/assets/ForgotPassword-BhqLWciw.js"
+    "/build/assets/ForgotPassword-fSRltq9X.js"
   ],
   "resources/js/Pages/Auth/Login.vue": [
-    "/build/assets/Login-AqsGMumm.js"
+    "/build/assets/Login-D_Vgx7Z7.js"
   ],
   "resources/js/Pages/Auth/Register.vue": [
-    "/build/assets/Register-v5ymOfx7.js"
+    "/build/assets/Register-Cn7vWoJA.js"
   ],
   "resources/js/Pages/Auth/ResetPassword.vue": [
-    "/build/assets/ResetPassword-uT8W-s_d.js"
+    "/build/assets/ResetPassword-BQ5sFKXa.js"
+  ],
+  "resources/js/Pages/Auth/VerifyCode.vue": [
+    "/build/assets/VerifyCode-BjkZCrwb.js"
   ],
   "resources/js/Pages/Auth/VerifyEmail.vue": [
     "/build/assets/VerifyEmail-CzXTSC6r.js"
   ],
   "resources/js/Pages/Chat/Index.vue": [
-    "/build/assets/Index-D4RCFZcS.js",
+    "/build/assets/Index-CXJTYZFD.js",
     "/build/assets/Index-B1I0n8mu.css"
   ],
   "resources/js/Pages/Chat/Index.vue?vue&type=style&index=0&scoped=bbc37838&lang.css": [
-    "/build/assets/Index-D4RCFZcS.js",
+    "/build/assets/Index-CXJTYZFD.js",
     "/build/assets/Index-B1I0n8mu.css"
   ],
   "resources/js/Pages/Chat/Show.vue": [
@@ -95,38 +113,47 @@
     "/build/assets/Show-DeelACrP.css"
   ],
   "resources/js/Pages/Dashboard.vue": [
-    "/build/assets/Dashboard-B0CubsYp.js",
+    "/build/assets/Dashboard-D6OFr34n.js",
     "/build/assets/Dashboard-D2JBOGWk.css"
   ],
   "resources/js/Pages/Home.vue": [
-    "/build/assets/Home-BykChxGl.js"
+    "/build/assets/Home-BZa-1emy.js"
   ],
   "resources/js/Pages/Products/Create.vue": [
-    "/build/assets/Create-DwFqWBab.js"
+    "/build/assets/Create-BJFU7Yhx.js"
   ],
   "resources/js/Pages/Products/Edit.vue": [
-    "/build/assets/Edit-BX7o57tE.js"
+    "/build/assets/Edit-CnO9JtTT.js"
   ],
   "resources/js/Pages/Products/Favorites.vue": [
-    "/build/assets/Favorites-D6No14oo.js"
+    "/build/assets/Favorites-Cp1bwIls.js"
   ],
   "resources/js/Pages/Products/Show.vue": [
-    "/build/assets/Show-98IQqXvh.js"
+    "/build/assets/Show-BBdRliaI.js"
+  ],
+  "resources/js/Pages/Profile/DisputeForm.vue": [
+    "/build/assets/DisputeForm-DotxPM7z.js"
   ],
   "resources/js/Pages/Profile/Edit.vue": [
-    "/build/assets/Edit-mTjcwUXF.js"
+    "/build/assets/Edit-DcMUoPgi.js"
+  ],
+  "resources/js/Pages/Profile/Orders.vue": [
+    "/build/assets/Orders-DuYaU_U-.js"
   ],
   "resources/js/Pages/Profile/Partials/DeleteUserForm.vue": [
-    "/build/assets/DeleteUserForm-BBjJluVq.js"
+    "/build/assets/DeleteUserForm-CiRQjIi_.js"
   ],
   "resources/js/Pages/Profile/Partials/UpdatePasswordForm.vue": [
-    "/build/assets/UpdatePasswordForm-Bu8h5msk.js"
+    "/build/assets/UpdatePasswordForm-DhXA2h2s.js"
   ],
   "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.vue": [
-    "/build/assets/UpdateProfileInformationForm-C9xkWZFu.js"
+    "/build/assets/UpdateProfileInformationForm-B9t5C5Ol.js"
+  ],
+  "resources/js/Pages/Profile/VerifySeller.vue": [
+    "/build/assets/VerifySeller-ndAfif1M.js"
   ],
   "resources/js/Pages/Store/Show.vue": [
-    "/build/assets/Show-TzU_cXw3.js"
+    "/build/assets/Show-8K1U3znv.js"
   ],
   "resources/js/constants.js": [
     "/build/assets/constants-CeaA9YUP.js"

@@ -15,6 +15,17 @@ class RealDataSeeder extends Seeder
 {
     public function run(): void
     {
+        // 0. Create Admin
+        User::updateOrCreate(
+            ['email' => 'admin@gawaiseken.com'],
+            [
+                'name' => 'Super Admin',
+                'password' => Hash::make('password'),
+                'role' => 'admin',
+                'email_verified_at' => now(),
+            ]
+        );
+
         // 1. Get Categories
         $smartphone = Category::where('slug', 'smartphone')->first() ?? Category::create(['name' => 'Smartphone', 'slug' => 'smartphone']);
         $laptop = Category::where('slug', 'laptop')->first() ?? Category::create(['name' => 'Laptop', 'slug' => 'laptop']);
@@ -164,7 +175,8 @@ class RealDataSeeder extends Seeder
                 $product = Product::create(array_merge($p, [
                     'user_id' => $seller->id,
                     'slug' => Str::slug($p['title']).'-'.Str::random(5),
-                    'status' => 'available',
+                    'availability' => 'available',
+                    'status' => 'active',
                 ]));
 
                 ProductImage::create([

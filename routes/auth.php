@@ -35,9 +35,16 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 });
 
+Route::get('verify-email-code', [VerifyEmailController::class, 'showCodeForm'])
+    ->name('verification.notice');
+
+Route::post('verify-email-code', [VerifyEmailController::class, 'verifyCode'])
+    ->name('verification.code.verify');
+
 Route::middleware('auth')->group(function () {
-    Route::get('verify-email', EmailVerificationPromptController::class)
-        ->name('verification.notice');
+    // Standard email verification link route renamed to avoid conflict
+    Route::get('verify-email-link', EmailVerificationPromptController::class)
+        ->name('verification.link.notice');
 
     Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
         ->middleware(['signed', 'throttle:6,1'])

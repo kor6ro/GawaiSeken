@@ -25,7 +25,9 @@ return new class extends Migration
             $table->decimal('price', 15, 2)->index();
             $table->boolean('is_cod')->default(false);
             $table->boolean('is_negotiable')->default(true);
-            $table->string('status')->default('available')->index();
+            $table->string('availability')->default('available')->index();
+            $table->enum('status', ['pending', 'active', 'rejected', 'banned'])->default('pending')->index();
+            $table->text('moderation_note')->nullable();
 
             $table->json('specifications')->nullable();
             $table->json('reports')->nullable(); // Metadata: user_id, reason, date

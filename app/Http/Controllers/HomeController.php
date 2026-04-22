@@ -19,7 +19,7 @@ class HomeController extends Controller
             'kelengkapan' => ['Fullset', 'Unit + Charger', 'Batangan'],
         ];
 
-        // Mulai query produk yang statusnya available
+        // Mulai query produk yang statusnya available dan sudah di-review (active)
         $query = Product::with([
             'images',
             'category',
@@ -31,7 +31,8 @@ class HomeController extends Controller
                     }]);
             },
         ])
-            ->where('status', 'available');
+            ->where('availability', 'available')
+            ->where('status', 'active');
 
         // Jangan tampilkan produk milik user yang sedang login di beranda
         if ($request->user()) {

@@ -41,7 +41,7 @@ class UpdateProductRequest extends FormRequest
             'is_negotiable' => 'nullable|boolean',
             'price' => 'required|numeric|min:1000|max:99999999999',
             'description' => 'required|string',
-            'status' => 'required|in:available,sold',
+            'availability' => 'required|in:available,sold',
             'specifications' => 'nullable|array',
             'specifications.battery_health' => 'nullable|numeric|min:0|max:100',
             'images' => 'nullable|array',

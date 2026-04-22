@@ -4,7 +4,8 @@ import InputError from '@/Components/InputError.vue'
 import InputLabel from '@/Components/InputLabel.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import TextInput from '@/Components/TextInput.vue'
-import { Head, useForm } from '@inertiajs/vue3'
+import { Head, Link, useForm } from '@inertiajs/vue3'
+
 
 defineProps({
   status: {
@@ -51,7 +52,14 @@ const submit = () => {
         <InputError class="mt-2" :message="form.errors.email" />
       </div>
 
-      <div class="mt-4 flex items-center justify-end">
+      <div class="mt-4 flex items-center justify-between">
+        <Link
+          :href="route('login')"
+          class="text-sm text-muted-foreground underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        >
+          Kembali ke Login
+        </Link>
+
         <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
           Kirim Tautan Reset Password
         </PrimaryButton>

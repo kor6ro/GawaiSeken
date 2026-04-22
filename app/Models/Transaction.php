@@ -17,6 +17,7 @@ class Transaction extends Model
         'seller_id',
         'price',
         'status',
+        'snap_token',
     ];
 
     protected $casts = [
@@ -38,9 +39,13 @@ class Transaction extends Model
         return $this->belongsTo(User::class, 'seller_id');
     }
 
-    // A transaction may be linked back to a single chat
     public function chat()
     {
         return $this->hasOne(Chat::class, 'transaction_id');
+    }
+
+    public function dispute()
+    {
+        return $this->hasOne(TransactionDispute::class);
     }
 }
