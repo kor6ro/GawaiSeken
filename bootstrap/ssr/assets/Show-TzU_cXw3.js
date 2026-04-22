@@ -1,14 +1,15 @@
-import { ref, onMounted, onUnmounted, watch, computed, withCtx, unref, createTextVNode, createVNode, createBlock, openBlock, toDisplayString, createCommentVNode, Fragment, renderList, useSSRContext } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch, withCtx, unref, createTextVNode, createVNode, createBlock, openBlock, toDisplayString, createCommentVNode, Fragment, renderList, useSSRContext } from "vue";
 import { ssrRenderComponent, ssrRenderAttr, ssrInterpolate, ssrRenderClass, ssrRenderList } from "vue/server-renderer";
 import { usePage, Head, Link } from "@inertiajs/vue3";
 import axios from "axios";
-import { _ as _sfc_main$1 } from "./AppLayout-CFkOwdlU.js";
-import { P as ProductCard } from "./ProductCard-CWopBDLU.js";
+import { _ as _sfc_main$1 } from "./AppLayout-x9cx5faw.js";
+import { P as ProductCard } from "./ProductCard-DuFFyYn9.js";
 import { ShieldCheck, MapPin, MessageCircle, Star, Package } from "lucide-vue-next";
 import "./ApplicationLogo-5BXBKbkR.js";
 import "lodash/debounce.js";
 import "./Modal-C0YBTj_6.js";
 import "lodash/pickBy.js";
+import "./onlineState-BAtS9nBF.js";
 import "./_plugin-vue_export-helper-1tPrXgE0.js";
 const _sfc_main = {
   __name: "Show",
@@ -28,6 +29,15 @@ const _sfc_main = {
     const nextUrl = ref(props.products.next_page_url);
     const loadMoreTrigger = ref(null);
     let observer = null;
+    const sellerInitial = computed(() => {
+      var _a;
+      const name = ((_a = props.seller) == null ? void 0 : _a.name) ?? "";
+      return name ? name.charAt(0).toUpperCase() : "?";
+    });
+    const buyerInitial = (buyer) => {
+      const name = (buyer == null ? void 0 : buyer.name) ?? "";
+      return name ? name.charAt(0).toUpperCase() : "?";
+    };
     const loadMore = async () => {
       if (!nextUrl.value || loading.value || activeTab.value !== "products") return;
       loading.value = true;
@@ -88,7 +98,7 @@ const _sfc_main = {
             if ((_b = __props.seller.profile) == null ? void 0 : _b.avatar) {
               _push2(`<img${ssrRenderAttr("src", "/storage/" + __props.seller.profile.avatar)}${ssrRenderAttr("alt", __props.seller.name)} loading="lazy" class="h-full w-full rounded-full object-cover"${_scopeId}>`);
             } else {
-              _push2(`<div class="flex h-full w-full items-center justify-center rounded-full bg-primary text-4xl font-black text-primary-foreground"${_scopeId}>${ssrInterpolate(__props.seller.name.charAt(0).toUpperCase())}</div>`);
+              _push2(`<div class="flex h-full w-full items-center justify-center rounded-full bg-primary text-4xl font-black text-primary-foreground"${_scopeId}>${ssrInterpolate(sellerInitial.value)}</div>`);
             }
             _push2(`</div><span class="absolute bottom-2 right-2 block h-5 w-5 rounded-full bg-green-500 shadow-sm ring-4 ring-background" title="Online"${_scopeId}></span></div><div class="mt-4 flex items-center gap-2"${_scopeId}><h1 class="text-2xl font-black"${_scopeId}>${ssrInterpolate(((_c = __props.seller.profile) == null ? void 0 : _c.store_name) || __props.seller.name)}</h1>`);
             if (__props.stats.is_premium) {
@@ -138,7 +148,7 @@ const _sfc_main = {
                 _: 1
               }, _parent2, _scopeId));
             }
-            _push2(`</div></div><div class="flex flex-col justify-between p-8 md:w-2/3"${_scopeId}><div class="mb-10 grid grid-cols-3 gap-6 text-center"${_scopeId}><div class="rounded-3xl border border-border bg-muted/50 p-6 transition-colors hover:bg-muted"${_scopeId}><span class="block text-3xl font-black text-foreground"${_scopeId}>${ssrInterpolate(__props.products.length)}</span><span class="text-[10px] font-black uppercase tracking-widest text-muted-foreground"${_scopeId}>Produk Aktif</span></div><div class="rounded-3xl border border-border bg-muted/50 p-6 transition-colors hover:bg-muted"${_scopeId}><span class="block text-3xl font-black text-foreground"${_scopeId}>${ssrInterpolate(__props.stats.sold)}</span><span class="text-[10px] font-black uppercase tracking-widest text-muted-foreground"${_scopeId}>Terjual</span></div><div class="rounded-3xl border border-border bg-muted/50 p-6 transition-colors hover:bg-muted"${_scopeId}><div class="flex items-center justify-center gap-1"${_scopeId}><span class="text-3xl font-black text-foreground"${_scopeId}>${ssrInterpolate(__props.stats.rating.toFixed(1))}</span>`);
+            _push2(`</div></div><div class="flex flex-col justify-between p-8 md:w-2/3"${_scopeId}><div class="mb-10 grid grid-cols-3 gap-6 text-center"${_scopeId}><div class="rounded-3xl border border-border bg-muted/50 p-6 transition-colors hover:bg-muted"${_scopeId}><span class="block text-3xl font-black text-foreground"${_scopeId}>${ssrInterpolate(__props.products.total)}</span><span class="text-[10px] font-black uppercase tracking-widest text-muted-foreground"${_scopeId}>Produk Aktif</span></div><div class="rounded-3xl border border-border bg-muted/50 p-6 transition-colors hover:bg-muted"${_scopeId}><span class="block text-3xl font-black text-foreground"${_scopeId}>${ssrInterpolate(__props.stats.sold)}</span><span class="text-[10px] font-black uppercase tracking-widest text-muted-foreground"${_scopeId}>Terjual</span></div><div class="rounded-3xl border border-border bg-muted/50 p-6 transition-colors hover:bg-muted"${_scopeId}><div class="flex items-center justify-center gap-1"${_scopeId}><span class="text-3xl font-black text-foreground"${_scopeId}>${ssrInterpolate(__props.stats.rating.toFixed(1))}</span>`);
             _push2(ssrRenderComponent(unref(Star), { class: "h-6 w-6 fill-current text-yellow-500" }, null, _parent2, _scopeId));
             _push2(`</div><span class="text-[10px] font-black uppercase tracking-widest text-muted-foreground"${_scopeId}>Rating Toko</span></div></div><div class="prose dark:prose-invert max-w-none"${_scopeId}><h3 class="mb-4 flex items-center gap-2 text-sm font-black uppercase tracking-wider text-foreground"${_scopeId}><div class="h-4 w-1.5 rounded-full bg-primary"${_scopeId}></div> Tentang Toko </h3><p class="text-sm leading-relaxed text-muted-foreground"${_scopeId}>${ssrInterpolate(((_e = __props.seller.profile) == null ? void 0 : _e.bio) || `Halo! Saya member GawaiSeken sejak ${formattedJoined.value}. Saya menjual barang elektronik bekas berkualitas. Silakan chat untuk bertanya detail kondisi barang.`)}</p></div></div></div><div class="flex border-t border-border bg-card/50 backdrop-blur"${_scopeId}><button class="${ssrRenderClass([
               activeTab.value === "products" ? "border-primary bg-primary/5 text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
@@ -179,14 +189,14 @@ const _sfc_main = {
             if (activeTab.value === "reviews") {
               _push2(`<div class="animate-fade-in mx-auto max-w-3xl space-y-6"${_scopeId}><!--[-->`);
               ssrRenderList(__props.reviews, (review) => {
-                var _a2, _b2, _c2, _d2;
+                var _a2, _b2, _c2;
                 _push2(`<div class="group rounded-3xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md"${_scopeId}><div class="flex gap-4"${_scopeId}><div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-primary font-black text-primary-foreground shadow-lg shadow-primary/10"${_scopeId}>`);
                 if ((_b2 = (_a2 = review.buyer) == null ? void 0 : _a2.profile) == null ? void 0 : _b2.avatar) {
                   _push2(`<img${ssrRenderAttr("src", "/storage/" + review.buyer.profile.avatar)} loading="lazy" class="h-full w-full object-cover"${_scopeId}>`);
                 } else {
-                  _push2(`<span${_scopeId}>${ssrInterpolate((_c2 = review.buyer) == null ? void 0 : _c2.name.charAt(0).toUpperCase())}</span>`);
+                  _push2(`<span${_scopeId}>${ssrInterpolate(buyerInitial(review.buyer))}</span>`);
                 }
-                _push2(`</div><div class="flex-1"${_scopeId}><div class="mb-2 flex items-center justify-between"${_scopeId}><h4 class="font-black text-foreground"${_scopeId}>${ssrInterpolate((_d2 = review.buyer) == null ? void 0 : _d2.name)}</h4><span class="text-[10px] font-bold text-muted-foreground"${_scopeId}>Ulasan Pelanggan</span></div><div class="mb-3 flex text-yellow-500"${_scopeId}><!--[-->`);
+                _push2(`</div><div class="flex-1"${_scopeId}><div class="mb-2 flex items-center justify-between"${_scopeId}><h4 class="font-black text-foreground"${_scopeId}>${ssrInterpolate((_c2 = review.buyer) == null ? void 0 : _c2.name)}</h4><span class="text-[10px] font-bold text-muted-foreground"${_scopeId}>Ulasan Pelanggan</span></div><div class="mb-3 flex text-yellow-500"${_scopeId}><!--[-->`);
                 ssrRenderList(5, (i) => {
                   _push2(ssrRenderComponent(unref(Star), {
                     key: i,
@@ -235,7 +245,7 @@ const _sfc_main = {
                           }, null, 8, ["src", "alt"])) : (openBlock(), createBlock("div", {
                             key: 1,
                             class: "flex h-full w-full items-center justify-center rounded-full bg-primary text-4xl font-black text-primary-foreground"
-                          }, toDisplayString(__props.seller.name.charAt(0).toUpperCase()), 1))
+                          }, toDisplayString(sellerInitial.value), 1))
                         ]),
                         createVNode("span", {
                           class: "absolute bottom-2 right-2 block h-5 w-5 rounded-full bg-green-500 shadow-sm ring-4 ring-background",
@@ -288,7 +298,7 @@ const _sfc_main = {
                     createVNode("div", { class: "flex flex-col justify-between p-8 md:w-2/3" }, [
                       createVNode("div", { class: "mb-10 grid grid-cols-3 gap-6 text-center" }, [
                         createVNode("div", { class: "rounded-3xl border border-border bg-muted/50 p-6 transition-colors hover:bg-muted" }, [
-                          createVNode("span", { class: "block text-3xl font-black text-foreground" }, toDisplayString(__props.products.length), 1),
+                          createVNode("span", { class: "block text-3xl font-black text-foreground" }, toDisplayString(__props.products.total), 1),
                           createVNode("span", { class: "text-[10px] font-black uppercase tracking-widest text-muted-foreground" }, "Produk Aktif")
                         ]),
                         createVNode("div", { class: "rounded-3xl border border-border bg-muted/50 p-6 transition-colors hover:bg-muted" }, [
@@ -377,7 +387,7 @@ const _sfc_main = {
                     class: "animate-fade-in mx-auto max-w-3xl space-y-6"
                   }, [
                     (openBlock(true), createBlock(Fragment, null, renderList(__props.reviews, (review) => {
-                      var _a2, _b2, _c2, _d2;
+                      var _a2, _b2, _c2;
                       return openBlock(), createBlock("div", {
                         key: review.id,
                         class: "group rounded-3xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md"
@@ -389,11 +399,11 @@ const _sfc_main = {
                               src: "/storage/" + review.buyer.profile.avatar,
                               loading: "lazy",
                               class: "h-full w-full object-cover"
-                            }, null, 8, ["src"])) : (openBlock(), createBlock("span", { key: 1 }, toDisplayString((_c2 = review.buyer) == null ? void 0 : _c2.name.charAt(0).toUpperCase()), 1))
+                            }, null, 8, ["src"])) : (openBlock(), createBlock("span", { key: 1 }, toDisplayString(buyerInitial(review.buyer)), 1))
                           ]),
                           createVNode("div", { class: "flex-1" }, [
                             createVNode("div", { class: "mb-2 flex items-center justify-between" }, [
-                              createVNode("h4", { class: "font-black text-foreground" }, toDisplayString((_d2 = review.buyer) == null ? void 0 : _d2.name), 1),
+                              createVNode("h4", { class: "font-black text-foreground" }, toDisplayString((_c2 = review.buyer) == null ? void 0 : _c2.name), 1),
                               createVNode("span", { class: "text-[10px] font-bold text-muted-foreground" }, "Ulasan Pelanggan")
                             ]),
                             createVNode("div", { class: "mb-3 flex text-yellow-500" }, [

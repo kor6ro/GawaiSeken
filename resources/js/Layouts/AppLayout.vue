@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { Head, Link, usePage } from '@inertiajs/vue3'
 import ApplicationLogo from '@/Components/ApplicationLogo.vue'
 import NavLink from '@/Components/NavLink.vue'
@@ -26,16 +26,34 @@ import {
   HardDrive,
   Package,
   ArrowUpDown,
+  Store,
 } from 'lucide-vue-next'
 import { router } from '@inertiajs/vue3'
 import debounce from 'lodash/debounce'
 import Modal from '@/Components/Modal.vue'
 import pickBy from 'lodash/pickBy'
+import { setupOnlinePresence } from '@/onlineState'
 
-const { props: pageProps } = usePage()
+const page = usePage()
+const { props: pageProps } = page
 const auth = pageProps.auth
 const globalFilters = pageProps.global_filters
 const initialFilters = pageProps.active_filters
+const toastVisible = ref(false)
+const toastText = ref('')
+const toastType = ref('success')
+let toastTimer = null
+
+const flashText = computed(
+  () =>
+    page.props.flash?.status ||
+    page.props.flash?.success ||
+    page.props.flash?.message ||
+    page.props.flash?.error ||
+    ''
+)
+
+const flashType = computed(() => (page.props.flash?.error ? 'error' : 'success'))
 
 const filterModalOpen = ref(false)
 const search = ref(initialFilters.search || '')
@@ -112,11 +130,61 @@ const toggleTheme = () => {
 
 onMounted(() => {
   document.documentElement.classList.toggle('dark', isDark.value)
+
+  const checkEcho = setInterval(() => {
+    if (window.Echo) {
+      clearInterval(checkEcho)
+      setupOnlinePresence()
+    }
+  }, 100)
+  setTimeout(() => clearInterval(checkEcho), 5000)
+})
+
+watch(
+  flashText,
+  (message) => {
+    if (!message) return
+
+    toastText.value = message
+    toastType.value = flashType.value
+    toastVisible.value = true
+
+    if (toastTimer) clearTimeout(toastTimer)
+    toastTimer = setTimeout(() => {
+      toastVisible.value = false
+    }, 2800)
+  },
+  { immediate: true }
+)
+
+onBeforeUnmount(() => {
+  if (toastTimer) clearTimeout(toastTimer)
 })
 </script>
 
 <template>
   <div class="min-h-screen bg-background text-foreground transition-colors duration-100">
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="translate-y-2 opacity-0"
+      enter-to-class="translate-y-0 opacity-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="translate-y-0 opacity-100"
+      leave-to-class="translate-y-2 opacity-0"
+    >
+      <div
+        v-if="toastVisible"
+        class="fixed right-4 top-20 z-[70] rounded-xl px-4 py-2.5 text-xs font-bold shadow-xl sm:right-6"
+        :class="
+          toastType === 'error'
+            ? 'border border-red-200 bg-red-50 text-red-700'
+            : 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+        "
+      >
+        {{ toastText }}
+      </div>
+    </Transition>
+
     <nav
       class="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur transition-colors duration-100 supports-[backdrop-filter]:bg-background/60"
     >
@@ -172,6 +240,12 @@ onMounted(() => {
                   title="Pesan"
                 >
                   <MessageSquare class="h-5 w-5 transition-transform group-hover:scale-110" />
+                  <span
+                    v-if="auth.user.unread_messages_count > 0"
+                    class="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-background"
+                  >
+                    {{ auth.user.unread_messages_count > 9 ? '9+' : auth.user.unread_messages_count }}
+                  </span>
                 </Link>
               </template>
             </div>
@@ -274,6 +348,14 @@ onMounted(() => {
                   <DropdownLink :href="route('profile.edit')">
                     <User class="mr-2 inline h-4 w-4" /> Profile
                   </DropdownLink>
+                  <DropdownLink
+                    v-if="auth.user.role === 'buyer'"
+                    :href="route('profile.upgrade')"
+                    method="patch"
+                    as="button"
+                  >
+                    <Store class="mr-2 inline h-4 w-4 text-primary" /> Jadi Penjual
+                  </DropdownLink>
                   <DropdownLink :href="route('logout')" method="post" as="button">
                     <LogOut class="mr-2 inline h-4 w-4 text-red-500" /> Log Out
                   </DropdownLink>
@@ -307,6 +389,19 @@ onMounted(() => {
               <Sun v-if="isDark" class="h-5 w-5" />
               <Moon v-else class="h-5 w-5" />
             </button>
+            <Link
+              v-if="auth.user"
+              :href="route('chat.index')"
+              class="group relative rounded-lg p-2.5 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+            >
+              <MessageSquare class="h-5 w-5" />
+              <span
+                v-if="auth.user.unread_messages_count > 0"
+                class="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-2 ring-background"
+              >
+                {{ auth.user.unread_messages_count > 9 ? '9+' : auth.user.unread_messages_count }}
+              </span>
+            </Link>
             <button
               @click="showingNavigationDropdown = !showingNavigationDropdown"
               class="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition duration-150 ease-in-out hover:bg-accent hover:text-foreground focus:outline-none"
@@ -367,9 +462,6 @@ onMounted(() => {
                 <LayoutDashboard class="h-4 w-4" /> Seller Dashboard
               </div>
             </ResponsiveNavLink>
-            <ResponsiveNavLink :href="route('chat.index')" :active="route().current('chat.*')">
-              <div class="flex items-center gap-2"><MessageSquare class="h-4 w-4" /> Pesan</div>
-            </ResponsiveNavLink>
           </template>
         </div>
 
@@ -391,6 +483,16 @@ onMounted(() => {
               <ResponsiveNavLink :href="route('profile.edit')">
                 <div class="flex items-center gap-2">
                   <Settings class="h-4 w-4" /> Profile Settings
+                </div>
+              </ResponsiveNavLink>
+              <ResponsiveNavLink
+                v-if="auth.user.role === 'buyer'"
+                :href="route('profile.upgrade')"
+                method="patch"
+                as="button"
+              >
+                <div class="flex items-center gap-2 font-bold text-primary">
+                  <Store class="h-4 w-4" /> Jadi Penjual
                 </div>
               </ResponsiveNavLink>
               <ResponsiveNavLink

@@ -5,6 +5,11 @@ import InputLabel from '@/Components/InputLabel.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import TextInput from '@/Components/TextInput.vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
+import { Eye, EyeOff } from 'lucide-vue-next'
+import { ref } from 'vue'
+
+const showPassword = ref(false)
+const showPasswordConfirmation = ref(false)
 
 const form = useForm({
   name: '',
@@ -59,14 +64,25 @@ const submit = () => {
       <div class="mt-4">
         <InputLabel for="password" value="Password" />
 
-        <TextInput
-          id="password"
-          type="password"
-          class="mt-1 block w-full"
-          v-model="form.password"
-          required
-          autocomplete="new-password"
-        />
+        <div class="relative">
+          <TextInput
+            id="password"
+            :type="showPassword ? 'text' : 'password'"
+            class="mt-1 block w-full pr-10"
+            v-model="form.password"
+            required
+            autocomplete="new-password"
+          />
+          <button
+            type="button"
+            @click="showPassword = !showPassword"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            tabindex="-1"
+          >
+            <Eye v-if="!showPassword" class="h-5 w-5" />
+            <EyeOff v-else class="h-5 w-5" />
+          </button>
+        </div>
 
         <InputError class="mt-2" :message="form.errors.password" />
       </div>
@@ -74,14 +90,25 @@ const submit = () => {
       <div class="mt-4">
         <InputLabel for="password_confirmation" value="Konfirmasi Password" />
 
-        <TextInput
-          id="password_confirmation"
-          type="password"
-          class="mt-1 block w-full"
-          v-model="form.password_confirmation"
-          required
-          autocomplete="new-password"
-        />
+        <div class="relative">
+          <TextInput
+            id="password_confirmation"
+            :type="showPasswordConfirmation ? 'text' : 'password'"
+            class="mt-1 block w-full pr-10"
+            v-model="form.password_confirmation"
+            required
+            autocomplete="new-password"
+          />
+          <button
+            type="button"
+            @click="showPasswordConfirmation = !showPasswordConfirmation"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            tabindex="-1"
+          >
+            <Eye v-if="!showPasswordConfirmation" class="h-5 w-5" />
+            <EyeOff v-else class="h-5 w-5" />
+          </button>
+        </div>
 
         <InputError class="mt-2" :message="form.errors.password_confirmation" />
       </div>

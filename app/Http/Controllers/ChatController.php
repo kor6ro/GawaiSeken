@@ -75,7 +75,7 @@ class ChatController extends Controller
             $isNewChat = true;
         } else {
             $chat = Chat::with([
-                'messages.sender.profile',
+                'messages' => fn ($q) => $q->orderBy('created_at', 'asc')->with('sender.profile'),
                 'product.images',
                 'seller.profile',
                 'buyer.profile',
@@ -134,7 +134,8 @@ class ChatController extends Controller
         $message->load('sender.profile');
         $formatted = $this->formatMessage($message);
 
-        broadcast(new \App\Events\MessageSent($formatted, $chat->id))->toOthers();
+        $recipientId = ($chat->buyer_id === Auth::id()) ? $chat->seller_id : $chat->buyer_id;
+        broadcast(new \App\Events\MessageSent($formatted, $chat->id, $recipientId))->toOthers();
 
         return response()->json($formatted);
     }
@@ -172,7 +173,8 @@ class ChatController extends Controller
         $message->load('sender.profile');
         $formatted = $this->formatMessage($message);
 
-        broadcast(new \App\Events\MessageSent($formatted, $chat->id))->toOthers();
+        $recipientId = ($chat->buyer_id === Auth::id()) ? $chat->seller_id : $chat->buyer_id;
+        broadcast(new \App\Events\MessageSent($formatted, $chat->id, $recipientId))->toOthers();
 
         return response()->json($formatted);
     }

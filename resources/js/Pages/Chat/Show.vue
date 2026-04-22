@@ -17,6 +17,7 @@ import {
   Download,
   AlertTriangle,
 } from 'lucide-vue-next'
+import { onlineUserIds, setupOnlinePresence } from '@/onlineState'
 
 const props = defineProps({
   chat: Object,
@@ -28,7 +29,9 @@ const isDark = computed(() => document.documentElement.classList.contains('dark'
 const messages = ref(props.chat.messages || [])
 const newMessage = ref('')
 const isTyping = ref(false)
-const isOpponentOnline = ref(false)
+const isOpponentOnline = computed(() =>
+  opponent.value ? onlineUserIds.value.includes(Number(opponent.value.id)) : false
+)
 const lightboxUrl = ref(null)
 const chatId = ref(props.isNewChat ? `product-${props.chat.product_id}` : props.chat.id)
 const currentIsNewChat = ref(props.isNewChat)
@@ -139,13 +142,13 @@ const setupEcho = () => {
 
   window.Echo.join(`chat.${chatId.value}`)
     .here((users) => {
-      isOpponentOnline.value = users.some((u) => u.id !== auth.user.id)
+      // We use global presence for online status now
     })
     .joining((user) => {
-      if (user.id !== auth.user.id) isOpponentOnline.value = true
+      // We use global presence for online status now
     })
     .leaving((user) => {
-      if (user.id !== auth.user.id) isOpponentOnline.value = false
+      // We use global presence for online status now
     })
     .listen('MessageSent', (e) => {
       if (e.message.sender_id !== auth.user.id) {
@@ -274,15 +277,16 @@ const downloadImage = (url) => {
 
 onMounted(() => {
   scrollToBottom('auto')
-  if (!currentIsNewChat.value) {
-    const checkEcho = setInterval(() => {
-      if (window.Echo) {
-        clearInterval(checkEcho)
+  const checkEcho = setInterval(() => {
+    if (window.Echo) {
+      clearInterval(checkEcho)
+      setupOnlinePresence()
+      if (!currentIsNewChat.value) {
         setupEcho()
       }
-    }, 100)
-    setTimeout(() => clearInterval(checkEcho), 5000)
-  }
+    }
+  }, 100)
+  setTimeout(() => clearInterval(checkEcho), 5000)
 })
 
 onUnmounted(() => {

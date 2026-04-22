@@ -60,4 +60,19 @@ class ProfileController extends Controller
 
         return Redirect::to('/');
     }
+
+    /**
+     * Upgrade user account to seller.
+     */
+    public function upgradeToSeller(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->role !== 'seller') {
+            $user->role = 'seller';
+            $user->save();
+        }
+
+        return Redirect::back()->with('success', 'Akun berhasil ditingkatkan menjadi Akun Penjual!');
+    }
 }

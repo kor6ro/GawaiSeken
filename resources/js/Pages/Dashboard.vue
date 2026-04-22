@@ -15,7 +15,11 @@ import {
   Trash2,
   Image,
   MapPin,
+  CheckCircle,
+  Circle,
+  Activity,
 } from 'lucide-vue-next'
+import { router } from '@inertiajs/vue3'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import SecondaryButton from '@/Components/SecondaryButton.vue'
 import DangerButton from '@/Components/DangerButton.vue'
@@ -107,6 +111,16 @@ const confirmDeletion = (product) => {
 const closeModal = () => {
   confirmProductDeletion.value = false
   productToDelete.value = null
+}
+
+const toggleStatus = (product) => {
+  router.patch(
+    route('products.toggle-status', product.id),
+    {},
+    {
+      preserveScroll: true,
+    }
+  )
 }
 
 // Store Settings Form
@@ -334,16 +348,19 @@ const updateStoreSettings = () => {
                         Rp {{ new Intl.NumberFormat('id-ID').format(item.price) }}
                       </td>
                       <td class="px-6 py-4 text-center align-middle">
-                        <span
-                          class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold"
+                        <button
+                          @click="toggleStatus(item)"
+                          class="group relative inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold transition-all hover:scale-105 active:scale-95"
                           :class="
                             item.status === 'available'
-                              ? 'border-green-200 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300'
-                              : 'border-gray-200 bg-gray-100 text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400'
+                              : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400'
                           "
                         >
-                          {{ item.status }}
-                        </span>
+                          <CheckCircle v-if="item.status === 'available'" class="h-3.5 w-3.5" />
+                          <Circle v-else class="h-3.5 w-3.5" />
+                          {{ item.status === 'available' ? 'Tersedia' : 'Terjual' }}
+                        </button>
                       </td>
                       <td
                         class="whitespace-nowrap px-6 py-4 text-center align-middle text-xs text-muted-foreground"
@@ -412,16 +429,19 @@ const updateStoreSettings = () => {
                   </div>
                   <div class="flex items-center justify-between gap-4 border-t border-border pt-2">
                     <div class="flex flex-col gap-1">
-                      <span
-                        class="inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[10px] font-bold"
+                      <button
+                        @click="toggleStatus(item)"
+                        class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold transition-all active:scale-90"
                         :class="
                           item.status === 'available'
-                            ? 'border-green-200 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300'
-                            : 'border-gray-200 bg-gray-100 text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400'
+                            : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400'
                         "
                       >
-                        {{ item.status }}
-                      </span>
+                        <CheckCircle v-if="item.status === 'available'" class="h-3 w-3" />
+                        <Circle v-else class="h-3 w-3" />
+                        {{ item.status === 'available' ? 'Tersedia' : 'Terjual' }}
+                      </button>
                       <span class="text-[10px] text-muted-foreground">{{
                         new Date(item.created_at).toLocaleDateString('id-ID')
                       }}</span>

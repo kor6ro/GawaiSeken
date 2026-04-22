@@ -1,9 +1,10 @@
-import { ref, onMounted, onUnmounted, watch, withCtx, unref, createVNode, createTextVNode, createBlock, createCommentVNode, openBlock, toDisplayString, withDirectives, Fragment, renderList, vShow, withModifiers, vModelText, Transition, useSSRContext } from "vue";
+import { ref, shallowRef, watch, withCtx, unref, createVNode, createTextVNode, createBlock, createCommentVNode, openBlock, toDisplayString, withDirectives, Fragment, renderList, vShow, withModifiers, vModelText, Transition, useSSRContext } from "vue";
 import { ssrRenderComponent, ssrRenderClass, ssrRenderStyle, ssrInterpolate, ssrRenderList, ssrRenderAttr } from "vue/server-renderer";
-import { useForm, Head, Link, usePage } from "@inertiajs/vue3";
+import { useForm, Head, Link, usePage, router } from "@inertiajs/vue3";
 import axios from "axios";
-import { _ as _sfc_main$1 } from "./AppLayout-CFkOwdlU.js";
-import { LayoutDashboard, Settings, Package, ShoppingBag, MessageCircle, Plus, Image, Edit3, Trash2, MapPin } from "lucide-vue-next";
+import { _ as _sfc_main$1 } from "./AppLayout-x9cx5faw.js";
+import { useIntersectionObserver } from "@vueuse/core";
+import { LayoutDashboard, Settings, Package, ShoppingBag, MessageCircle, Plus, Image, CheckCircle, Circle, Edit3, Trash2, MapPin } from "lucide-vue-next";
 import { _ as _sfc_main$7 } from "./PrimaryButton-Chd5xZL9.js";
 import { _ as _sfc_main$2, a as _sfc_main$3 } from "./DangerButton-COhGmvyd.js";
 import { b as _sfc_main$4, _ as _sfc_main$5, a as _sfc_main$6 } from "./TextInput-C__yGyCx.js";
@@ -12,6 +13,7 @@ import { Cropper } from "vue-advanced-cropper";
 import "./ApplicationLogo-5BXBKbkR.js";
 import "lodash/debounce.js";
 import "lodash/pickBy.js";
+import "./onlineState-BAtS9nBF.js";
 const _sfc_main = {
   __name: "Dashboard",
   __ssrInlineRender: true,
@@ -27,10 +29,9 @@ const _sfc_main = {
     const props = __props;
     const tab = ref("overview");
     const loading = ref(false);
-    const allMyProducts = ref([...props.myProducts.data]);
+    const allMyProducts = shallowRef([...props.myProducts.data]);
     const nextUrl = ref(props.myProducts.next_page_url);
     const loadMoreTrigger = ref(null);
-    let observer = null;
     const loadMore = async () => {
       if (!nextUrl.value || loading.value || tab.value !== "overview") return;
       loading.value = true;
@@ -44,7 +45,7 @@ const _sfc_main = {
           }
         });
         const newProducts = response.data.props.myProducts;
-        allMyProducts.value.push(...newProducts.data);
+        allMyProducts.value = [...allMyProducts.value, ...newProducts.data];
         nextUrl.value = newProducts.next_page_url;
       } catch (error) {
         console.error("Error loading more dashboard products:", error);
@@ -52,22 +53,15 @@ const _sfc_main = {
         loading.value = false;
       }
     };
-    onMounted(() => {
-      observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting) {
-            loadMore();
-          }
-        },
-        { rootMargin: "200px" }
-      );
-      if (loadMoreTrigger.value) {
-        observer.observe(loadMoreTrigger.value);
-      }
-    });
-    onUnmounted(() => {
-      if (observer) observer.disconnect();
-    });
+    useIntersectionObserver(
+      loadMoreTrigger,
+      ([{ isIntersecting }]) => {
+        if (isIntersecting) {
+          loadMore();
+        }
+      },
+      { rootMargin: "400px 0px" }
+    );
     watch(
       () => props.myProducts,
       (newVal) => {
@@ -76,7 +70,7 @@ const _sfc_main = {
         }
         nextUrl.value = newVal.next_page_url;
       },
-      { deep: true }
+      { deep: false }
     );
     const confirmProductDeletion = ref(false);
     const productToDelete = ref(null);
@@ -93,6 +87,15 @@ const _sfc_main = {
     const closeModal = () => {
       confirmProductDeletion.value = false;
       productToDelete.value = null;
+    };
+    const toggleStatus = (product) => {
+      router.patch(
+        route("products.toggle-status", product.id),
+        {},
+        {
+          preserveScroll: true
+        }
+      );
     };
     const storeForm = useForm({
       store_name: ((_a = props.user.profile) == null ? void 0 : _a.store_name) || props.user.name,
@@ -207,10 +210,16 @@ const _sfc_main = {
                 _push2(ssrRenderComponent(unref(Image), { class: "h-6 w-6" }, null, _parent2, _scopeId));
                 _push2(`</div>`);
               }
-              _push2(`</div><div${_scopeId}><div class="line-clamp-1 text-base font-bold"${_scopeId}>${ssrInterpolate(item.title)}</div><div class="text-xs text-muted-foreground"${_scopeId}>${ssrInterpolate((_a3 = item.category) == null ? void 0 : _a3.name)}</div></div></div></td><td class="whitespace-nowrap px-6 py-4 align-middle font-medium"${_scopeId}> Rp ${ssrInterpolate(new Intl.NumberFormat("id-ID").format(item.price))}</td><td class="px-6 py-4 text-center align-middle"${_scopeId}><span class="${ssrRenderClass([
-                item.status === "available" ? "border-green-200 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300" : "border-gray-200 bg-gray-100 text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300",
-                "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold"
-              ])}"${_scopeId}>${ssrInterpolate(item.status)}</span></td><td class="whitespace-nowrap px-6 py-4 text-center align-middle text-xs text-muted-foreground"${_scopeId}>${ssrInterpolate(new Date(item.created_at).toLocaleDateString("id-ID", {
+              _push2(`</div><div${_scopeId}><div class="line-clamp-1 text-base font-bold"${_scopeId}>${ssrInterpolate(item.title)}</div><div class="text-xs text-muted-foreground"${_scopeId}>${ssrInterpolate((_a3 = item.category) == null ? void 0 : _a3.name)}</div></div></div></td><td class="whitespace-nowrap px-6 py-4 align-middle font-medium"${_scopeId}> Rp ${ssrInterpolate(new Intl.NumberFormat("id-ID").format(item.price))}</td><td class="px-6 py-4 text-center align-middle"${_scopeId}><button class="${ssrRenderClass([
+                item.status === "available" ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400" : "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400",
+                "group relative inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold transition-all hover:scale-105 active:scale-95"
+              ])}"${_scopeId}>`);
+              if (item.status === "available") {
+                _push2(ssrRenderComponent(unref(CheckCircle), { class: "h-3.5 w-3.5" }, null, _parent2, _scopeId));
+              } else {
+                _push2(ssrRenderComponent(unref(Circle), { class: "h-3.5 w-3.5" }, null, _parent2, _scopeId));
+              }
+              _push2(` ${ssrInterpolate(item.status === "available" ? "Tersedia" : "Terjual")}</button></td><td class="whitespace-nowrap px-6 py-4 text-center align-middle text-xs text-muted-foreground"${_scopeId}>${ssrInterpolate(new Date(item.created_at).toLocaleDateString("id-ID", {
                 day: "numeric",
                 month: "short",
                 year: "numeric"
@@ -279,10 +288,16 @@ const _sfc_main = {
                 _push2(ssrRenderComponent(unref(Image), { class: "h-8 w-8" }, null, _parent2, _scopeId));
                 _push2(`</div>`);
               }
-              _push2(`</div><div class="min-w-0 flex-1"${_scopeId}><div class="truncate text-base font-bold"${_scopeId}>${ssrInterpolate(item.title)}</div><div class="text-xs text-muted-foreground"${_scopeId}>${ssrInterpolate((_a3 = item.category) == null ? void 0 : _a3.name)}</div><div class="mt-1 font-bold text-primary"${_scopeId}> Rp ${ssrInterpolate(new Intl.NumberFormat("id-ID").format(item.price))}</div></div></div><div class="flex items-center justify-between gap-4 border-t border-border pt-2"${_scopeId}><div class="flex flex-col gap-1"${_scopeId}><span class="${ssrRenderClass([
-                item.status === "available" ? "border-green-200 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300" : "border-gray-200 bg-gray-100 text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300",
-                "inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[10px] font-bold"
-              ])}"${_scopeId}>${ssrInterpolate(item.status)}</span><span class="text-[10px] text-muted-foreground"${_scopeId}>${ssrInterpolate(new Date(item.created_at).toLocaleDateString("id-ID"))}</span></div><div class="flex items-center gap-2"${_scopeId}>`);
+              _push2(`</div><div class="min-w-0 flex-1"${_scopeId}><div class="truncate text-base font-bold"${_scopeId}>${ssrInterpolate(item.title)}</div><div class="text-xs text-muted-foreground"${_scopeId}>${ssrInterpolate((_a3 = item.category) == null ? void 0 : _a3.name)}</div><div class="mt-1 font-bold text-primary"${_scopeId}> Rp ${ssrInterpolate(new Intl.NumberFormat("id-ID").format(item.price))}</div></div></div><div class="flex items-center justify-between gap-4 border-t border-border pt-2"${_scopeId}><div class="flex flex-col gap-1"${_scopeId}><button class="${ssrRenderClass([
+                item.status === "available" ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400" : "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400",
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold transition-all active:scale-90"
+              ])}"${_scopeId}>`);
+              if (item.status === "available") {
+                _push2(ssrRenderComponent(unref(CheckCircle), { class: "h-3 w-3" }, null, _parent2, _scopeId));
+              } else {
+                _push2(ssrRenderComponent(unref(Circle), { class: "h-3 w-3" }, null, _parent2, _scopeId));
+              }
+              _push2(` ${ssrInterpolate(item.status === "available" ? "Tersedia" : "Terjual")}</button><span class="text-[10px] text-muted-foreground"${_scopeId}>${ssrInterpolate(new Date(item.created_at).toLocaleDateString("id-ID"))}</span></div><div class="flex items-center gap-2"${_scopeId}>`);
               _push2(ssrRenderComponent(unref(Link), {
                 href: _ctx.route("products.edit", item.slug),
                 class: "rounded-lg p-2 text-muted-foreground transition hover:bg-accent"
@@ -765,12 +780,22 @@ const _sfc_main = {
                                   ]),
                                   createVNode("td", { class: "whitespace-nowrap px-6 py-4 align-middle font-medium" }, " Rp " + toDisplayString(new Intl.NumberFormat("id-ID").format(item.price)), 1),
                                   createVNode("td", { class: "px-6 py-4 text-center align-middle" }, [
-                                    createVNode("span", {
+                                    createVNode("button", {
+                                      onClick: ($event) => toggleStatus(item),
                                       class: [
-                                        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold",
-                                        item.status === "available" ? "border-green-200 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300" : "border-gray-200 bg-gray-100 text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                        "group relative inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold transition-all hover:scale-105 active:scale-95",
+                                        item.status === "available" ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400" : "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400"
                                       ]
-                                    }, toDisplayString(item.status), 3)
+                                    }, [
+                                      item.status === "available" ? (openBlock(), createBlock(unref(CheckCircle), {
+                                        key: 0,
+                                        class: "h-3.5 w-3.5"
+                                      })) : (openBlock(), createBlock(unref(Circle), {
+                                        key: 1,
+                                        class: "h-3.5 w-3.5"
+                                      })),
+                                      createTextVNode(" " + toDisplayString(item.status === "available" ? "Tersedia" : "Terjual"), 1)
+                                    ], 10, ["onClick"])
                                   ]),
                                   createVNode("td", { class: "whitespace-nowrap px-6 py-4 text-center align-middle text-xs text-muted-foreground" }, toDisplayString(new Date(item.created_at).toLocaleDateString("id-ID", {
                                     day: "numeric",
@@ -851,12 +876,22 @@ const _sfc_main = {
                               ]),
                               createVNode("div", { class: "flex items-center justify-between gap-4 border-t border-border pt-2" }, [
                                 createVNode("div", { class: "flex flex-col gap-1" }, [
-                                  createVNode("span", {
+                                  createVNode("button", {
+                                    onClick: ($event) => toggleStatus(item),
                                     class: [
-                                      "inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[10px] font-bold",
-                                      item.status === "available" ? "border-green-200 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300" : "border-gray-200 bg-gray-100 text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                      "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold transition-all active:scale-90",
+                                      item.status === "available" ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400" : "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400"
                                     ]
-                                  }, toDisplayString(item.status), 3),
+                                  }, [
+                                    item.status === "available" ? (openBlock(), createBlock(unref(CheckCircle), {
+                                      key: 0,
+                                      class: "h-3 w-3"
+                                    })) : (openBlock(), createBlock(unref(Circle), {
+                                      key: 1,
+                                      class: "h-3 w-3"
+                                    })),
+                                    createTextVNode(" " + toDisplayString(item.status === "available" ? "Tersedia" : "Terjual"), 1)
+                                  ], 10, ["onClick"]),
                                   createVNode("span", { class: "text-[10px] text-muted-foreground" }, toDisplayString(new Date(item.created_at).toLocaleDateString("id-ID")), 1)
                                 ]),
                                 createVNode("div", { class: "flex items-center gap-2" }, [

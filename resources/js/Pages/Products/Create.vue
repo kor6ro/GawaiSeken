@@ -24,7 +24,7 @@ const form = useForm({
   category_id: '',
   brand: '',
   type: '',
-  condition: 'Bekas Mulus',
+  condition: 'second_like_new',
   is_cod: false,
   is_negotiable: true,
   price: '',
@@ -45,7 +45,7 @@ const form = useForm({
 watch(
   () => form.condition,
   (newVal) => {
-    if (newVal && newVal.includes('Bekas')) {
+    if (newVal && newVal !== 'new') {
       form.is_negotiable = true
     }
   }
@@ -329,7 +329,7 @@ watch(
                       class="mt-1 block w-full rounded-xl border-border bg-background p-3 text-sm text-foreground shadow-sm transition-all focus:border-primary focus:ring-primary"
                       required
                       :placeholder="
-                        form.condition === 'Bekas Ada minus' || form.condition === 'Minus'
+                        form.condition === 'second_good' || form.condition === 'minus'
                           ? 'WAJIB: Jelaskan semua minus secara jujur (LCD retak, baterai drop, dll)...'
                           : 'Jelaskan kelengkapan, garansi, dan kondisi fisik secara detail...'
                       "

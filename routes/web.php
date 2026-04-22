@@ -34,6 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/favorites', [ProductController::class, 'favorites'])->name('products.favorites');
     Route::post('/products/{product:id}/favorite', [ProductController::class, 'toggleFavorite'])->name('products.toggle-favorite');
     Route::post('/products/{product:id}/report', [ProductController::class, 'report'])->name('products.report');
+    Route::patch('/products/{product:id}/status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
 
     Route::get('/chats', [ChatController::class, 'index'])->name('chat.index');
     Route::get('/chats/new/{product}', [ChatController::class, 'initiate'])->name('chat.new');

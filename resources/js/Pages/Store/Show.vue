@@ -22,6 +22,16 @@ const nextUrl = ref(props.products.next_page_url)
 const loadMoreTrigger = ref(null)
 let observer = null
 
+const sellerInitial = computed(() => {
+  const name = props.seller?.name ?? ''
+  return name ? name.charAt(0).toUpperCase() : '?'
+})
+
+const buyerInitial = (buyer) => {
+  const name = buyer?.name ?? ''
+  return name ? name.charAt(0).toUpperCase() : '?'
+}
+
 const loadMore = async () => {
   if (!nextUrl.value || loading.value || activeTab.value !== 'products') return
 
@@ -113,7 +123,7 @@ const formattedJoined = computed(() => props.stats.joined)
                   v-else
                   class="flex h-full w-full items-center justify-center rounded-full bg-primary text-4xl font-black text-primary-foreground"
                 >
-                  {{ seller.name.charAt(0).toUpperCase() }}
+                  {{ sellerInitial }}
                 </div>
               </div>
               <span
@@ -172,7 +182,7 @@ const formattedJoined = computed(() => props.stats.joined)
               <div
                 class="rounded-3xl border border-border bg-muted/50 p-6 transition-colors hover:bg-muted"
               >
-                <span class="block text-3xl font-black text-foreground">{{ products.length }}</span>
+                <span class="block text-3xl font-black text-foreground">{{ products.total }}</span>
                 <span class="text-[10px] font-black uppercase tracking-widest text-muted-foreground"
                   >Produk Aktif</span
                 >
@@ -307,7 +317,7 @@ const formattedJoined = computed(() => props.stats.joined)
                   loading="lazy"
                   class="h-full w-full object-cover"
                 />
-                <span v-else>{{ review.buyer?.name.charAt(0).toUpperCase() }}</span>
+                <span v-else>{{ buyerInitial(review.buyer) }}</span>
               </div>
               <div class="flex-1">
                 <div class="mb-2 flex items-center justify-between">

@@ -51,9 +51,10 @@ export const PRODUCT_BRANDS = {
 }
 
 export const PRODUCT_CONDITIONS = [
-  { value: 'Bekas Mulus', label: 'Bekas Mulus' },
-  { value: 'Bekas Ada minus', label: 'Bekas Ada minus' },
-  { value: 'Minus', label: 'Minus' },
+  { value: 'new', label: 'Baru' },
+  { value: 'second_like_new', label: 'Bekas Mulus' },
+  { value: 'second_good', label: 'Bekas Ada minus' },
+  { value: 'minus', label: 'Minus' },
 ]
 
 export const RAM_OPTIONS = [

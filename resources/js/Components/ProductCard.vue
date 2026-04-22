@@ -198,7 +198,7 @@ const conditionBadgeClass = computed(() => {
             'whitespace-nowrap rounded-lg border border-white/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest shadow-lg sm:text-[9px]',
           ]"
         >
-          {{ product.condition }}
+          {{ product.condition_label }}
         </span>
       </div>
     </div>
@@ -223,31 +223,22 @@ const conditionBadgeClass = computed(() => {
       <div class="mt-auto space-y-3">
         <div class="flex items-center justify-between gap-2 overflow-hidden">
           <div class="flex min-w-0 items-center gap-1.5">
-            <!-- Condition Text -->
-            <span
-              class="shrink-0 text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 sm:text-xs"
-            >
-              {{ product.condition }}
-            </span>
-
-            <span class="h-1 w-1 shrink-0 rounded-full bg-slate-200 dark:bg-slate-700"></span>
-
             <!-- Store Name -->
             <Link
-              :href="route('store.show', product.user_id)"
+              :href="route('store.show', product.store?.id ?? product.user_id)"
               class="z-20 truncate text-[10px] font-bold text-slate-500 transition-colors hover:text-primary dark:text-slate-400 sm:text-xs"
             >
-              {{ product.store.profile?.store_name ?? product.store.name }}
+              {{ product.store?.profile?.store_name ?? product.store?.name ?? 'Toko' }}
             </Link>
           </div>
 
           <!-- Rating -->
           <div
-            v-if="product.store.reviews_as_seller_avg_rating"
+            v-if="product.store?.reviews_as_seller_avg_rating"
             class="flex shrink-0 items-center gap-0.5 text-[10px] font-bold text-amber-500 sm:text-xs"
           >
             <Star class="h-2.5 w-2.5 fill-current sm:h-3 sm:w-3" />
-            <span>{{ Number(product.store.reviews_as_seller_avg_rating).toFixed(1) }}</span>
+            <span>{{ Number(product.store?.reviews_as_seller_avg_rating).toFixed(1) }}</span>
           </div>
         </div>
 
@@ -257,7 +248,7 @@ const conditionBadgeClass = computed(() => {
         >
           <div class="flex items-center gap-1 truncate">
             <MapPin class="h-2.5 w-2.5 shrink-0 sm:h-3 sm:w-3" />
-            <span class="truncate">{{ product.store.profile?.city ?? 'Lokasi N/A' }}</span>
+            <span class="truncate">{{ product.store?.profile?.city ?? 'Lokasi N/A' }}</span>
           </div>
           <div
             class="flex shrink-0 items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 dark:bg-slate-800/50"

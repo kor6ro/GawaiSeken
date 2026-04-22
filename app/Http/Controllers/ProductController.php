@@ -65,14 +65,25 @@ class ProductController extends Controller
             ]);
 
             if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $file) {
-                    if ($file->isValid()) {
-                        // Simpan file sementara ke disk 'local' (bukan public)
-                        $tempPath = $file->store('tmp', 'local');
-                        $fileName = $file->hashName();
+                foreach ($request->file('images') as $index => $file) {
+                    $tmpName = $file?->getPathname();
+                    if ($file->isValid() && ! empty($tmpName)) {
+                        try {
+                            // Simpan file sementara ke disk 'local' secara manual
+                            // untuk menghindari kegagalan internal UploadedFile::store()
+                            $extension = $file->getClientOriginalExtension() ?: 'jpg';
+                            $fileName = Str::uuid()->toString().'.'.$extension;
+                            $tempPath = 'tmp/'.$fileName;
+                            $written = Storage::disk('local')->put($tempPath, file_get_contents($tmpName));
+                            if (! $written) {
+                                throw new \RuntimeException('Failed writing temp image to local disk');
+                            }
 
-                        // Dispatch Job untuk proses kompresi, resize, dan penyimpanan final
-                        ProcessProductImage::dispatch($product, $tempPath, $fileName)->afterCommit();
+                            // Proses sinkron agar foto langsung tersimpan meski worker queue tidak berjalan
+                            ProcessProductImage::dispatchSync($product, $tempPath, $fileName);
+                        } catch (\Throwable $e) {
+                            continue;
+                        }
                     }
                 }
             }
@@ -136,14 +147,23 @@ class ProductController extends Controller
             }
 
             if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $file) {
-                    if ($file->isValid()) {
-                        // Simpan file sementara ke disk 'local' (bukan public)
-                        $tempPath = $file->store('tmp', 'local');
-                        $fileName = $file->hashName();
+                foreach ($request->file('images') as $index => $file) {
+                    $tmpName = $file?->getPathname();
+                    if ($file->isValid() && ! empty($tmpName)) {
+                        $extension = $file->getClientOriginalExtension() ?: 'jpg';
+                        $fileName = Str::uuid()->toString().'.'.$extension;
+                        $tempPath = 'tmp/'.$fileName;
+                        $written = Storage::disk('local')->put($tempPath, file_get_contents($tmpName));
+                        if (! $written) {
+                            continue;
+                        }
 
-                        // Dispatch Job untuk proses kompresi, resize, dan penyimpanan final
-                        ProcessProductImage::dispatch($product, $tempPath, $fileName)->afterCommit();
+                        try {
+                            // Proses sinkron agar foto langsung tersimpan meski worker queue tidak berjalan
+                            ProcessProductImage::dispatchSync($product, $tempPath, $fileName);
+                        } catch (\Throwable $e) {
+                            continue;
+                        }
                     }
                 }
             }
@@ -275,6 +295,7 @@ class ProductController extends Controller
         $perPage = $isMobile ? 8 : 15;
 
         $products = Product::whereIn('id', $favoriteIds)
+            ->where('user_id', '!=', $user->id)
             ->with(['images', 'category', 'store.profile'])
             ->latest()
             ->paginate($perPage);
@@ -287,6 +308,11 @@ class ProductController extends Controller
     public function toggleFavorite(Product $product)
     {
         $user = Auth::user();
+
+        if ($product->user_id === $user->id) {
+            return back()->with('error', 'Produk jualan sendiri tidak bisa ditambahkan ke keranjang.');
+        }
+
         $favorites = $user->favorites ?? [];
 
         if (in_array($product->id, $favorites)) {
@@ -299,7 +325,17 @@ class ProductController extends Controller
 
         $user->update(['favorites' => $favorites]);
 
-        return back()->with('status', $status === 'added' ? 'Produk ditambahkan ke favorit' : 'Produk dihapus dari favorit');
+        return back()->with('status', $status === 'added' ? 'Berhasil ditambahkan ke keranjang.' : 'Produk dihapus dari keranjang.');
+    }
+
+    public function toggleStatus(Product $product)
+    {
+        Gate::authorize('update', $product);
+
+        $newStatus = $product->status === 'available' ? 'sold' : 'available';
+        $product->update(['status' => $newStatus]);
+
+        return back()->with('status', 'Status produk berhasil diperbarui.');
     }
 
     public function report(Request $request, Product $product)

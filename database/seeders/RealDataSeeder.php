@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Enums\ProductConditionEnum;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductImage;
-use App\Enums\ProductConditionEnum;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -57,7 +57,7 @@ class RealDataSeeder extends Seeder
                         'is_cod' => true,
                         'is_negotiable' => true,
                         'specifications' => ['ram' => '6GB', 'storage' => '256GB', 'color' => 'Sierra Blue'],
-                        'image' => 'products/iphone13.jpg'
+                        'image' => 'products/iphone13.jpg',
                     ],
                     [
                         'category_id' => $laptop->id,
@@ -70,7 +70,7 @@ class RealDataSeeder extends Seeder
                         'is_cod' => false,
                         'is_negotiable' => true,
                         'specifications' => ['processor' => 'Apple M1', 'ram' => '8GB', 'storage' => '256GB'],
-                        'image' => 'products/macbook.jpg'
+                        'image' => 'products/macbook.jpg',
                     ],
                     [
                         'category_id' => $tablet->id,
@@ -83,9 +83,9 @@ class RealDataSeeder extends Seeder
                         'is_cod' => true,
                         'is_negotiable' => false,
                         'specifications' => ['ram' => '4GB', 'storage' => '64GB', 'chipset' => 'A14 Bionic'],
-                        'image' => 'products/ipad.jpg'
+                        'image' => 'products/ipad.jpg',
                     ],
-                ]
+                ],
             ],
             [
                 'name' => 'Vyno',
@@ -104,7 +104,7 @@ class RealDataSeeder extends Seeder
                         'is_cod' => true,
                         'is_negotiable' => true,
                         'specifications' => ['ram' => '12GB', 'storage' => '256GB', 'color' => 'Phantom Black'],
-                        'image' => 'products/samsung.jpg'
+                        'image' => 'products/samsung.jpg',
                     ],
                     [
                         'category_id' => $laptop->id,
@@ -117,7 +117,7 @@ class RealDataSeeder extends Seeder
                         'is_cod' => false,
                         'is_negotiable' => true,
                         'specifications' => ['processor' => 'Ryzen 9', 'gpu' => 'RTX 3060', 'ram' => '16GB'],
-                        'image' => 'products/rog.jpg'
+                        'image' => 'products/rog.jpg',
                     ],
                     [
                         'category_id' => $aksesoris->id,
@@ -130,9 +130,9 @@ class RealDataSeeder extends Seeder
                         'is_cod' => true,
                         'is_negotiable' => false,
                         'specifications' => ['battery_life' => '30h', 'bluetooth' => '5.0'],
-                        'image' => 'products/sony.jpg'
+                        'image' => 'products/sony.jpg',
                     ],
-                ]
+                ],
             ],
         ];
 
@@ -152,8 +152,8 @@ class RealDataSeeder extends Seeder
                     'store_name' => $sellerData['store_name'],
                     'city' => $sellerData['city'],
                     'bio' => "Selamat datang di {$sellerData['store_name']}! Kami menjual gadget second berkualitas tinggi.",
-                    'phone' => '0812' . rand(10000000, 99999999),
-                    'address' => "Jl. Gadget Real No. " . rand(1, 100) . ", " . $sellerData['city'],
+                    'phone' => '0812'.rand(10000000, 99999999),
+                    'address' => 'Jl. Gadget Real No. '.rand(1, 100).', '.$sellerData['city'],
                 ]
             );
 
@@ -163,7 +163,7 @@ class RealDataSeeder extends Seeder
 
                 $product = Product::create(array_merge($p, [
                     'user_id' => $seller->id,
-                    'slug' => Str::slug($p['title']) . '-' . Str::random(5),
+                    'slug' => Str::slug($p['title']).'-'.Str::random(5),
                     'status' => 'available',
                 ]));
 

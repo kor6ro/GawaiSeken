@@ -21,10 +21,16 @@ const props = defineProps({
   categories: Array,
 })
 const formatCondition = (cond) => {
-  if (!cond || cond.includes('Baru')) return 'Bekas Mulus'
-  if (cond === 'Bekas - Mulus') return 'Bekas Mulus'
-  if (cond === 'Bekas - Ada minus') return 'Bekas Ada minus'
-  return cond
+  if (!cond) return 'second_like_new'
+  const mapping = {
+    Baru: 'new',
+    'Bekas Mulus': 'second_like_new',
+    'Bekas - Mulus': 'second_like_new',
+    'Bekas Ada minus': 'second_good',
+    'Bekas - Ada minus': 'second_good',
+    Minus: 'minus',
+  }
+  return mapping[cond] || cond
 }
 
 const form = useForm({
@@ -281,7 +287,7 @@ const submit = () => {
                       class="mt-1 block w-full rounded-xl border-border bg-background p-3 text-sm text-foreground shadow-sm transition-all focus:border-primary focus:ring-primary"
                       required
                       :placeholder="
-                        form.condition === 'Bekas Ada minus' || form.condition === 'Minus'
+                        form.condition === 'second_good' || form.condition === 'minus'
                           ? 'WAJIB: Jelaskan semua minus secara jujur (LCD retak, baterai drop, dll)...'
                           : 'Jelaskan kelengkapan, garansi, dan kondisi fisik secara detail...'
                       "

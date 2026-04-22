@@ -22,7 +22,15 @@ class StoreController extends Controller
         $perPage = $isMobile ? 8 : 15;
 
         $products = $user->products()
-            ->with(['images', 'category', 'seller.profile'])
+            ->with([
+                'images',
+                'category',
+                'store' => function ($query) {
+                    $query->with('profile')
+                        ->withCount('transactionsAsSeller')
+                        ->withAvg('reviewsAsSeller', 'rating');
+                },
+            ])
             ->where('status', 'available')
             ->latest()
             ->paginate($perPage);

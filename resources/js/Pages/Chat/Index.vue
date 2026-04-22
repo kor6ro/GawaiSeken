@@ -1,8 +1,9 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { Head, Link, usePage } from '@inertiajs/vue3'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { Head, Link, usePage, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { MessageSquare, Search, X, CheckCheck, Check } from 'lucide-vue-next'
+import { onlineUserIds } from '@/onlineState'
 
 const props = defineProps({
   chats: Array,
@@ -10,6 +11,50 @@ const props = defineProps({
 
 const auth = usePage().props.auth
 const searchQuery = ref('')
+const localChats = ref([...props.chats])
+
+watch(
+  () => props.chats,
+  (newChats) => {
+    localChats.value = [...newChats]
+  },
+  { deep: true }
+)
+
+onMounted(() => {
+  if (window.Echo && auth.user) {
+    window.Echo.private(`App.Models.User.${auth.user.id}`).listen('MessageSent', (e) => {
+      const chatIndex = localChats.value.findIndex((c) => c.id === e.chatId)
+
+      if (chatIndex !== -1) {
+        // Update existing chat room
+        const chat = { ...localChats.value[chatIndex] }
+        chat.messages = [e.message]
+        chat.unread_count = (chat.unread_count || 0) + 1
+
+        // Move to top and update list
+        const newList = [...localChats.value]
+        newList.splice(chatIndex, 1)
+        newList.unshift(chat)
+        localChats.value = newList
+
+        // Update global unread count in header
+        if (usePage().props.auth.user) {
+          usePage().props.auth.user.unread_messages_count++
+        }
+      } else {
+        // If it's a completely new chat room, just reload the list
+        router.reload({ only: ['chats'] })
+      }
+    })
+  }
+})
+
+onUnmounted(() => {
+  if (window.Echo && auth.user) {
+    window.Echo.leave(`App.Models.User.${auth.user.id}`)
+  }
+})
 
 const getOpponent = (chat) => {
   return auth.user.id === chat.buyer_id ? chat.seller : chat.buyer
@@ -82,9 +127,9 @@ const getAvatarGradient = (chat) => {
 }
 
 const filteredChats = computed(() => {
-  if (!searchQuery.value.trim()) return props.chats
+  if (!searchQuery.value.trim()) return localChats.value
   const q = searchQuery.value.toLowerCase()
-  return props.chats.filter((chat) => {
+  return localChats.value.filter((chat) => {
     const name = getDisplayName(chat).toLowerCase()
     const preview = getPreviewContent(chat).toLowerCase()
     const product = (chat.product?.title || '').toLowerCase()
@@ -190,52 +235,69 @@ const filteredChats = computed(() => {
                     {{ getInitial(chat) }}
                   </div>
 
-                  <!-- Unread badge -->
-                  <span v-if="chat.unread_count > 0" class="chat-unread-badge">
-                    {{ chat.unread_count > 99 ? '99+' : chat.unread_count }}
-                  </span>
+                  <!-- Online indicator -->
+                  <span
+                    v-if="onlineUserIds.includes(Number(getOpponent(chat).id))"
+                    class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-card bg-green-500 shadow-sm"
+                  ></span>
                 </div>
 
                 <!-- Content -->
                 <div class="min-w-0 flex-1">
-                  <div class="mb-0.5 flex items-center justify-between">
-                    <h3 class="chat-item-name" :class="chat.unread_count > 0 ? 'font-bold' : ''">
-                      {{ getDisplayName(chat) }}
-                    </h3>
-                    <span
-                      class="chat-item-time"
-                      :class="
-                        chat.unread_count > 0
-                          ? 'font-semibold text-primary'
-                          : 'text-muted-foreground'
-                      "
-                    >
-                      {{ formatTime(chat) }}
-                    </span>
-                  </div>
+                  <div class="flex items-start justify-between gap-3">
+                    <!-- Left column -->
+                    <div class="min-w-0 flex-1">
+                      <h3 class="chat-item-name" :class="chat.unread_count > 0 ? 'font-bold' : ''">
+                        {{ getDisplayName(chat) }}
+                      </h3>
 
-                  <div class="flex min-w-0 items-center gap-1.5">
-                    <!-- My message ticks -->
-                    <template v-if="isMine(chat)">
-                      <CheckCheck v-if="isRead(chat)" class="h-4 w-4 flex-shrink-0 text-primary" />
-                      <CheckCheck v-else class="h-4 w-4 flex-shrink-0 text-muted-foreground/50" />
-                    </template>
+                      <div class="mt-0.5 flex min-w-0 items-center gap-1.5">
+                        <!-- My message ticks -->
+                        <template v-if="isMine(chat)">
+                          <CheckCheck
+                            v-if="isRead(chat)"
+                            class="h-4 w-4 flex-shrink-0 text-primary"
+                          />
+                          <CheckCheck
+                            v-else
+                            class="h-4 w-4 flex-shrink-0 text-muted-foreground/50"
+                          />
+                        </template>
 
-                    <p
-                      class="chat-item-preview"
-                      :class="
-                        chat.unread_count > 0
-                          ? 'font-medium text-foreground'
-                          : 'text-muted-foreground'
-                      "
-                    >
-                      {{ getPreviewContent(chat) }}
-                    </p>
-                  </div>
+                        <p
+                          class="chat-item-preview"
+                          :class="
+                            chat.unread_count > 0
+                              ? 'font-medium text-foreground'
+                              : 'text-muted-foreground'
+                          "
+                        >
+                          {{ getPreviewContent(chat) }}
+                        </p>
+                      </div>
 
-                  <!-- Product tag -->
-                  <div v-if="chat.product?.title" class="mt-1">
-                    <span class="chat-item-product"> 📦 {{ chat.product.title }} </span>
+                      <!-- Product tag -->
+                      <div v-if="chat.product?.title" class="mt-1">
+                        <span class="chat-item-product"> 📦 {{ chat.product.title }} </span>
+                      </div>
+                    </div>
+
+                    <!-- Right column (Time + Badge) -->
+                    <div class="flex flex-shrink-0 flex-col items-end gap-1.5">
+                      <span
+                        class="chat-item-time"
+                        :class="
+                          chat.unread_count > 0
+                            ? 'font-bold text-primary'
+                            : 'text-muted-foreground'
+                        "
+                      >
+                        {{ formatTime(chat) }}
+                      </span>
+                      <span v-if="chat.unread_count > 0" class="chat-unread-pill">
+                        {{ chat.unread_count }}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </Link>
@@ -345,22 +407,19 @@ const filteredChats = computed(() => {
   line-height: 1;
 }
 
-.chat-unread-badge {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
+.chat-unread-pill {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: 9px;
   background: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
   font-size: 10px;
-  font-weight: 800;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  font-weight: 900;
+  box-shadow: 0 2px 8px hsl(var(--primary) / 0.4);
 }
 
 /* ============================================

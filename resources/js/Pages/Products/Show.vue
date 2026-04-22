@@ -197,7 +197,7 @@ const specifications = computed(() => {
                           : 'bg-slate-400',
                       'rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white',
                     ]"
-                    >{{ product.condition }}</span
+                    >{{ product.condition_label }}</span
                   >
                   <span
                     v-if="product.is_cod"
@@ -308,7 +308,7 @@ const specifications = computed(() => {
                       </div>
                     </div>
                     <Link
-                      :href="route('store.show', product.user_id)"
+                      :href="route('store.show', product.store?.id ?? product.user_id)"
                       class="rounded-xl border border-border bg-card p-3 shadow-sm transition-all hover:bg-accent group-hover:border-primary/30"
                     >
                       <Store class="h-5 w-5 transition-transform group-hover:scale-110" />

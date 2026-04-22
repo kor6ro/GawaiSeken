@@ -56,7 +56,18 @@ class Product extends Model
         };
     }
 
-    protected $appends = ['condition_badge_color'];
+    public function getConditionLabelAttribute(): string
+    {
+        return match ($this->condition) {
+            ProductConditionEnum::NEW => 'Baru',
+            ProductConditionEnum::SECOND_LIKE_NEW => 'Bekas Mulus',
+            ProductConditionEnum::SECOND_GOOD => 'Bekas Ada minus',
+            ProductConditionEnum::MINUS => 'Minus',
+            default => 'Bekas',
+        };
+    }
+
+    protected $appends = ['condition_badge_color', 'condition_label'];
 
     public function category(): BelongsTo
     {

@@ -1,12 +1,13 @@
 import { ref, computed, withCtx, unref, createVNode, createTextVNode, toDisplayString, createBlock, createCommentVNode, openBlock, Fragment, renderList, useSSRContext } from "vue";
 import { ssrRenderComponent, ssrInterpolate, ssrRenderAttr, ssrRenderList, ssrRenderClass } from "vue/server-renderer";
 import { usePage, Head, Link, router } from "@inertiajs/vue3";
-import { _ as _sfc_main$1 } from "./AppLayout-CFkOwdlU.js";
+import { _ as _sfc_main$1 } from "./AppLayout-x9cx5faw.js";
 import { Home, ChevronRight, ExternalLink, Globe, ArrowRight, ShieldCheck, MapPin, Store, MessageCircle, Edit3, X, ShoppingCart, Flag, AlertTriangle } from "lucide-vue-next";
 import { _ as _sfc_main$2 } from "./Modal-C0YBTj_6.js";
 import "./ApplicationLogo-5BXBKbkR.js";
 import "lodash/debounce.js";
 import "lodash/pickBy.js";
+import "./onlineState-BAtS9nBF.js";
 const _sfc_main = {
   __name: "Show",
   __ssrInlineRender: true,
@@ -78,7 +79,7 @@ const _sfc_main = {
     return (_ctx, _push, _parent, _attrs) => {
       _push(ssrRenderComponent(_sfc_main$1, _attrs, {
         default: withCtx((_, _push2, _parent2, _scopeId) => {
-          var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B;
+          var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D;
           if (_push2) {
             _push2(ssrRenderComponent(unref(Head), {
               title: __props.product.title
@@ -127,7 +128,7 @@ const _sfc_main = {
             _push2(`</div><div class="lg:col-span-5"${_scopeId}><div class="sticky top-8 rounded-[2.5rem] border border-border bg-card p-8 text-card-foreground shadow-xl md:p-10"${_scopeId}><div class="mb-8"${_scopeId}><div class="mb-4 flex flex-wrap items-center gap-3"${_scopeId}><span class="rounded-full bg-muted px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground"${_scopeId}>${ssrInterpolate((_b = __props.product.category) == null ? void 0 : _b.name)}</span><span class="${ssrRenderClass([
               __props.product.condition_badge_color === "green" ? "bg-emerald-500" : __props.product.condition_badge_color === "yellow" ? "bg-amber-500" : "bg-slate-400",
               "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white"
-            ])}"${_scopeId}>${ssrInterpolate(__props.product.condition)}</span>`);
+            ])}"${_scopeId}>${ssrInterpolate(__props.product.condition_label)}</span>`);
             if (__props.product.is_cod) {
               _push2(`<span class="rounded-full bg-blue-500 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white"${_scopeId}>COD</span>`);
             } else {
@@ -175,7 +176,7 @@ const _sfc_main = {
             _push2(ssrRenderComponent(unref(MapPin), { class: "mr-1 h-3 w-3" }, null, _parent2, _scopeId));
             _push2(` ${ssrInterpolate(((_n = (_m = __props.product.store) == null ? void 0 : _m.profile) == null ? void 0 : _n.city) || "Lokasi tidak diisi")}</div></div></div>`);
             _push2(ssrRenderComponent(unref(Link), {
-              href: _ctx.route("store.show", __props.product.user_id),
+              href: _ctx.route("store.show", ((_o = __props.product.store) == null ? void 0 : _o.id) ?? __props.product.user_id),
               class: "rounded-xl border border-border bg-card p-3 shadow-sm transition-all hover:bg-accent group-hover:border-primary/30"
             }, {
               default: withCtx((_2, _push3, _parent3, _scopeId2) => {
@@ -330,7 +331,7 @@ const _sfc_main = {
                       createVNode("li", null, [
                         createVNode("div", { class: "flex items-center" }, [
                           createVNode(unref(ChevronRight), { class: "h-4 w-4 text-muted-foreground" }),
-                          createVNode("span", { class: "ml-1 text-muted-foreground md:ml-2" }, toDisplayString((_o = __props.product.category) == null ? void 0 : _o.name), 1)
+                          createVNode("span", { class: "ml-1 text-muted-foreground md:ml-2" }, toDisplayString((_p = __props.product.category) == null ? void 0 : _p.name), 1)
                         ])
                       ])
                     ])
@@ -389,13 +390,13 @@ const _sfc_main = {
                       createVNode("div", { class: "sticky top-8 rounded-[2.5rem] border border-border bg-card p-8 text-card-foreground shadow-xl md:p-10" }, [
                         createVNode("div", { class: "mb-8" }, [
                           createVNode("div", { class: "mb-4 flex flex-wrap items-center gap-3" }, [
-                            createVNode("span", { class: "rounded-full bg-muted px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground" }, toDisplayString((_p = __props.product.category) == null ? void 0 : _p.name), 1),
+                            createVNode("span", { class: "rounded-full bg-muted px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground" }, toDisplayString((_q = __props.product.category) == null ? void 0 : _q.name), 1),
                             createVNode("span", {
                               class: [
                                 __props.product.condition_badge_color === "green" ? "bg-emerald-500" : __props.product.condition_badge_color === "yellow" ? "bg-amber-500" : "bg-slate-400",
                                 "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white"
                               ]
-                            }, toDisplayString(__props.product.condition), 3),
+                            }, toDisplayString(__props.product.condition_label), 3),
                             __props.product.is_cod ? (openBlock(), createBlock("span", {
                               key: 0,
                               class: "rounded-full bg-blue-500 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white"
@@ -447,8 +448,8 @@ const _sfc_main = {
                             createVNode("div", { class: "relative z-10 mb-6 flex items-center justify-between" }, [
                               createVNode("div", { class: "flex items-center gap-4" }, [
                                 createVNode("div", { class: "relative" }, [
-                                  createVNode("div", { class: "flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-xl font-black text-primary-foreground shadow-xl transition-transform group-hover:scale-105" }, toDisplayString((_q = __props.product.store) == null ? void 0 : _q.name.charAt(0).toUpperCase()), 1),
-                                  ((_s = (_r = __props.product.store) == null ? void 0 : _r.profile) == null ? void 0 : _s.is_ktp_verified) && ((_t = __props.product.store) == null ? void 0 : _t.transactions_as_seller_count) >= 5 ? (openBlock(), createBlock("div", {
+                                  createVNode("div", { class: "flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-xl font-black text-primary-foreground shadow-xl transition-transform group-hover:scale-105" }, toDisplayString((_r = __props.product.store) == null ? void 0 : _r.name.charAt(0).toUpperCase()), 1),
+                                  ((_t = (_s = __props.product.store) == null ? void 0 : _s.profile) == null ? void 0 : _t.is_ktp_verified) && ((_u = __props.product.store) == null ? void 0 : _u.transactions_as_seller_count) >= 5 ? (openBlock(), createBlock("div", {
                                     key: 0,
                                     class: "absolute -bottom-1 -right-1 rounded-lg border-2 border-card bg-amber-400 p-1 text-white shadow-lg ring-1 ring-amber-500/20"
                                   }, [
@@ -457,20 +458,20 @@ const _sfc_main = {
                                 ]),
                                 createVNode("div", null, [
                                   createVNode("div", { class: "flex items-center gap-2" }, [
-                                    createVNode("h4", { class: "text-lg font-black" }, toDisplayString(((_v = (_u = __props.product.store) == null ? void 0 : _u.profile) == null ? void 0 : _v.store_name) ?? ((_w = __props.product.store) == null ? void 0 : _w.name)), 1),
-                                    ((_y = (_x = __props.product.store) == null ? void 0 : _x.profile) == null ? void 0 : _y.is_ktp_verified) && ((_z = __props.product.store) == null ? void 0 : _z.transactions_as_seller_count) >= 5 ? (openBlock(), createBlock("div", {
+                                    createVNode("h4", { class: "text-lg font-black" }, toDisplayString(((_w = (_v = __props.product.store) == null ? void 0 : _v.profile) == null ? void 0 : _w.store_name) ?? ((_x = __props.product.store) == null ? void 0 : _x.name)), 1),
+                                    ((_z = (_y = __props.product.store) == null ? void 0 : _y.profile) == null ? void 0 : _z.is_ktp_verified) && ((_A = __props.product.store) == null ? void 0 : _A.transactions_as_seller_count) >= 5 ? (openBlock(), createBlock("div", {
                                       key: 0,
                                       class: "rounded bg-amber-400/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-600"
                                     }, " Premium Seller ")) : createCommentVNode("", true)
                                   ]),
                                   createVNode("div", { class: "mt-1 flex items-center text-xs text-muted-foreground" }, [
                                     createVNode(unref(MapPin), { class: "mr-1 h-3 w-3" }),
-                                    createTextVNode(" " + toDisplayString(((_B = (_A = __props.product.store) == null ? void 0 : _A.profile) == null ? void 0 : _B.city) || "Lokasi tidak diisi"), 1)
+                                    createTextVNode(" " + toDisplayString(((_C = (_B = __props.product.store) == null ? void 0 : _B.profile) == null ? void 0 : _C.city) || "Lokasi tidak diisi"), 1)
                                   ])
                                 ])
                               ]),
                               createVNode(unref(Link), {
-                                href: _ctx.route("store.show", __props.product.user_id),
+                                href: _ctx.route("store.show", ((_D = __props.product.store) == null ? void 0 : _D.id) ?? __props.product.user_id),
                                 class: "rounded-xl border border-border bg-card p-3 shadow-sm transition-all hover:bg-accent group-hover:border-primary/30"
                               }, {
                                 default: withCtx(() => [

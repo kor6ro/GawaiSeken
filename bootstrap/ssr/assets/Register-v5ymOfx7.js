@@ -1,14 +1,17 @@
-import { withCtx, unref, createTextVNode, createVNode, withModifiers, useSSRContext } from "vue";
+import { ref, withCtx, unref, createTextVNode, createVNode, withModifiers, createBlock, openBlock, useSSRContext } from "vue";
 import { ssrRenderComponent } from "vue/server-renderer";
 import { _ as _sfc_main$1 } from "./GuestLayout-BwVHXVA6.js";
 import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4 } from "./TextInput-C__yGyCx.js";
 import { _ as _sfc_main$5 } from "./PrimaryButton-Chd5xZL9.js";
 import { useForm, Head, Link } from "@inertiajs/vue3";
+import { Eye, EyeOff } from "lucide-vue-next";
 import "./ApplicationLogo-5BXBKbkR.js";
 const _sfc_main = {
   __name: "Register",
   __ssrInlineRender: true,
   setup(__props) {
+    const showPassword = ref(false);
+    const showPasswordConfirmation = ref(false);
     const form = useForm({
       name: "",
       email: "",
@@ -67,15 +70,23 @@ const _sfc_main = {
               for: "password",
               value: "Password"
             }, null, _parent2, _scopeId));
+            _push2(`<div class="relative"${_scopeId}>`);
             _push2(ssrRenderComponent(_sfc_main$3, {
               id: "password",
-              type: "password",
-              class: "mt-1 block w-full",
+              type: showPassword.value ? "text" : "password",
+              class: "mt-1 block w-full pr-10",
               modelValue: unref(form).password,
               "onUpdate:modelValue": ($event) => unref(form).password = $event,
               required: "",
               autocomplete: "new-password"
             }, null, _parent2, _scopeId));
+            _push2(`<button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" tabindex="-1"${_scopeId}>`);
+            if (!showPassword.value) {
+              _push2(ssrRenderComponent(unref(Eye), { class: "h-5 w-5" }, null, _parent2, _scopeId));
+            } else {
+              _push2(ssrRenderComponent(unref(EyeOff), { class: "h-5 w-5" }, null, _parent2, _scopeId));
+            }
+            _push2(`</button></div>`);
             _push2(ssrRenderComponent(_sfc_main$4, {
               class: "mt-2",
               message: unref(form).errors.password
@@ -85,15 +96,23 @@ const _sfc_main = {
               for: "password_confirmation",
               value: "Konfirmasi Password"
             }, null, _parent2, _scopeId));
+            _push2(`<div class="relative"${_scopeId}>`);
             _push2(ssrRenderComponent(_sfc_main$3, {
               id: "password_confirmation",
-              type: "password",
-              class: "mt-1 block w-full",
+              type: showPasswordConfirmation.value ? "text" : "password",
+              class: "mt-1 block w-full pr-10",
               modelValue: unref(form).password_confirmation,
               "onUpdate:modelValue": ($event) => unref(form).password_confirmation = $event,
               required: "",
               autocomplete: "new-password"
             }, null, _parent2, _scopeId));
+            _push2(`<button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" tabindex="-1"${_scopeId}>`);
+            if (!showPasswordConfirmation.value) {
+              _push2(ssrRenderComponent(unref(Eye), { class: "h-5 w-5" }, null, _parent2, _scopeId));
+            } else {
+              _push2(ssrRenderComponent(unref(EyeOff), { class: "h-5 w-5" }, null, _parent2, _scopeId));
+            }
+            _push2(`</button></div>`);
             _push2(ssrRenderComponent(_sfc_main$4, {
               class: "mt-2",
               message: unref(form).errors.password_confirmation
@@ -180,15 +199,31 @@ const _sfc_main = {
                     for: "password",
                     value: "Password"
                   }),
-                  createVNode(_sfc_main$3, {
-                    id: "password",
-                    type: "password",
-                    class: "mt-1 block w-full",
-                    modelValue: unref(form).password,
-                    "onUpdate:modelValue": ($event) => unref(form).password = $event,
-                    required: "",
-                    autocomplete: "new-password"
-                  }, null, 8, ["modelValue", "onUpdate:modelValue"]),
+                  createVNode("div", { class: "relative" }, [
+                    createVNode(_sfc_main$3, {
+                      id: "password",
+                      type: showPassword.value ? "text" : "password",
+                      class: "mt-1 block w-full pr-10",
+                      modelValue: unref(form).password,
+                      "onUpdate:modelValue": ($event) => unref(form).password = $event,
+                      required: "",
+                      autocomplete: "new-password"
+                    }, null, 8, ["type", "modelValue", "onUpdate:modelValue"]),
+                    createVNode("button", {
+                      type: "button",
+                      onClick: ($event) => showPassword.value = !showPassword.value,
+                      class: "absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200",
+                      tabindex: "-1"
+                    }, [
+                      !showPassword.value ? (openBlock(), createBlock(unref(Eye), {
+                        key: 0,
+                        class: "h-5 w-5"
+                      })) : (openBlock(), createBlock(unref(EyeOff), {
+                        key: 1,
+                        class: "h-5 w-5"
+                      }))
+                    ], 8, ["onClick"])
+                  ]),
                   createVNode(_sfc_main$4, {
                     class: "mt-2",
                     message: unref(form).errors.password
@@ -199,15 +234,31 @@ const _sfc_main = {
                     for: "password_confirmation",
                     value: "Konfirmasi Password"
                   }),
-                  createVNode(_sfc_main$3, {
-                    id: "password_confirmation",
-                    type: "password",
-                    class: "mt-1 block w-full",
-                    modelValue: unref(form).password_confirmation,
-                    "onUpdate:modelValue": ($event) => unref(form).password_confirmation = $event,
-                    required: "",
-                    autocomplete: "new-password"
-                  }, null, 8, ["modelValue", "onUpdate:modelValue"]),
+                  createVNode("div", { class: "relative" }, [
+                    createVNode(_sfc_main$3, {
+                      id: "password_confirmation",
+                      type: showPasswordConfirmation.value ? "text" : "password",
+                      class: "mt-1 block w-full pr-10",
+                      modelValue: unref(form).password_confirmation,
+                      "onUpdate:modelValue": ($event) => unref(form).password_confirmation = $event,
+                      required: "",
+                      autocomplete: "new-password"
+                    }, null, 8, ["type", "modelValue", "onUpdate:modelValue"]),
+                    createVNode("button", {
+                      type: "button",
+                      onClick: ($event) => showPasswordConfirmation.value = !showPasswordConfirmation.value,
+                      class: "absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200",
+                      tabindex: "-1"
+                    }, [
+                      !showPasswordConfirmation.value ? (openBlock(), createBlock(unref(Eye), {
+                        key: 0,
+                        class: "h-5 w-5"
+                      })) : (openBlock(), createBlock(unref(EyeOff), {
+                        key: 1,
+                        class: "h-5 w-5"
+                      }))
+                    ], 8, ["onClick"])
+                  ]),
                   createVNode(_sfc_main$4, {
                     class: "mt-2",
                     message: unref(form).errors.password_confirmation

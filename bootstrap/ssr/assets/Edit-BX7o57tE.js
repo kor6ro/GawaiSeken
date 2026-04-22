@@ -1,15 +1,16 @@
 import { computed, ref, withCtx, unref, createTextVNode, createVNode, withModifiers, withDirectives, createBlock, openBlock, Fragment, renderList, toDisplayString, vModelSelect, vModelCheckbox, vModelText, createCommentVNode, useSSRContext } from "vue";
 import { ssrRenderComponent, ssrIncludeBooleanAttr, ssrLooseContain, ssrLooseEqual, ssrRenderList, ssrRenderAttr, ssrInterpolate, ssrRenderClass } from "vue/server-renderer";
 import { useForm, Head, Link } from "@inertiajs/vue3";
-import { _ as _sfc_main$1 } from "./AppLayout-CFkOwdlU.js";
+import { _ as _sfc_main$1 } from "./AppLayout-x9cx5faw.js";
 import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4 } from "./TextInput-C__yGyCx.js";
 import { _ as _sfc_main$6 } from "./PrimaryButton-Chd5xZL9.js";
-import { P as PRODUCT_BRANDS, _ as _sfc_main$5, a as PRODUCT_CONDITIONS, R as RAM_OPTIONS, S as STORAGE_OPTIONS, K as KELENGKAPAN_OPTIONS } from "./constants-BVyjBhQf.js";
+import { P as PRODUCT_BRANDS, _ as _sfc_main$5, a as PRODUCT_CONDITIONS, R as RAM_OPTIONS, S as STORAGE_OPTIONS, K as KELENGKAPAN_OPTIONS } from "./constants-CeaA9YUP.js";
 import { Info, X, ImagePlus } from "lucide-vue-next";
 import "./ApplicationLogo-5BXBKbkR.js";
 import "lodash/debounce.js";
 import "./Modal-C0YBTj_6.js";
 import "lodash/pickBy.js";
+import "./onlineState-BAtS9nBF.js";
 const _sfc_main = {
   __name: "Edit",
   __ssrInlineRender: true,
@@ -21,10 +22,16 @@ const _sfc_main = {
     var _a, _b, _c, _d, _e, _f, _g;
     const props = __props;
     const formatCondition = (cond) => {
-      if (!cond || cond.includes("Baru")) return "Bekas Mulus";
-      if (cond === "Bekas - Mulus") return "Bekas Mulus";
-      if (cond === "Bekas - Ada minus") return "Bekas Ada minus";
-      return cond;
+      if (!cond) return "second_like_new";
+      const mapping = {
+        Baru: "new",
+        "Bekas Mulus": "second_like_new",
+        "Bekas - Mulus": "second_like_new",
+        "Bekas Ada minus": "second_good",
+        "Bekas - Ada minus": "second_good",
+        Minus: "minus"
+      };
+      return mapping[cond] || cond;
     };
     const form = useForm({
       _method: "put",
@@ -208,7 +215,7 @@ const _sfc_main = {
             }, null, _parent2, _scopeId));
             _push2(`<textarea id="description" rows="5" class="mt-1 block w-full rounded-xl border-border bg-background p-3 text-sm text-foreground shadow-sm transition-all focus:border-primary focus:ring-primary" required${ssrRenderAttr(
               "placeholder",
-              unref(form).condition === "Bekas Ada minus" || unref(form).condition === "Minus" ? "WAJIB: Jelaskan semua minus secara jujur (LCD retak, baterai drop, dll)..." : "Jelaskan kelengkapan, garansi, dan kondisi fisik secara detail..."
+              unref(form).condition === "second_good" || unref(form).condition === "minus" ? "WAJIB: Jelaskan semua minus secara jujur (LCD retak, baterai drop, dll)..." : "Jelaskan kelengkapan, garansi, dan kondisi fisik secara detail..."
             )}${_scopeId}>${ssrInterpolate(unref(form).description)}</textarea>`);
             _push2(ssrRenderComponent(_sfc_main$4, {
               class: "mt-2",
@@ -604,7 +611,7 @@ const _sfc_main = {
                                 rows: "5",
                                 class: "mt-1 block w-full rounded-xl border-border bg-background p-3 text-sm text-foreground shadow-sm transition-all focus:border-primary focus:ring-primary",
                                 required: "",
-                                placeholder: unref(form).condition === "Bekas Ada minus" || unref(form).condition === "Minus" ? "WAJIB: Jelaskan semua minus secara jujur (LCD retak, baterai drop, dll)..." : "Jelaskan kelengkapan, garansi, dan kondisi fisik secara detail..."
+                                placeholder: unref(form).condition === "second_good" || unref(form).condition === "minus" ? "WAJIB: Jelaskan semua minus secara jujur (LCD retak, baterai drop, dll)..." : "Jelaskan kelengkapan, garansi, dan kondisi fisik secara detail..."
                               }, null, 8, ["onUpdate:modelValue", "placeholder"]), [
                                 [vModelText, unref(form).description]
                               ]),

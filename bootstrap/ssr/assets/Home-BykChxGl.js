@@ -1,14 +1,16 @@
-import { ref, onMounted, onUnmounted, watch, withCtx, unref, createVNode, createBlock, createCommentVNode, openBlock, toDisplayString, Fragment, renderList, useSSRContext } from "vue";
+import { ref, shallowRef, watch, withCtx, unref, createVNode, createBlock, createCommentVNode, openBlock, toDisplayString, Fragment, renderList, useSSRContext } from "vue";
 import { ssrRenderComponent, ssrInterpolate, ssrRenderList } from "vue/server-renderer";
 import { router, Head, usePage } from "@inertiajs/vue3";
 import axios from "axios";
-import { _ as _sfc_main$1 } from "./AppLayout-CFkOwdlU.js";
-import { P as ProductCard } from "./ProductCard-CWopBDLU.js";
+import { _ as _sfc_main$1 } from "./AppLayout-x9cx5faw.js";
+import { P as ProductCard } from "./ProductCard-DuFFyYn9.js";
 import "./Modal-C0YBTj_6.js";
 import { Search } from "lucide-vue-next";
 import debounce from "lodash/debounce.js";
 import pickBy from "lodash/pickBy.js";
+import { useIntersectionObserver } from "@vueuse/core";
 import "./ApplicationLogo-5BXBKbkR.js";
+import "./onlineState-BAtS9nBF.js";
 import "./_plugin-vue_export-helper-1tPrXgE0.js";
 const _sfc_main = {
   __name: "Home",
@@ -27,10 +29,9 @@ const _sfc_main = {
     const filterModalOpen = ref(false);
     const search = ref(props.filters.search || "");
     const loading = ref(false);
-    const allProducts = ref([...props.products.data]);
+    const allProducts = shallowRef([...props.products.data]);
     const nextUrl = ref(props.products.next_page_url);
     const loadMoreTrigger = ref(null);
-    let observer = null;
     const loadMore = async () => {
       if (!nextUrl.value || loading.value) return;
       loading.value = true;
@@ -40,11 +41,12 @@ const _sfc_main = {
             "X-Inertia": "true",
             "X-Inertia-Version": usePage().version,
             "X-Inertia-Partial-Component": "Home",
+            // Ensure fetching correct component partial
             "X-Inertia-Partial-Data": "products"
           }
         });
         const newProducts = response.data.props.products;
-        allProducts.value.push(...newProducts.data);
+        allProducts.value = [...allProducts.value, ...newProducts.data];
         nextUrl.value = newProducts.next_page_url;
       } catch (error) {
         console.error("Error loading more products:", error);
@@ -52,22 +54,18 @@ const _sfc_main = {
         loading.value = false;
       }
     };
-    onMounted(() => {
-      observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting) {
-            loadMore();
-          }
-        },
-        { rootMargin: "200px" }
-      );
-      if (loadMoreTrigger.value) {
-        observer.observe(loadMoreTrigger.value);
+    useIntersectionObserver(
+      loadMoreTrigger,
+      ([{ isIntersecting }]) => {
+        if (isIntersecting) {
+          loadMore();
+        }
+      },
+      {
+        // Increase root margin to buffer loading before user actually reaches the end
+        rootMargin: "400px 0px"
       }
-    });
-    onUnmounted(() => {
-      if (observer) observer.disconnect();
-    });
+    );
     watch(
       () => props.products,
       (newVal) => {
@@ -76,7 +74,8 @@ const _sfc_main = {
         }
         nextUrl.value = newVal.next_page_url;
       },
-      { deep: true }
+      { deep: false }
+      // Avoid deep watching the entire products object!
     );
     const filterParams = ref({
       category: props.filters.category || "",
@@ -192,7 +191,7 @@ const _sfc_main = {
             }
             _push2(`<div class="mt-12 flex justify-center"${_scopeId}>`);
             if (loading.value) {
-              _push2(`<div class="flex flex-col items-center gap-2"${_scopeId}><div class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"${_scopeId}></div><span class="text-xs font-bold uppercase tracking-widest text-muted-foreground"${_scopeId}>Memuat barang...</span></div>`);
+              _push2(`<div class="flex w-full flex-col items-center gap-6 py-6"${_scopeId}><div class="flex gap-2"${_scopeId}><div class="h-3 w-3 animate-[bounce_1s_infinite_0ms] rounded-full bg-primary/70"${_scopeId}></div><div class="h-3 w-3 animate-[bounce_1s_infinite_200ms] rounded-full bg-primary/80"${_scopeId}></div><div class="h-3 w-3 animate-[bounce_1s_infinite_400ms] rounded-full bg-primary/90"${_scopeId}></div></div><span class="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60"${_scopeId}>Mengambil Data Produk...</span></div>`);
             } else if (!nextUrl.value && allProducts.value.length > 0) {
               _push2(`<div class="py-8 text-center"${_scopeId}><div class="flex items-center gap-3 text-muted-foreground/40"${_scopeId}><div class="h-px w-8 bg-current"${_scopeId}></div><span class="text-[10px] font-black uppercase tracking-[0.2em]"${_scopeId}>Semua produk telah ditampilkan</span><div class="h-px w-8 bg-current"${_scopeId}></div></div></div>`);
             } else {
@@ -262,10 +261,14 @@ const _sfc_main = {
                   }, [
                     loading.value ? (openBlock(), createBlock("div", {
                       key: 0,
-                      class: "flex flex-col items-center gap-2"
+                      class: "flex w-full flex-col items-center gap-6 py-6"
                     }, [
-                      createVNode("div", { class: "h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" }),
-                      createVNode("span", { class: "text-xs font-bold uppercase tracking-widest text-muted-foreground" }, "Memuat barang...")
+                      createVNode("div", { class: "flex gap-2" }, [
+                        createVNode("div", { class: "h-3 w-3 animate-[bounce_1s_infinite_0ms] rounded-full bg-primary/70" }),
+                        createVNode("div", { class: "h-3 w-3 animate-[bounce_1s_infinite_200ms] rounded-full bg-primary/80" }),
+                        createVNode("div", { class: "h-3 w-3 animate-[bounce_1s_infinite_400ms] rounded-full bg-primary/90" })
+                      ]),
+                      createVNode("span", { class: "text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60" }, "Mengambil Data Produk...")
                     ])) : !nextUrl.value && allProducts.value.length > 0 ? (openBlock(), createBlock("div", {
                       key: 1,
                       class: "py-8 text-center"

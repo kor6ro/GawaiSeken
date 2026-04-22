@@ -2,13 +2,14 @@ import { ref, onMounted, onUnmounted, watch, withCtx, unref, createTextVNode, cr
 import { ssrRenderComponent, ssrRenderList } from "vue/server-renderer";
 import { Head, Link, usePage } from "@inertiajs/vue3";
 import axios from "axios";
-import { _ as _sfc_main$1 } from "./AppLayout-CFkOwdlU.js";
-import { P as ProductCard } from "./ProductCard-CWopBDLU.js";
+import { _ as _sfc_main$1 } from "./AppLayout-x9cx5faw.js";
+import { P as ProductCard } from "./ProductCard-DuFFyYn9.js";
 import { ShoppingCart, Package } from "lucide-vue-next";
 import "./ApplicationLogo-5BXBKbkR.js";
 import "lodash/debounce.js";
 import "./Modal-C0YBTj_6.js";
 import "lodash/pickBy.js";
+import "./onlineState-BAtS9nBF.js";
 import "./_plugin-vue_export-helper-1tPrXgE0.js";
 const _sfc_main = {
   __name: "Favorites",

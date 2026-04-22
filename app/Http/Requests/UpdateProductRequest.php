@@ -36,7 +36,7 @@ class UpdateProductRequest extends FormRequest
         return [
             'brand' => 'required|string|max:255',
             'type' => 'required|string|max:255',
-            'condition' => 'required|string|max:255',
+            'condition' => ['required', \Illuminate\Validation\Rule::enum(\App\Enums\ProductConditionEnum::class)],
             'is_cod' => 'nullable|boolean',
             'is_negotiable' => 'nullable|boolean',
             'price' => 'required|numeric|min:1000|max:99999999999',

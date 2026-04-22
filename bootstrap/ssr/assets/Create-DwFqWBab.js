@@ -1,15 +1,16 @@
 import { watch, computed, ref, withCtx, unref, createTextVNode, toDisplayString, createVNode, withModifiers, withDirectives, createBlock, openBlock, Fragment, renderList, vModelSelect, vModelCheckbox, vModelText, Transition, createCommentVNode, useSSRContext } from "vue";
 import { ssrRenderComponent, ssrInterpolate, ssrIncludeBooleanAttr, ssrLooseContain, ssrLooseEqual, ssrRenderList, ssrRenderAttr } from "vue/server-renderer";
 import { useForm, Head, Link } from "@inertiajs/vue3";
-import { _ as _sfc_main$1 } from "./AppLayout-CFkOwdlU.js";
+import { _ as _sfc_main$1 } from "./AppLayout-x9cx5faw.js";
 import { _ as _sfc_main$2, b as _sfc_main$3, a as _sfc_main$4 } from "./TextInput-C__yGyCx.js";
 import { _ as _sfc_main$6 } from "./PrimaryButton-Chd5xZL9.js";
-import { P as PRODUCT_BRANDS, _ as _sfc_main$5, a as PRODUCT_CONDITIONS, R as RAM_OPTIONS, S as STORAGE_OPTIONS, K as KELENGKAPAN_OPTIONS } from "./constants-BVyjBhQf.js";
+import { P as PRODUCT_BRANDS, _ as _sfc_main$5, a as PRODUCT_CONDITIONS, R as RAM_OPTIONS, S as STORAGE_OPTIONS, K as KELENGKAPAN_OPTIONS } from "./constants-CeaA9YUP.js";
 import { ExternalLink, Info, ImagePlus, X } from "lucide-vue-next";
 import "./ApplicationLogo-5BXBKbkR.js";
 import "lodash/debounce.js";
 import "./Modal-C0YBTj_6.js";
 import "lodash/pickBy.js";
+import "./onlineState-BAtS9nBF.js";
 const _sfc_main = {
   __name: "Create",
   __ssrInlineRender: true,
@@ -22,7 +23,7 @@ const _sfc_main = {
       category_id: "",
       brand: "",
       type: "",
-      condition: "Bekas Mulus",
+      condition: "second_like_new",
       is_cod: false,
       is_negotiable: true,
       price: "",
@@ -41,7 +42,7 @@ const _sfc_main = {
     watch(
       () => form.condition,
       (newVal) => {
-        if (newVal && newVal.includes("Bekas")) {
+        if (newVal && newVal !== "new") {
           form.is_negotiable = true;
         }
       }
@@ -227,7 +228,7 @@ const _sfc_main = {
             }, null, _parent2, _scopeId));
             _push2(`<textarea id="description" rows="5" class="mt-1 block w-full rounded-xl border-border bg-background p-3 text-sm text-foreground shadow-sm transition-all focus:border-primary focus:ring-primary" required${ssrRenderAttr(
               "placeholder",
-              unref(form).condition === "Bekas Ada minus" || unref(form).condition === "Minus" ? "WAJIB: Jelaskan semua minus secara jujur (LCD retak, baterai drop, dll)..." : "Jelaskan kelengkapan, garansi, dan kondisi fisik secara detail..."
+              unref(form).condition === "second_good" || unref(form).condition === "minus" ? "WAJIB: Jelaskan semua minus secara jujur (LCD retak, baterai drop, dll)..." : "Jelaskan kelengkapan, garansi, dan kondisi fisik secara detail..."
             )}${_scopeId}>${ssrInterpolate(unref(form).description)}</textarea>`);
             _push2(ssrRenderComponent(_sfc_main$3, {
               class: "mt-2",
@@ -627,7 +628,7 @@ const _sfc_main = {
                                 rows: "5",
                                 class: "mt-1 block w-full rounded-xl border-border bg-background p-3 text-sm text-foreground shadow-sm transition-all focus:border-primary focus:ring-primary",
                                 required: "",
-                                placeholder: unref(form).condition === "Bekas Ada minus" || unref(form).condition === "Minus" ? "WAJIB: Jelaskan semua minus secara jujur (LCD retak, baterai drop, dll)..." : "Jelaskan kelengkapan, garansi, dan kondisi fisik secara detail..."
+                                placeholder: unref(form).condition === "second_good" || unref(form).condition === "minus" ? "WAJIB: Jelaskan semua minus secara jujur (LCD retak, baterai drop, dll)..." : "Jelaskan kelengkapan, garansi, dan kondisi fisik secara detail..."
                               }, null, 8, ["onUpdate:modelValue", "placeholder"]), [
                                 [vModelText, unref(form).description]
                               ]),

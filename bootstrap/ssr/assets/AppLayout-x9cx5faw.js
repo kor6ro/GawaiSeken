@@ -1,11 +1,12 @@
-import { computed, unref, mergeProps, withCtx, renderSlot, useSSRContext, ref, onMounted, onUnmounted, watch, createVNode, createBlock, createCommentVNode, openBlock, createTextVNode, toDisplayString, Fragment, renderList, withDirectives, vModelRadio } from "vue";
-import { ssrRenderComponent, ssrRenderSlot, ssrRenderAttrs, ssrRenderStyle, ssrRenderClass, ssrRenderAttr, ssrInterpolate, ssrRenderList, ssrIncludeBooleanAttr, ssrLooseEqual } from "vue/server-renderer";
+import { computed, unref, mergeProps, withCtx, renderSlot, useSSRContext, ref, onMounted, onUnmounted, watch, onBeforeUnmount, createVNode, createBlock, createCommentVNode, openBlock, toDisplayString, createTextVNode, Fragment, renderList, withDirectives, vModelRadio } from "vue";
+import { ssrRenderComponent, ssrRenderSlot, ssrRenderAttrs, ssrRenderStyle, ssrRenderClass, ssrInterpolate, ssrRenderAttr, ssrRenderList, ssrIncludeBooleanAttr, ssrLooseEqual } from "vue/server-renderer";
 import { Link, usePage, router } from "@inertiajs/vue3";
 import { _ as _sfc_main$4 } from "./ApplicationLogo-5BXBKbkR.js";
-import { Home, LayoutDashboard, MessageSquare, Search, SlidersHorizontal, ShoppingCart, Sun, Moon, User, LogOut, ChevronDown, Menu, X, Settings, Cpu, HardDrive, ArrowUpDown } from "lucide-vue-next";
+import { Home, LayoutDashboard, MessageSquare, Search, SlidersHorizontal, ShoppingCart, Sun, Moon, User, Store, LogOut, ChevronDown, Menu, X, Settings, Cpu, HardDrive, ArrowUpDown } from "lucide-vue-next";
 import debounce from "lodash/debounce.js";
 import { _ as _sfc_main$5 } from "./Modal-C0YBTj_6.js";
 import pickBy from "lodash/pickBy.js";
+import { s as setupOnlinePresence } from "./onlineState-BAtS9nBF.js";
 const _sfc_main$3 = {
   __name: "ResponsiveNavLink",
   __ssrInlineRender: true,
@@ -143,10 +144,25 @@ const _sfc_main = {
   __name: "AppLayout",
   __ssrInlineRender: true,
   setup(__props) {
-    const { props: pageProps } = usePage();
+    const page = usePage();
+    const { props: pageProps } = page;
     const auth = pageProps.auth;
     const globalFilters = pageProps.global_filters;
     const initialFilters = pageProps.active_filters;
+    const toastVisible = ref(false);
+    const toastText = ref("");
+    const toastType = ref("success");
+    let toastTimer = null;
+    const flashText = computed(
+      () => {
+        var _a, _b, _c, _d;
+        return ((_a = page.props.flash) == null ? void 0 : _a.status) || ((_b = page.props.flash) == null ? void 0 : _b.success) || ((_c = page.props.flash) == null ? void 0 : _c.message) || ((_d = page.props.flash) == null ? void 0 : _d.error) || "";
+      }
+    );
+    const flashType = computed(() => {
+      var _a;
+      return ((_a = page.props.flash) == null ? void 0 : _a.error) ? "error" : "success";
+    });
     const filterModalOpen = ref(false);
     const search = ref(initialFilters.search || "");
     const filterParams = ref({
@@ -199,9 +215,42 @@ const _sfc_main = {
     );
     onMounted(() => {
       document.documentElement.classList.toggle("dark", isDark.value);
+      const checkEcho = setInterval(() => {
+        if (window.Echo) {
+          clearInterval(checkEcho);
+          setupOnlinePresence();
+        }
+      }, 100);
+      setTimeout(() => clearInterval(checkEcho), 5e3);
+    });
+    watch(
+      flashText,
+      (message) => {
+        if (!message) return;
+        toastText.value = message;
+        toastType.value = flashType.value;
+        toastVisible.value = true;
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toastVisible.value = false;
+        }, 2800);
+      },
+      { immediate: true }
+    );
+    onBeforeUnmount(() => {
+      if (toastTimer) clearTimeout(toastTimer);
     });
     return (_ctx, _push, _parent, _attrs) => {
-      _push(`<div${ssrRenderAttrs(mergeProps({ class: "min-h-screen bg-background text-foreground transition-colors duration-100" }, _attrs))}><nav class="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur transition-colors duration-100 supports-[backdrop-filter]:bg-background/60"><div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"><div class="flex h-16 justify-between"><div class="flex items-center"><div class="mr-6 flex shrink-0 items-center">`);
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "min-h-screen bg-background text-foreground transition-colors duration-100" }, _attrs))}>`);
+      if (toastVisible.value) {
+        _push(`<div class="${ssrRenderClass([
+          toastType.value === "error" ? "border border-red-200 bg-red-50 text-red-700" : "border border-emerald-200 bg-emerald-50 text-emerald-700",
+          "fixed right-4 top-20 z-[70] rounded-xl px-4 py-2.5 text-xs font-bold shadow-xl sm:right-6"
+        ])}">${ssrInterpolate(toastText.value)}</div>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<nav class="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur transition-colors duration-100 supports-[backdrop-filter]:bg-background/60"><div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"><div class="flex h-16 justify-between"><div class="flex items-center"><div class="mr-6 flex shrink-0 items-center">`);
       _push(ssrRenderComponent(unref(Link), {
         href: _ctx.route("home")
       }, {
@@ -269,9 +318,18 @@ const _sfc_main = {
           default: withCtx((_, _push2, _parent2, _scopeId) => {
             if (_push2) {
               _push2(ssrRenderComponent(unref(MessageSquare), { class: "h-5 w-5 transition-transform group-hover:scale-110" }, null, _parent2, _scopeId));
+              if (unref(auth).user.unread_messages_count > 0) {
+                _push2(`<span class="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-background"${_scopeId}>${ssrInterpolate(unref(auth).user.unread_messages_count > 9 ? "9+" : unref(auth).user.unread_messages_count)}</span>`);
+              } else {
+                _push2(`<!---->`);
+              }
             } else {
               return [
-                createVNode(unref(MessageSquare), { class: "h-5 w-5 transition-transform group-hover:scale-110" })
+                createVNode(unref(MessageSquare), { class: "h-5 w-5 transition-transform group-hover:scale-110" }),
+                unref(auth).user.unread_messages_count > 0 ? (openBlock(), createBlock("span", {
+                  key: 0,
+                  class: "absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-background"
+                }, toDisplayString(unref(auth).user.unread_messages_count > 9 ? "9+" : unref(auth).user.unread_messages_count), 1)) : createCommentVNode("", true)
               ];
             }
           }),
@@ -281,16 +339,22 @@ const _sfc_main = {
       } else {
         _push(`<!---->`);
       }
-      _push(`</div></div><div class="hidden gap-1 sm:flex sm:items-center"><div class="mr-2 flex items-center gap-2"><div class="group relative"><div class="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 transition-colors">`);
-      _push(ssrRenderComponent(unref(Search), { class: "h-4 w-4 text-muted-foreground group-focus-within:text-primary" }, null, _parent));
-      _push(`</div><input type="text"${ssrRenderAttr("value", search.value)} placeholder="Cari gadget..." class="w-40 rounded-xl border-transparent bg-muted/60 py-1.5 pl-9 pr-4 text-sm transition-all duration-100 placeholder:text-muted-foreground/70 focus:border-border focus:bg-background focus:ring-2 focus:ring-primary/20 lg:w-56"></div><button class="group relative rounded-xl bg-muted/60 p-2 text-muted-foreground transition-all hover:bg-accent hover:text-primary" title="Filter Pencarian">`);
-      _push(ssrRenderComponent(unref(SlidersHorizontal), { class: "h-4 w-4" }, null, _parent));
-      if (hasActiveFilters()) {
-        _push(`<span class="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full border-2 border-background bg-primary"></span>`);
+      _push(`</div></div><div class="hidden gap-1 sm:flex sm:items-center">`);
+      if (_ctx.$page.component === "Home") {
+        _push(`<div class="mr-2 flex items-center gap-2"><div class="group relative"><div class="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 transition-colors">`);
+        _push(ssrRenderComponent(unref(Search), { class: "h-4 w-4 text-muted-foreground group-focus-within:text-primary" }, null, _parent));
+        _push(`</div><input type="text"${ssrRenderAttr("value", search.value)} placeholder="Cari gadget..." class="w-40 rounded-xl border-transparent bg-muted/60 py-1.5 pl-9 pr-4 text-sm transition-all duration-100 placeholder:text-muted-foreground/70 focus:border-border focus:bg-background focus:ring-2 focus:ring-primary/20 lg:w-56"></div><button class="group relative rounded-xl bg-muted/60 p-2 text-muted-foreground transition-all hover:bg-accent hover:text-primary" title="Filter Pencarian">`);
+        _push(ssrRenderComponent(unref(SlidersHorizontal), { class: "h-4 w-4" }, null, _parent));
+        if (hasActiveFilters()) {
+          _push(`<span class="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full border-2 border-background bg-primary"></span>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</button></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</button></div><div class="mr-2 flex items-center gap-1 border-r border-border/50 px-2">`);
+      _push(`<div class="mr-2 flex items-center gap-1 border-r border-border/50 px-2">`);
       if (unref(auth).user) {
         _push(ssrRenderComponent(unref(Link), {
           href: _ctx.route("products.favorites"),
@@ -378,6 +442,28 @@ const _sfc_main = {
                 }),
                 _: 1
               }, _parent2, _scopeId));
+              if (unref(auth).user.role === "buyer") {
+                _push2(ssrRenderComponent(_sfc_main$1, {
+                  href: _ctx.route("profile.upgrade"),
+                  method: "patch",
+                  as: "button"
+                }, {
+                  default: withCtx((_2, _push3, _parent3, _scopeId2) => {
+                    if (_push3) {
+                      _push3(ssrRenderComponent(unref(Store), { class: "mr-2 inline h-4 w-4 text-primary" }, null, _parent3, _scopeId2));
+                      _push3(` Jadi Penjual `);
+                    } else {
+                      return [
+                        createVNode(unref(Store), { class: "mr-2 inline h-4 w-4 text-primary" }),
+                        createTextVNode(" Jadi Penjual ")
+                      ];
+                    }
+                  }),
+                  _: 1
+                }, _parent2, _scopeId));
+              } else {
+                _push2(`<!---->`);
+              }
               _push2(ssrRenderComponent(_sfc_main$1, {
                 href: _ctx.route("logout"),
                 method: "post",
@@ -411,6 +497,18 @@ const _sfc_main = {
                   ]),
                   _: 1
                 }, 8, ["href"]),
+                unref(auth).user.role === "buyer" ? (openBlock(), createBlock(_sfc_main$1, {
+                  key: 0,
+                  href: _ctx.route("profile.upgrade"),
+                  method: "patch",
+                  as: "button"
+                }, {
+                  default: withCtx(() => [
+                    createVNode(unref(Store), { class: "mr-2 inline h-4 w-4 text-primary" }),
+                    createTextVNode(" Jadi Penjual ")
+                  ]),
+                  _: 1
+                }, 8, ["href"])) : createCommentVNode("", true),
                 createVNode(_sfc_main$1, {
                   href: _ctx.route("logout"),
                   method: "post",
@@ -468,22 +566,57 @@ const _sfc_main = {
       } else {
         _push(ssrRenderComponent(unref(Moon), { class: "h-5 w-5" }, null, _parent));
       }
-      _push(`</button><button class="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition duration-150 ease-in-out hover:bg-accent hover:text-foreground focus:outline-none">`);
+      _push(`</button>`);
+      if (unref(auth).user) {
+        _push(ssrRenderComponent(unref(Link), {
+          href: _ctx.route("chat.index"),
+          class: "group relative rounded-lg p-2.5 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+        }, {
+          default: withCtx((_, _push2, _parent2, _scopeId) => {
+            if (_push2) {
+              _push2(ssrRenderComponent(unref(MessageSquare), { class: "h-5 w-5" }, null, _parent2, _scopeId));
+              if (unref(auth).user.unread_messages_count > 0) {
+                _push2(`<span class="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-2 ring-background"${_scopeId}>${ssrInterpolate(unref(auth).user.unread_messages_count > 9 ? "9+" : unref(auth).user.unread_messages_count)}</span>`);
+              } else {
+                _push2(`<!---->`);
+              }
+            } else {
+              return [
+                createVNode(unref(MessageSquare), { class: "h-5 w-5" }),
+                unref(auth).user.unread_messages_count > 0 ? (openBlock(), createBlock("span", {
+                  key: 0,
+                  class: "absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-2 ring-background"
+                }, toDisplayString(unref(auth).user.unread_messages_count > 9 ? "9+" : unref(auth).user.unread_messages_count), 1)) : createCommentVNode("", true)
+              ];
+            }
+          }),
+          _: 1
+        }, _parent));
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<button class="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition duration-150 ease-in-out hover:bg-accent hover:text-foreground focus:outline-none">`);
       if (!showingNavigationDropdown.value) {
         _push(ssrRenderComponent(unref(Menu), { class: "h-6 w-6" }, null, _parent));
       } else {
         _push(ssrRenderComponent(unref(X), { class: "h-6 w-6" }, null, _parent));
       }
-      _push(`</button></div></div><div class="pb-3 pt-2 sm:hidden"><div class="flex gap-2"><div class="group relative flex-1"><div class="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 transition-colors">`);
-      _push(ssrRenderComponent(unref(Search), { class: "h-4 w-4 text-muted-foreground group-focus-within:text-primary" }, null, _parent));
-      _push(`</div><input type="text"${ssrRenderAttr("value", search.value)} placeholder="Cari gadget..." class="w-full rounded-xl border-transparent bg-muted/60 py-2 pl-10 pr-4 text-sm transition-all duration-100 placeholder:text-muted-foreground/70 focus:border-border focus:bg-background focus:ring-2 focus:ring-primary/20"></div><button class="group relative rounded-xl bg-muted/60 p-2 text-muted-foreground transition-all hover:bg-accent hover:text-primary" title="Filter Pencarian">`);
-      _push(ssrRenderComponent(unref(SlidersHorizontal), { class: "h-5 w-5" }, null, _parent));
-      if (hasActiveFilters()) {
-        _push(`<span class="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full border-2 border-background bg-primary"></span>`);
+      _push(`</button></div></div>`);
+      if (_ctx.$page.component === "Home") {
+        _push(`<div class="pb-3 pt-2 sm:hidden"><div class="flex gap-2"><div class="group relative flex-1"><div class="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 transition-colors">`);
+        _push(ssrRenderComponent(unref(Search), { class: "h-4 w-4 text-muted-foreground group-focus-within:text-primary" }, null, _parent));
+        _push(`</div><input type="text"${ssrRenderAttr("value", search.value)} placeholder="Cari gadget..." class="w-full rounded-xl border-transparent bg-muted/60 py-2 pl-10 pr-4 text-sm transition-all duration-100 placeholder:text-muted-foreground/70 focus:border-border focus:bg-background focus:ring-2 focus:ring-primary/20"></div><button class="group relative rounded-xl bg-muted/60 p-2 text-muted-foreground transition-all hover:bg-accent hover:text-primary" title="Filter Pencarian">`);
+        _push(ssrRenderComponent(unref(SlidersHorizontal), { class: "h-5 w-5" }, null, _parent));
+        if (hasActiveFilters()) {
+          _push(`<span class="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full border-2 border-background bg-primary"></span>`);
+        } else {
+          _push(`<!---->`);
+        }
+        _push(`</button></div></div>`);
       } else {
         _push(`<!---->`);
       }
-      _push(`</button></div></div></div><div class="${ssrRenderClass([{ block: showingNavigationDropdown.value, hidden: !showingNavigationDropdown.value }, "border-t border-border bg-background shadow-xl sm:hidden"])}"><div class="space-y-1 pb-3 pt-2">`);
+      _push(`</div><div class="${ssrRenderClass([{ block: showingNavigationDropdown.value, hidden: !showingNavigationDropdown.value }, "border-t border-border bg-background shadow-xl sm:hidden"])}"><div class="space-y-1 pb-3 pt-2">`);
       _push(ssrRenderComponent(_sfc_main$3, {
         href: _ctx.route("home"),
         active: _ctx.route().current("home")
@@ -530,26 +663,6 @@ const _sfc_main = {
         } else {
           _push(`<!---->`);
         }
-        _push(ssrRenderComponent(_sfc_main$3, {
-          href: _ctx.route("chat.index"),
-          active: _ctx.route().current("chat.*")
-        }, {
-          default: withCtx((_, _push2, _parent2, _scopeId) => {
-            if (_push2) {
-              _push2(`<div class="flex items-center gap-2"${_scopeId}>`);
-              _push2(ssrRenderComponent(unref(MessageSquare), { class: "h-4 w-4" }, null, _parent2, _scopeId));
-              _push2(` Pesan</div>`);
-            } else {
-              return [
-                createVNode("div", { class: "flex items-center gap-2" }, [
-                  createVNode(unref(MessageSquare), { class: "h-4 w-4" }),
-                  createTextVNode(" Pesan")
-                ])
-              ];
-            }
-          }),
-          _: 1
-        }, _parent));
         _push(`<!--]-->`);
       } else {
         _push(`<!---->`);
@@ -578,6 +691,31 @@ const _sfc_main = {
           }),
           _: 1
         }, _parent));
+        if (unref(auth).user.role === "buyer") {
+          _push(ssrRenderComponent(_sfc_main$3, {
+            href: _ctx.route("profile.upgrade"),
+            method: "patch",
+            as: "button"
+          }, {
+            default: withCtx((_, _push2, _parent2, _scopeId) => {
+              if (_push2) {
+                _push2(`<div class="flex items-center gap-2 font-bold text-primary"${_scopeId}>`);
+                _push2(ssrRenderComponent(unref(Store), { class: "h-4 w-4" }, null, _parent2, _scopeId));
+                _push2(` Jadi Penjual </div>`);
+              } else {
+                return [
+                  createVNode("div", { class: "flex items-center gap-2 font-bold text-primary" }, [
+                    createVNode(unref(Store), { class: "h-4 w-4" }),
+                    createTextVNode(" Jadi Penjual ")
+                  ])
+                ];
+              }
+            }),
+            _: 1
+          }, _parent));
+        } else {
+          _push(`<!---->`);
+        }
         _push(ssrRenderComponent(_sfc_main$3, {
           href: _ctx.route("logout"),
           method: "post",

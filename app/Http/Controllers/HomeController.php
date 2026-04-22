@@ -33,6 +33,11 @@ class HomeController extends Controller
         ])
             ->where('status', 'available');
 
+        // Jangan tampilkan produk milik user yang sedang login di beranda
+        if ($request->user()) {
+            $query->where('user_id', '!=', $request->user()->id);
+        }
+
         // 1. Filter Pencarian (Search)
         if ($request->filled('search')) {
             $search = $request->search;

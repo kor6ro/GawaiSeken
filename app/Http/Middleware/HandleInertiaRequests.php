@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Category;
+use App\Models\ChatMessage;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
@@ -45,9 +46,16 @@ class HandleInertiaRequests extends Middleware
                     'name' => $request->user()->name,
                     'email' => $request->user()->email,
                     'role' => $request->user()->role,
+                    'unread_messages_count' => ChatMessage::whereHas('chat', function ($q) use ($request) {
+                        $q->where('buyer_id', $request->user()->id)
+                            ->orWhere('seller_id', $request->user()->id);
+                    })->where('sender_id', '!=', $request->user()->id)
+                        ->whereNull('read_at')
+                        ->count(),
                 ] : null,
             ],
             'flash' => [
+                'status' => $request->session()->get('status'),
                 'message' => $request->session()->get('message'),
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
