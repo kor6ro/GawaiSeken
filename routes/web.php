@@ -18,6 +18,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/products/{product}/status', [AdminController::class, 'updateProductStatus'])->name('products.update-status');
     Route::post('/verifications/{verification}/approve', [AdminController::class, 'approveVerification'])->name('verifications.approve');
     Route::post('/verifications/{verification}/reject', [AdminController::class, 'rejectVerification'])->name('verifications.reject');
+    
+    // User Management
+    Route::get('/users', [AdminController::class, 'users'])->name('users.index');
+    Route::post('/users/{user}/suspend', [AdminController::class, 'suspendUser'])->name('users.suspend');
+    Route::post('/users/{user}/unsuspend', [AdminController::class, 'unsuspendUser'])->name('users.unsuspend');
+
+    // Product Deletion
+    Route::delete('/products/{product}', [AdminController::class, 'destroyProduct'])->name('products.destroy');
 
     // Dispute Management
     Route::get('/disputes', [AdminController::class, 'disputes'])->name('disputes.index');
@@ -69,7 +77,33 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/orders', [\App\Http\Controllers\TransactionController::class, 'orders'])->name('profile.orders');
     Route::post('/transactions/{transaction}/status', [\App\Http\Controllers\TransactionController::class, 'updateStatus'])->name('transactions.update-status');
     Route::post('/transactions/{transaction}/repay', [\App\Http\Controllers\TransactionController::class, 'repay'])->name('transactions.repay');
+    Route::post('/transactions/{transaction}/simulate-payment', [\App\Http\Controllers\TransactionController::class, 'simulatePayment'])->name('transactions.simulate-payment');
     Route::post('/transactions/{transaction}/dispute', [\App\Http\Controllers\TransactionController::class, 'storeDispute'])->name('transactions.dispute');
+
+    // --- REGIONS API ---
+    Route::get('/api/regions/provinces', function () {
+        return response()->json(cache()->rememberForever('regions_provinces', function () {
+            return \Illuminate\Support\Facades\DB::table('provinces')->select('id', 'name')->get();
+        }));
+    })->name('api.regions.provinces');
+    
+    Route::get('/api/regions/regencies/{provinceId}', function ($provinceId) {
+        return response()->json(cache()->rememberForever("regions_regencies_{$provinceId}", function () use ($provinceId) {
+            return \Illuminate\Support\Facades\DB::table('regencies')->where('province_id', $provinceId)->select('id', 'name')->get();
+        }));
+    })->name('api.regions.regencies');
+    
+    Route::get('/api/regions/districts/{regencyId}', function ($regencyId) {
+        return response()->json(cache()->rememberForever("regions_districts_{$regencyId}", function () use ($regencyId) {
+            return \Illuminate\Support\Facades\DB::table('districts')->where('regency_id', $regencyId)->select('id', 'name')->get();
+        }));
+    })->name('api.regions.districts');
+    
+    Route::get('/api/regions/villages/{districtId}', function ($districtId) {
+        return response()->json(cache()->rememberForever("regions_villages_{$districtId}", function () use ($districtId) {
+            return \Illuminate\Support\Facades\DB::table('villages')->where('district_id', $districtId)->select('id', 'name')->get();
+        }));
+    })->name('api.regions.villages');
 });
 
 // --- PUBLIC PRODUCT DETAIL (Moved here to avoid conflict with /products/create) ---

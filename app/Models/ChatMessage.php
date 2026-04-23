@@ -59,11 +59,15 @@ class ChatMessage extends Model
 
     public function sender(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'sender_id');
+        return $this->belongsTo(User::class, 'sender_id')->withTrashed()->withDefault([
+            'name' => 'Pengguna Terhapus',
+        ]);
     }
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'sender_id');
+        return $this->belongsTo(User::class, 'sender_id')->withTrashed()->withDefault([
+            'name' => 'Pengguna Terhapus',
+        ]);
     }
 }

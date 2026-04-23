@@ -13,17 +13,24 @@ class Chat extends Model
 
     public function product()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class)->withTrashed()->withDefault([
+            'title' => 'Produk Terhapus',
+            'price' => 0,
+        ]);
     }
 
     public function buyer()
     {
-        return $this->belongsTo(User::class, 'buyer_id');
+        return $this->belongsTo(User::class, 'buyer_id')->withTrashed()->withDefault([
+            'name' => 'Pengguna Terhapus',
+        ]);
     }
 
     public function seller()
     {
-        return $this->belongsTo(User::class, 'seller_id');
+        return $this->belongsTo(User::class, 'seller_id')->withTrashed()->withDefault([
+            'name' => 'Toko Terhapus',
+        ]);
     }
 
     public function messages()

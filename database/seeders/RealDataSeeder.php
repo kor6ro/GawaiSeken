@@ -9,6 +9,7 @@ use App\Models\ProductImage;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class RealDataSeeder extends Seeder
@@ -34,17 +35,28 @@ class RealDataSeeder extends Seeder
 
         // 2. Create Buyers
         $buyers = [
-            ['name' => 'Ahmad', 'email' => 'ahmad@example.com'],
-            ['name' => 'Mus', 'email' => 'mus@example.com'],
+            ['name' => 'Ahmad', 'email' => 'ahmad@example.com', 'avatar' => 'https://i.pravatar.cc/150?u=ahmad'],
+            ['name' => 'Mus', 'email' => 'mus@example.com', 'avatar' => 'https://i.pravatar.cc/150?u=mus'],
         ];
 
         foreach ($buyers as $buyerData) {
-            User::updateOrCreate(
+            $user = User::updateOrCreate(
                 ['email' => $buyerData['email']],
                 [
                     'name' => $buyerData['name'],
                     'password' => Hash::make('password'),
                     'role' => 'buyer',
+                ]
+            );
+
+            $avatarPath = $this->downloadImage($buyerData['avatar'], 'avatars/personal');
+            
+            $user->profile()->updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'avatar' => $avatarPath,
+                    'phone' => '08' . rand(1000000000, 9999999999),
+                    'city' => 'Jakarta',
                 ]
             );
         }
@@ -56,6 +68,8 @@ class RealDataSeeder extends Seeder
                 'email' => 'gilang@example.com',
                 'store_name' => 'Gilang Gadget Store',
                 'city' => 'Jakarta Selatan',
+                'avatar' => 'https://i.pravatar.cc/150?u=gilang',
+                'store_logo' => 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?auto=format&fit=crop&q=80&w=200&h=200',
                 'products' => [
                     [
                         'category_id' => $smartphone->id,
@@ -103,6 +117,8 @@ class RealDataSeeder extends Seeder
                 'email' => 'vyno@example.com',
                 'store_name' => 'Vyno Tech Hub',
                 'city' => 'Bandung',
+                'avatar' => 'https://i.pravatar.cc/150?u=vyno',
+                'store_logo' => 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?auto=format&fit=crop&q=80&w=200&h=200',
                 'products' => [
                     [
                         'category_id' => $smartphone->id,
@@ -157,14 +173,21 @@ class RealDataSeeder extends Seeder
                 ]
             );
 
+            $avatarPath = $this->downloadImage($sellerData['avatar'], 'avatars/personal');
+            $logoPath = $this->downloadImage($sellerData['store_logo'], 'avatars/logos');
+
             $seller->profile()->updateOrCreate(
                 ['user_id' => $seller->id],
                 [
                     'store_name' => $sellerData['store_name'],
                     'city' => $sellerData['city'],
-                    'bio' => "Selamat datang di {$sellerData['store_name']}! Kami menjual gadget second berkualitas tinggi.",
+                    'bio' => "Saya adalah pemilik {$sellerData['store_name']}.", // Personal bio
+                    'store_bio' => "Selamat datang di {$sellerData['store_name']}! Kami menjual gadget second berkualitas tinggi.",
                     'phone' => '0812'.rand(10000000, 99999999),
-                    'address' => 'Jl. Gadget Real No. '.rand(1, 100).', '.$sellerData['city'],
+                    'address' => 'Alamat Rumah Seller No. '.rand(1, 100), // Personal address
+                    'store_address' => 'Jl. Gadget Real No. '.rand(1, 100).', '.$sellerData['city'], // Store address
+                    'avatar' => $avatarPath,
+                    'store_logo' => $logoPath,
                 ]
             );
 
@@ -184,6 +207,33 @@ class RealDataSeeder extends Seeder
                     'image_path' => $imagePath,
                 ]);
             }
+        }
+    }
+
+    /**
+     * Download image from URL and save to local storage.
+     */
+    private function downloadImage($url, $directory)
+    {
+        try {
+            // Use a simple stream context to avoid some basic 403s
+            $options = [
+                'http' => [
+                    'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3\r\n"
+                ]
+            ];
+            $context = stream_context_create($options);
+            $contents = file_get_contents($url, false, $context);
+            
+            if ($contents === false) return null;
+
+            $filename = Str::random(15) . '.jpg';
+            $path = "$directory/$filename";
+            
+            Storage::disk('public')->put($path, $contents);
+            return $path;
+        } catch (\Exception $e) {
+            return null;
         }
     }
 }

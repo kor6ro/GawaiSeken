@@ -21,6 +21,8 @@ class AdminController extends Controller
             'pendingVerifications' => SellerVerification::with('user')->where('status', 'pending')->get(),
             'pendingProductsCount' => Product::where('status', 'pending')->count(),
             'pendingDisputesCount' => \App\Models\TransactionDispute::where('status', 'pending')->count(),
+            'totalUsersCount' => User::count(),
+            'totalProductsCount' => Product::count(),
         ]);
     }
 
@@ -29,16 +31,51 @@ class AdminController extends Controller
      */
     public function products(Request $request): Response
     {
-        $query = Product::with(['user', 'category', 'images']);
+        $query = Product::with(['user.profile', 'category', 'images']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('user', function($qu) use ($request) {
+                      $qu->where('name', 'like', '%' . $request->search . '%');
+                  });
+            });
+        }
+
+        $sortBy = $request->get('sort_by', 'id');
+        $sortDir = $request->get('sort_dir', 'desc');
+
+        // Validasi kolom sort
+        if (!in_array($sortBy, ['id', 'title', 'price', 'status', 'created_at'])) {
+            $sortBy = 'id';
+        }
+
         return Inertia::render('Admin/Products/Index', [
-            'products' => $query->latest()->paginate(20)->withQueryString(),
-            'filters' => $request->only(['status']),
+            'products' => $query->orderBy($sortBy, $sortDir)->paginate(20)->withQueryString(),
+            'filters' => $request->only(['status', 'search', 'sort_by', 'sort_dir']),
         ]);
+    }
+
+    /**
+     * Hapus produk oleh admin (Hold/Delete).
+     */
+    public function destroyProduct(Product $product): RedirectResponse
+    {
+        // Hapus file fisik
+        if ($product->images->isNotEmpty()) {
+            foreach ($product->images as $image) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($image->image_path);
+                $image->delete();
+            }
+        }
+
+        $product->delete();
+
+        return back()->with('success', 'Produk berhasil dihapus secara permanen oleh Admin.');
     }
 
     /**
@@ -136,5 +173,64 @@ class AdminController extends Controller
         }
 
         return redirect()->route('admin.disputes.index')->with('success', 'Resolusi sengketa telah diputuskan.');
+    }
+    /**
+     * Tampilkan daftar semua user.
+     */
+    public function users(Request $request): Response
+    {
+        $query = User::withCount('products')->with('profile');
+
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('email', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        $sortBy = $request->get('sort_by', 'id');
+        $sortDir = $request->get('sort_dir', 'asc');
+
+        // Validasi kolom sort
+        if (!in_array($sortBy, ['id', 'name', 'email', 'role', 'products_count', 'is_suspended', 'created_at'])) {
+            $sortBy = 'id';
+        }
+
+        return Inertia::render('Admin/Users/Index', [
+            'users' => $query->orderBy($sortBy, $sortDir)->paginate(20)->withQueryString(),
+            'filters' => $request->only(['search', 'role', 'sort_by', 'sort_dir']),
+        ]);
+    }
+
+    /**
+     * Suspend user.
+     */
+    public function suspendUser(Request $request, User $user): RedirectResponse
+    {
+        $request->validate([
+            'suspension_reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        $user->update([
+            'is_suspended' => true,
+            'suspension_reason' => $request->suspension_reason,
+        ]);
+
+        return back()->with('success', 'User berhasil disuspensi.');
+    }
+
+    /**
+     * Unsuspend user.
+     */
+    public function unsuspendUser(User $user): RedirectResponse
+    {
+        $user->update([
+            'is_suspended' => false,
+            'suspension_reason' => null,
+        ]);
+
+        return back()->with('success', 'Suspensi user berhasil dicabut.');
     }
 }

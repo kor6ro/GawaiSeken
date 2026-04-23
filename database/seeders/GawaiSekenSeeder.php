@@ -9,6 +9,7 @@ use App\Models\ProductImage;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class GawaiSekenSeeder extends Seeder
@@ -32,6 +33,9 @@ class GawaiSekenSeeder extends Seeder
                 'role' => 'seller',
             ]);
 
+            $avatarPath = $this->downloadImage("https://i.pravatar.cc/150?u=seller$u", 'avatars/personal');
+            $logoPath = $this->downloadImage("https://images.unsplash.com/photo-1560179707-f14e90ef3623?auto=format&fit=crop&q=80&w=200&h=200", 'avatars/logos');
+
             $seller->profile()->create([
                 'store_name' => "Toko Gadget $u",
                 'city' => $cities[$u - 1],
@@ -39,6 +43,8 @@ class GawaiSekenSeeder extends Seeder
                 'phone' => "08123456780$u",
                 'address' => "Jl. Gadget No. $u, ".$cities[$u - 1],
                 'bio' => "Penyedia gadget berkualitas se-{$cities[$u - 1]}.",
+                'avatar' => $avatarPath,
+                'store_logo' => $logoPath,
             ]);
 
             $sellers[] = $seller;
@@ -503,6 +509,32 @@ class GawaiSekenSeeder extends Seeder
                     'image_path' => $img,
                 ]);
             }
+        }
+    }
+
+    /**
+     * Download image from URL and save to local storage.
+     */
+    private function downloadImage($url, $directory)
+    {
+        try {
+            $options = [
+                'http' => [
+                    'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3\r\n"
+                ]
+            ];
+            $context = stream_context_create($options);
+            $contents = file_get_contents($url, false, $context);
+            
+            if ($contents === false) return null;
+
+            $filename = Str::random(15) . '.jpg';
+            $path = "$directory/$filename";
+            
+            Storage::disk('public')->put($path, $contents);
+            return $path;
+        } catch (\Exception $e) {
+            return null;
         }
     }
 }

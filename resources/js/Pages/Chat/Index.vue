@@ -67,6 +67,9 @@ const getDisplayName = (chat) => {
 
 const getDisplayAvatar = (chat) => {
   const opponent = getOpponent(chat)
+  if (opponent.role === 'seller' && opponent.profile?.store_logo) {
+    return `/storage/${opponent.profile.store_logo}`
+  }
   return opponent.profile?.avatar ? `/storage/${opponent.profile.avatar}` : null
 }
 

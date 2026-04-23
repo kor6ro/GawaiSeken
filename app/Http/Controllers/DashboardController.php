@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
-// Pastikan ini ada
+use App\Enums\TransactionStatusEnum;
+use App\Http\Controllers\TransactionController;
 use App\Models\ChatMessage;
 use App\Models\Product;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Midtrans\Transaction as MidtransTransaction;
 
 class DashboardController extends Controller
 {
@@ -49,6 +51,26 @@ class DashboardController extends Controller
             ->with(['category', 'images', 'store'])
             ->latest()
             ->paginate($perPage, ['*'], 'products');
+
+        $transactions = Transaction::where('seller_id', $user->id)
+            ->with(['product.images', 'buyer.profile', 'dispute'])
+            ->latest()
+            ->get();
+
+        // Sync status for pending transactions
+        $transactionController = new TransactionController();
+        foreach ($transactions as $transaction) {
+            if ($transaction->status === TransactionStatusEnum::PENDING) {
+                try {
+                    $status = (object) MidtransTransaction::status($transaction->reference_number);
+                    if ($status && isset($status->transaction_status)) {
+                        $transactionController->syncStatus($transaction, $status->transaction_status);
+                    }
+                } catch (\Exception $e) {
+                    // Skip if not found in Midtrans
+                }
+            }
+        }
 
         $transactions = Transaction::where('seller_id', $user->id)
             ->with(['product.images', 'buyer.profile', 'dispute'])

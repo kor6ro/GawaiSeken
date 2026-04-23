@@ -8,6 +8,15 @@ const props = defineProps({
     disputes: Object
 })
 
+const headers = [
+    { text: "Transaksi", value: "transaction" },
+    { text: "Pelapor", value: "user" },
+    { text: "Alasan", value: "reason" },
+    { text: "Status", value: "status" },
+    { text: "Tanggal", value: "created_at" },
+    { text: "Aksi", value: "actions", width: 120 },
+]
+
 const getStatusClass = (status) => {
     switch (status) {
         case 'pending': return 'bg-amber-100 text-amber-700 border-amber-200'
@@ -51,63 +60,70 @@ const getStatusLabel = (status) => {
                             </div>
                         </div>
 
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm">
-                                <thead class="border-b border-border bg-muted/50 text-xs uppercase text-muted-foreground font-semibold">
-                                    <tr>
-                                        <th class="px-6 py-4">Transaksi</th>
-                                        <th class="px-6 py-4">Pelapor</th>
-                                        <th class="px-6 py-4">Alasan</th>
-                                        <th class="px-6 py-4">Status</th>
-                                        <th class="px-6 py-4">Tanggal</th>
-                                        <th class="px-6 py-4 text-right">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-border">
-                                    <tr v-for="dispute in disputes.data" :key="dispute.id" class="hover:bg-muted/30 transition-colors">
-                                        <td class="px-6 py-4 font-bold">#{{ dispute.transaction.reference_number }}</td>
-                                        <td class="px-6 py-4">
-                                            <div class="font-medium text-foreground">{{ dispute.user.name }}</div>
-                                            <div class="text-[10px] text-muted-foreground">{{ dispute.user.email }}</div>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span class="text-xs font-medium">
-                                                {{ 
-                                                    dispute.reason === 'not_delivered' ? 'Barang Belum Sampai' :
-                                                    dispute.reason === 'not_as_described' ? 'Barang Tidak Sesuai Deskripsi' :
-                                                    dispute.reason === 'damaged' ? 'Barang Rusak / Cacat' : 'Lainnya'
-                                                }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span 
-                                                class="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full border"
-                                                :class="getStatusClass(dispute.status)"
-                                            >
-                                                {{ getStatusLabel(dispute.status) }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 text-muted-foreground">
-                                            {{ new Date(dispute.created_at).toLocaleDateString('id-ID') }}
-                                        </td>
-                                        <td class="px-6 py-4 text-right">
-                                            <Link 
-                                                :href="route('admin.disputes.show', dispute.id)"
-                                                class="inline-flex items-center gap-1 px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
-                                            >
-                                                Detail
-                                                <ChevronRight class="h-3 w-3" />
-                                            </Link>
-                                        </td>
-                                    </tr>
-                                    <tr v-if="disputes.data.length === 0">
-                                        <td colspan="6" class="px-6 py-20 text-center text-muted-foreground">
-                                            <Clock class="h-12 w-12 mx-auto mb-4 opacity-20" />
-                                            <p class="font-medium">Tidak ada komplain yang perlu diproses.</p>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="easy-table-wrapper">
+                            <EasyDataTable
+                                :headers="headers"
+                                :items="disputes.data"
+                                hide-footer
+                                border-cell
+                                table-class-name="customize-table"
+                                header-class-name="customize-header"
+                            >
+                                <template #item-transaction="{ transaction }">
+                                    <span class="font-bold text-foreground">#{{ transaction.reference_number }}</span>
+                                </template>
+
+                                <template #item-user="{ user }">
+                                    <div class="py-2">
+                                        <div class="font-medium text-foreground">{{ user.name }}</div>
+                                        <div class="text-[10px] text-muted-foreground">{{ user.email }}</div>
+                                    </div>
+                                </template>
+
+                                <template #item-reason="{ reason }">
+                                    <span class="text-xs font-medium text-foreground">
+                                        {{ 
+                                            reason === 'not_delivered' ? 'Barang Belum Sampai' :
+                                            reason === 'not_as_described' ? 'Barang Tidak Sesuai Deskripsi' :
+                                            reason === 'damaged' ? 'Barang Rusak / Cacat' : 'Lainnya'
+                                        }}
+                                    </span>
+                                </template>
+
+                                <template #item-status="{ status }">
+                                    <span 
+                                        class="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full border"
+                                        :class="getStatusClass(status)"
+                                    >
+                                        {{ getStatusLabel(status) }}
+                                    </span>
+                                </template>
+
+                                <template #item-created_at="{ created_at }">
+                                    <span class="text-muted-foreground">
+                                        {{ new Date(created_at).toLocaleDateString('id-ID') }}
+                                    </span>
+                                </template>
+
+                                <template #item-actions="item">
+                                    <div class="flex justify-end py-2">
+                                        <Link 
+                                            :href="route('admin.disputes.show', item.id)"
+                                            class="inline-flex items-center gap-1 px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
+                                        >
+                                            Detail
+                                            <ChevronRight class="h-3 w-3" />
+                                        </Link>
+                                    </div>
+                                </template>
+
+                                <template #empty-message>
+                                    <div class="py-20 text-center text-muted-foreground">
+                                        <Clock class="h-12 w-12 mx-auto mb-4 opacity-20" />
+                                        <p class="font-medium">Tidak ada komplain yang perlu diproses.</p>
+                                    </div>
+                                </template>
+                            </EasyDataTable>
                         </div>
 
                         <div class="mt-8">
@@ -119,3 +135,44 @@ const getStatusLabel = (status) => {
         </div>
     </AuthenticatedLayout>
 </template>
+
+<style scoped>
+.customize-table {
+  --easy-table-border: 1px solid hsl(var(--border));
+  --easy-table-header-font-size: 12px;
+  --easy-table-header-height: 50px;
+  --easy-table-header-font-color: hsl(var(--muted-foreground));
+  --easy-table-header-background-color: hsl(var(--muted));
+  
+  --easy-table-body-row-font-size: 13px;
+  --easy-table-body-font-color: hsl(var(--foreground));
+  --easy-table-body-row-height: 60px;
+  --easy-table-body-row-background-color: hsl(var(--card));
+  --easy-table-body-row-hover-background-color: hsl(var(--muted) / 0.5);
+  
+  --easy-table-footer-background-color: hsl(var(--card));
+  --easy-table-footer-font-color: hsl(var(--muted-foreground));
+  --easy-table-footer-font-size: 12px;
+  --easy-table-footer-padding: 0px 10px;
+  --easy-table-footer-height: 50px;
+
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+}
+
+:deep(.customize-header) {
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.easy-table-wrapper {
+  @apply rounded-2xl overflow-hidden border border-border;
+}
+
+/* Dark mode specific overrides */
+.dark .customize-table {
+  --easy-table-body-row-hover-background-color: hsl(var(--muted) / 0.3);
+}
+</style>

@@ -46,6 +46,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => $request->user()->name,
                     'email' => $request->user()->email,
                     'role' => $request->user()->role,
+                    'profile' => $request->user()->profile,
                     'unread_messages_count' => ChatMessage::whereHas('chat', function ($q) use ($request) {
                         $q->where('buyer_id', $request->user()->id)
                             ->orWhere('seller_id', $request->user()->id);
@@ -79,6 +80,7 @@ class HandleInertiaRequests extends Middleware
                 'sort' => $request->sort,
             ],
             'midtrans_client_key' => config('services.midtrans.client_key'),
+            'app_env' => config('app.env'),
         ];
     }
 }

@@ -15,11 +15,14 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->string('reference_number')->unique(); // Tambahan: ID unik transaksi
-            $table->foreignId('product_id')->constrained('products'); // [cite: 113, 242]
-            $table->foreignId('buyer_id')->constrained('users'); // [cite: 115, 243]
-            $table->foreignId('seller_id')->constrained('users'); // [cite: 117, 246]
-            $table->decimal('price', 15, 2); // decimal [cite: 119, 248]
-            $table->string('status')->default(TransactionStatusEnum::PENDING->value); // varchar [cite: 121, 251]
+            $table->foreignId('product_id')->constrained('products');
+            $table->foreignId('buyer_id')->constrained('users');
+            $table->foreignId('seller_id')->constrained('users');
+            $table->decimal('price', 15, 2);
+            $table->decimal('service_fee', 15, 2)->default(0);
+            $table->decimal('total_amount', 15, 2)->default(0);
+            $table->string('status')->default(TransactionStatusEnum::PENDING->value);
+            $table->string('snap_token')->nullable();
 
             $table->softDeletes();
             $table->timestamps();

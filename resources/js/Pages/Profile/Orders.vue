@@ -17,6 +17,7 @@ import { onMounted } from 'vue'
 import Pagination from '@/Components/Pagination.vue'
 import DisputeForm from './DisputeForm.vue'
 import axios from 'axios'
+import { router } from '@inertiajs/vue3'
 
 const props = defineProps({
     orders: Object
@@ -74,6 +75,12 @@ const refreshPayment = async (order) => {
     } catch (error) {
         console.error('Gagal memperbarui token pembayaran:', error)
         alert('Gagal memperbarui sesi pembayaran. Silakan coba lagi.')
+    }
+}
+
+const simulatePayment = (order) => {
+    if (confirm('Simulasi pembayaran sukses untuk transaksi ini? (Hanya muncul di LOCAL)')) {
+        router.post(route('transactions.simulate-payment', order.id))
     }
 }
 
@@ -172,28 +179,49 @@ const getStatusLabel = (status) => {
                                         </div>
 
                                         <div class="flex-1 min-w-0">
-                                            <h4 class="font-bold text-lg truncate group-hover:text-primary transition-colors">{{ order.product.title }}</h4>
+                                            <h4 v-if="order.product.id" class="font-bold text-lg truncate group-hover:text-primary transition-colors">{{ order.product.title }}</h4>
+                                            <h4 v-else class="font-bold text-lg truncate text-muted-foreground italic">{{ order.product.title }} (Dihapus)</h4>
                                             <div class="flex items-center gap-2 mt-1 mb-2">
                                                 <div class="h-5 w-5 rounded-full bg-muted overflow-hidden border border-border">
-                                                    <img v-if="order.seller.profile?.avatar" :src="`/storage/${order.seller.profile.avatar}`" class="h-full w-full object-cover" />
-                                                    <div v-else class="h-full w-full flex items-center justify-center bg-primary/10 text-[8px] font-bold text-primary">
+                                                    <img v-if="order.seller.id && order.seller.profile?.store_logo" :src="`/storage/${order.seller.profile.store_logo}`" class="h-full w-full object-cover" />
+                                                    <div v-else-if="order.seller.id" class="h-full w-full flex items-center justify-center bg-primary/10 text-[8px] font-bold text-primary">
                                                         {{ order.seller.name.substring(0, 1) }}
                                                     </div>
+                                                    <div v-else class="h-full w-full flex items-center justify-center bg-muted text-[8px] font-bold text-muted-foreground">?</div>
                                                 </div>
-                                                <span class="text-xs font-medium text-muted-foreground">{{ order.seller.profile?.store_name || order.seller.name }}</span>
+                                                <Link v-if="order.seller.id" :href="route('store.show', order.seller.id)" class="text-xs font-medium text-muted-foreground hover:text-primary">{{ order.seller.profile?.store_name || order.seller.name }}</Link>
+                                                <span v-else class="text-xs font-medium text-muted-foreground italic">{{ order.seller.name }}</span>
                                             </div>
-                                            <p class="font-black text-primary">Rp {{ new Intl.NumberFormat('id-ID').format(order.price) }}</p>
+                                            <div class="space-y-1">
+                                                <div class="flex items-center justify-between sm:justify-start sm:gap-4">
+                                                    <span class="text-xs text-muted-foreground">Harga Produk:</span>
+                                                    <span class="text-xs font-bold">Rp {{ new Intl.NumberFormat('id-ID').format(order.price) }}</span>
+                                                </div>
+                                                <div v-if="order.service_fee > 0" class="flex items-center justify-between sm:justify-start sm:gap-4">
+                                                    <span class="text-xs text-muted-foreground">Biaya Admin:</span>
+                                                    <span class="text-xs font-bold text-amber-600">Rp {{ new Intl.NumberFormat('id-ID').format(order.service_fee) }}</span>
+                                                </div>
+                                                <div class="flex items-center justify-between sm:justify-start sm:gap-4 pt-1">
+                                                    <span class="text-sm font-bold">Total Dibayar:</span>
+                                                    <span class="text-lg font-black text-primary">Rp {{ new Intl.NumberFormat('id-ID').format(order.total_amount || order.price) }}</span>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div class="flex flex-col sm:items-end justify-between gap-4">
                                             <div class="flex flex-wrap gap-2">
                                                 <Link 
+                                                    v-if="order.product.id"
                                                     :href="route('products.show', order.product.slug)"
                                                     class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl border border-border hover:bg-muted transition-colors"
                                                 >
                                                     <ExternalLink class="h-3 w-3" />
                                                     Detail Produk
                                                 </Link>
+                                                <span v-else class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl border border-border bg-muted/50 text-muted-foreground cursor-not-allowed">
+                                                    <Package class="h-3 w-3" />
+                                                    Produk Tidak Tersedia
+                                                </span>
                                                 
                                                 <!-- Action Buttons -->
                                                 <div v-if="order.status === 'pending'" class="flex flex-col gap-2">
@@ -210,6 +238,13 @@ const getStatusLabel = (status) => {
                                                     >
                                                         <Clock class="h-3 w-3" />
                                                         Refresh Sesi Pembayaran
+                                                    </button>
+                                                    <button 
+                                                        v-if="$page.props.app_env === 'local'"
+                                                        @click="simulatePayment(order)"
+                                                        class="mt-2 text-[10px] text-amber-600 hover:text-amber-700 font-bold border border-amber-200 bg-amber-50 rounded-lg px-2 py-1 transition-colors"
+                                                    >
+                                                        ⚡ Simulasi Bayar (Local)
                                                     </button>
                                                 </div>
 

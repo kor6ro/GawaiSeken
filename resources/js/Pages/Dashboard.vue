@@ -15,10 +15,12 @@ import {
   Trash2,
   Image,
   MapPin,
-  CheckCircle,
-  Circle,
   Activity,
   AlertTriangle,
+  CheckCircle,
+  X,
+  Calendar,
+  Phone,
 } from 'lucide-vue-next'
 import { router } from '@inertiajs/vue3'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
@@ -29,6 +31,7 @@ import InputLabel from '@/Components/InputLabel.vue'
 import InputError from '@/Components/InputError.vue'
 import Modal from '@/Components/Modal.vue'
 import Pagination from '@/Components/Pagination.vue'
+import AddressForm from '@/Components/AddressForm.vue'
 import { Cropper } from 'vue-advanced-cropper'
 import 'vue-advanced-cropper/dist/style.css'
 
@@ -42,6 +45,7 @@ const props = defineProps({
 })
 
 const tab = ref('overview')
+const tabSettings = ref('store') // 'store' or 'user'
 const loading = ref(false)
 
 // Use shallowRef to avoid massive reactivity tracking on product array
@@ -128,24 +132,50 @@ const toggleStatus = (product) => {
 // Store Settings Form
 const storeForm = useForm({
   store_name: props.user.profile?.store_name || props.user.name,
-  bio: props.user.profile?.bio || '',
+  store_bio: props.user.profile?.store_bio || '',
+  store_address: props.user.profile?.store_address || '',
+  store_landmark: props.user.profile?.store_landmark || '',
+  store_province: props.user.profile?.store_province || '',
+  store_city: props.user.profile?.store_city || '',
+  store_district: props.user.profile?.store_district || '',
+  store_village: props.user.profile?.store_village || '',
+  store_logo: null,
+})
+
+// Personal Profile Form
+const personalForm = useForm({
+  name: props.user.name,
+  email: props.user.email,
+  phone: props.user.profile?.phone || '',
   address: props.user.profile?.address || '',
+  landmark: props.user.profile?.landmark || '',
+  province: props.user.profile?.province || '',
   city: props.user.profile?.city || '',
+  district: props.user.profile?.district || '',
+  village: props.user.profile?.village || '',
+  bio: props.user.profile?.bio || '',
+  date_of_birth: props.user.profile?.date_of_birth || '',
+  gender: props.user.profile?.gender || '',
   avatar: null,
 })
 
 const photoPreview = ref(null)
+const personalPhotoPreview = ref(null)
 const photoInput = ref(null)
+const personalPhotoInput = ref(null)
 
 const cropModalOpen = ref(false)
 const imageToCrop = ref(null)
 const cropper = ref(null)
+const currentCropTarget = ref('store') // 'store' or 'personal'
 
-const updatePhotoPreview = () => {
-  const photo = photoInput.value.files[0]
+const updatePhotoPreview = (target = 'store') => {
+  const input = target === 'store' ? photoInput.value : personalPhotoInput.value
+  const photo = input.files[0]
   if (!photo) return
 
-  photoInput.value.value = ''
+  input.value = ''
+  currentCropTarget.value = target
 
   const reader = new FileReader()
   reader.onload = (e) => {
@@ -164,12 +194,22 @@ const applyCrop = () => {
   if (!cropper.value) return
   const { canvas } = cropper.value.getResult()
   if (canvas) {
-    photoPreview.value = canvas.toDataURL()
+    if (currentCropTarget.value === 'store') {
+      photoPreview.value = canvas.toDataURL()
+    } else {
+      personalPhotoPreview.value = canvas.toDataURL()
+    }
 
     canvas.toBlob(
       (blob) => {
-        const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' })
-        storeForm.avatar = file
+        const file = new File([blob], currentCropTarget.value === 'store' ? 'store_logo.jpg' : 'avatar.jpg', {
+          type: 'image/jpeg',
+        })
+        if (currentCropTarget.value === 'store') {
+          storeForm.store_logo = file
+        } else {
+          personalForm.avatar = file
+        }
         cropModalOpen.value = false
         imageToCrop.value = null
       },
@@ -191,6 +231,29 @@ const updateStoreSettings = () => {
     })
 }
 
+const updatePersonalProfile = () => {
+  personalForm
+    .transform((data) => ({
+      ...data,
+      _method: 'PATCH',
+    }))
+    .post(route('profile.update'), {
+      forceFormData: true,
+      preserveScroll: true,
+      onSuccess: () => {
+        // Option to reload if name changed and we want it reflected everywhere
+      }
+    })
+}
+
+const handleSettingsSubmit = () => {
+  if (tabSettings.value === 'store') {
+    updateStoreSettings()
+  } else {
+    updatePersonalProfile()
+  }
+}
+
 const selectedDispute = ref(null)
 const showDisputeModal = ref(false)
 
@@ -210,6 +273,22 @@ const getStatusLabel = (status) => {
     default: return status
   }
 }
+
+const productHeaders = [
+  { text: "Produk", value: "title" },
+  { text: "Harga", value: "price" },
+  { text: "Status", value: "status" },
+  { text: "Tanggal", value: "created_at" },
+  { text: "Aksi", value: "actions", width: 150 },
+]
+
+const transactionHeaders = [
+  { text: "Transaksi", value: "transaction" },
+  { text: "Pembeli", value: "buyer" },
+  { text: "Total", value: "total" },
+  { text: "Status", value: "status" },
+  { text: "Aksi", value: "actions", width: 180 },
+]
 </script>
 
 <template>
@@ -333,105 +412,96 @@ const getStatusLabel = (status) => {
 
             <div class="overflow-hidden border border-border shadow-sm sm:rounded-lg">
               <!-- Desktop Table -->
-              <div class="hidden overflow-x-auto md:block">
-                <table class="w-full text-left text-sm">
-                  <thead
-                    class="border-b border-border bg-muted text-xs uppercase text-muted-foreground"
-                  >
-                    <tr>
-                      <th scope="col" class="px-6 py-4 font-semibold">Produk</th>
-                      <th scope="col" class="px-6 py-4 font-semibold">Harga</th>
-                      <th scope="col" class="px-6 py-4 text-center font-semibold">Status</th>
-                      <th scope="col" class="px-6 py-4 text-center font-semibold">Tanggal</th>
-                      <th scope="col" class="px-6 py-4 text-right font-semibold">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-border">
-                    <tr
-                      v-for="item in allMyProducts"
-                      :key="item.id"
-                      class="bg-card transition-colors hover:bg-muted"
+            <div class="easy-table-wrapper hidden md:block">
+              <EasyDataTable
+                :headers="productHeaders"
+                :items="allMyProducts"
+                hide-footer
+                border-cell
+                table-class-name="customize-table"
+                header-class-name="customize-header"
+              >
+                <template #item-title="{ title, images, category }">
+                  <div class="flex items-center gap-4 py-2">
+                    <div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border border-border bg-muted">
+                      <img
+                        v-if="images && images.length > 0"
+                        :src="`/storage/${images[0].image_path}`"
+                        loading="lazy"
+                        class="h-full w-full object-cover"
+                      />
+                      <div v-else class="flex h-full w-full items-center justify-center text-muted-foreground">
+                        <Image class="h-6 w-6" />
+                      </div>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="line-clamp-1 text-base font-bold text-foreground">{{ title }}</div>
+                      <div class="text-xs text-muted-foreground/80">{{ category?.name }}</div>
+                    </div>
+                  </div>
+                </template>
+
+                <template #item-price="{ price }">
+                  <span class="font-medium text-foreground">Rp {{ new Intl.NumberFormat('id-ID').format(price) }}</span>
+                </template>
+
+                <template #item-status="item">
+                  <div class="flex flex-col items-center gap-1 py-2">
+                    <button
+                      @click="toggleStatus(item)"
+                      class="group relative inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold transition-all hover:scale-105 active:scale-95"
+                      :class="
+                        item.availability === 'available'
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400'
+                          : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400'
+                      "
                     >
-                      <td class="px-6 py-4 align-middle">
-                        <div class="flex items-center gap-4">
-                          <div
-                            class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border border-border bg-muted"
-                          >
-                            <img
-                              v-if="item.images && item.images.length > 0"
-                              :src="`/storage/${item.images[0].image_path}`"
-                              loading="lazy"
-                              class="h-full w-full object-cover"
-                            />
-                            <div
-                              v-else
-                              class="flex h-full w-full items-center justify-center text-muted-foreground"
-                            >
-                              <Image class="h-6 w-6" />
-                            </div>
-                          </div>
-                          <div>
-                            <div class="line-clamp-1 text-base font-bold">{{ item.title }}</div>
-                            <div class="text-xs text-muted-foreground">
-                              {{ item.category?.name }}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="whitespace-nowrap px-6 py-4 align-middle font-medium">
-                        Rp {{ new Intl.NumberFormat('id-ID').format(item.price) }}
-                      </td>
-                      <td class="px-6 py-4 text-center align-middle">
-                        <button
-                          @click="toggleStatus(item)"
-                          class="group relative inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold transition-all hover:scale-105 active:scale-95"
-                          :class="
-                            item.status === 'available'
-                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400'
-                              : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400'
-                          "
-                        >
-                          <CheckCircle v-if="item.status === 'available'" class="h-3.5 w-3.5" />
-                          <Circle v-else class="h-3.5 w-3.5" />
-                          {{ item.status === 'available' ? 'Tersedia' : 'Terjual' }}
-                        </button>
-                      </td>
-                      <td
-                        class="whitespace-nowrap px-6 py-4 text-center align-middle text-xs text-muted-foreground"
-                      >
-                        {{
-                          new Date(item.created_at).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })
-                        }}
-                      </td>
-                      <td class="px-6 py-4 text-right align-middle">
-                        <div class="flex items-center justify-end gap-2">
-                          <Link
-                            :href="route('products.edit', item.slug)"
-                            class="inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-xs font-semibold uppercase tracking-widest text-foreground shadow-sm transition hover:bg-muted"
-                          >
-                            Edit
-                          </Link>
-                          <DangerButton @click="confirmDeletion(item)">Hapus</DangerButton>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr v-if="allMyProducts.length === 0">
-                      <td colspan="5" class="px-6 py-12 text-center text-muted-foreground">
-                        <div class="flex flex-col items-center">
-                          <span class="mb-2">Belum ada produk yang dijual.</span>
-                          <Link :href="route('products.create')" class="font-bold text-primary"
-                            >+ Tambah Produk Baru</Link
-                          >
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                      <CheckCircle v-if="item.availability === 'available'" class="h-3.5 w-3.5" />
+                      <Circle v-else class="h-3.5 w-3.5" />
+                      {{ item.availability === 'available' ? 'Tersedia' : 'Terjual' }}
+                    </button>
+                    
+                    <div v-if="item.status !== 'active'" 
+                      class="text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded border"
+                      :class="{
+                        'border-amber-200 bg-amber-50 text-amber-600': item.status === 'pending',
+                        'border-red-200 bg-red-50 text-red-600': item.status === 'rejected',
+                        'border-destructive/30 bg-destructive/10 text-destructive': item.status === 'banned',
+                      }"
+                    >
+                      {{ item.status === 'pending' ? 'Moderasi' : (item.status === 'rejected' ? 'Ditolak' : 'Dibanned') }}
+                    </div>
+                  </div>
+                </template>
+
+                <template #item-created_at="{ created_at }">
+                  <span class="text-xs text-muted-foreground">
+                    {{ new Date(created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}
+                  </span>
+                </template>
+
+                <template #item-actions="item">
+                  <div class="flex items-center justify-end gap-2 py-2">
+                    <Link
+                      :href="route('products.edit', item.slug)"
+                      class="inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-xs font-semibold uppercase tracking-widest text-foreground shadow-sm transition hover:bg-muted"
+                    >
+                      Edit
+                    </Link>
+                    <DangerButton @click="confirmDeletion(item)">Hapus</DangerButton>
+                  </div>
+                </template>
+
+                <template #empty-message>
+                  <div class="py-12 text-center text-muted-foreground">
+                    <div class="flex flex-col items-center">
+                      <span class="mb-2">Belum ada produk yang dijual.</span>
+                      <Link :href="route('products.create')" class="font-bold text-primary">+ Tambah Produk Baru</Link>
+                    </div>
+                  </div>
+                </template>
+              </EasyDataTable>
+            </div>
 
               <!-- Mobile Cards -->
               <div class="divide-y divide-border md:hidden">
@@ -467,15 +537,26 @@ const getStatusLabel = (status) => {
                         @click="toggleStatus(item)"
                         class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold transition-all active:scale-90"
                         :class="
-                          item.status === 'available'
+                          item.availability === 'available'
                             ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400'
                             : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400'
                         "
                       >
-                        <CheckCircle v-if="item.status === 'available'" class="h-3 w-3" />
+                        <CheckCircle v-if="item.availability === 'available'" class="h-3 w-3" />
                         <Circle v-else class="h-3 w-3" />
-                        {{ item.status === 'available' ? 'Tersedia' : 'Terjual' }}
+                        {{ item.availability === 'available' ? 'Tersedia' : 'Terjual' }}
                       </button>
+                      <!-- Mobile Moderation Status -->
+                      <div v-if="item.status !== 'active'" 
+                        class="inline-block text-[8px] font-black uppercase tracking-tighter px-1 rounded border self-start"
+                        :class="{
+                          'border-amber-200 bg-amber-50 text-amber-600': item.status === 'pending',
+                          'border-red-200 bg-red-50 text-red-600': item.status === 'rejected',
+                          'border-destructive/30 bg-destructive/10 text-destructive': item.status === 'banned',
+                        }"
+                      >
+                        {{ item.status === 'pending' ? 'Moderasi' : (item.status === 'rejected' ? 'Ditolak' : 'Dibanned') }}
+                      </div>
                       <span class="text-[10px] text-muted-foreground">{{
                         new Date(item.created_at).toLocaleDateString('id-ID')
                       }}</span>
@@ -529,93 +610,94 @@ const getStatusLabel = (status) => {
               <p class="text-sm text-muted-foreground">Kelola transaksi penjualan Anda.</p>
             </div>
 
-            <div class="overflow-hidden border border-border shadow-sm sm:rounded-lg">
-              <table class="w-full text-left text-sm">
-                <thead class="border-b border-border bg-muted text-xs uppercase text-muted-foreground">
-                  <tr>
-                    <th scope="col" class="px-6 py-4 font-semibold">Transaksi</th>
-                    <th scope="col" class="px-6 py-4 font-semibold">Pembeli</th>
-                    <th scope="col" class="px-6 py-4 font-semibold">Total</th>
-                    <th scope="col" class="px-6 py-4 text-center font-semibold">Status</th>
-                    <th scope="col" class="px-6 py-4 text-right font-semibold">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-border">
-                  <tr v-for="order in transactions.data" :key="order.id" class="bg-card transition-colors hover:bg-muted">
-                    <td class="px-6 py-4">
-                      <div class="flex items-center gap-3">
-                        <div class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md border border-border bg-muted">
-                          <img v-if="order.product.images?.length > 0" :src="`/storage/${order.product.images[0].image_path}`" class="h-full w-full object-cover" />
-                        </div>
-                        <div>
-                          <div class="font-bold">#{{ order.reference_number }}</div>
-                          <div class="text-[10px] text-muted-foreground truncate max-w-[150px]">{{ order.product.title }}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="px-6 py-4">
-                      <div class="text-sm font-medium">{{ order.buyer.name }}</div>
-                      <div class="text-[10px] text-muted-foreground">{{ order.buyer.email }}</div>
-                    </td>
-                    <td class="px-6 py-4 font-bold">
-                      Rp {{ new Intl.NumberFormat('id-ID').format(order.price) }}
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                      <span 
-                        class="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full border"
-                        :class="{
-                          'border-amber-200 bg-amber-50 text-amber-700': order.status === 'pending',
-                          'border-blue-200 bg-blue-50 text-blue-700': order.status === 'paid',
-                          'border-purple-200 bg-purple-50 text-purple-700': order.status === 'shipped',
-                          'border-emerald-200 bg-emerald-50 text-emerald-700': order.status === 'completed',
-                          'border-red-200 bg-red-50 text-red-700': order.status === 'disputed',
-                          'border-slate-200 bg-slate-50 text-slate-700': order.status === 'canceled',
-                        }"
-                      >
-                        {{ getStatusLabel(order.status) }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4 text-right">
-                      <div class="flex items-center justify-end gap-2">
-                        <button 
-                          v-if="order.status === 'pending'"
-                          @click="router.post(route('transactions.update-status', order.id), { status: 'paid' })"
-                          class="inline-flex items-center gap-1 px-3 py-1 bg-blue-500 text-white text-[10px] font-bold rounded-lg hover:bg-blue-600 transition-colors"
-                        >
-                          Tandai Dibayar
-                        </button>
-                        <button 
-                          v-if="order.status === 'paid'"
-                          @click="router.post(route('transactions.update-status', order.id), { status: 'shipped' })"
-                          class="inline-flex items-center gap-1 px-3 py-1 bg-purple-500 text-white text-[10px] font-bold rounded-lg hover:bg-purple-600 transition-colors"
-                        >
-                          Tandai Dikirim
-                        </button>
-                        <button 
-                          v-if="order.status === 'shipped'"
-                          @click="router.post(route('transactions.update-status', order.id), { status: 'completed' })"
-                          class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded-lg hover:bg-emerald-600 transition-colors"
-                        >
-                          Selesaikan
-                        </button>
-                        <button 
-                          v-if="order.status === 'disputed'"
-                          @click="openDisputeDetail(order)"
-                          class="inline-flex items-center gap-1 text-xs font-bold text-red-500 hover:underline"
-                        >
-                          <AlertTriangle class="h-3 w-3" />
-                          Detail Komplain
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr v-if="transactions.data.length === 0">
-                    <td colspan="5" class="px-6 py-12 text-center text-muted-foreground">
-                      Belum ada transaksi masuk.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="easy-table-wrapper">
+              <EasyDataTable
+                :headers="transactionHeaders"
+                :items="transactions.data"
+                hide-footer
+                border-cell
+                table-class-name="customize-table"
+                header-class-name="customize-header"
+              >
+                <template #item-transaction="{ reference_number, product }">
+                  <div class="flex items-center gap-3 py-2">
+                    <div class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md border border-border bg-muted">
+                      <img v-if="product.images?.length > 0" :src="`/storage/${product.images[0].image_path}`" class="h-full w-full object-cover" />
+                    </div>
+                    <div class="min-w-0">
+                      <div class="font-bold truncate text-foreground">#{{ reference_number }}</div>
+                      <div class="text-[10px] text-muted-foreground/80 truncate max-w-[150px]">{{ product.title }}</div>
+                    </div>
+                  </div>
+                </template>
+
+                <template #item-buyer="{ buyer }">
+                  <div class="py-2">
+                    <div class="text-sm font-medium text-foreground">{{ buyer.name }}</div>
+                    <div class="text-[10px] text-muted-foreground/80">{{ buyer.email }}</div>
+                  </div>
+                </template>
+
+                <template #item-total="{ price }">
+                  <span class="font-bold text-foreground">Rp {{ new Intl.NumberFormat('id-ID').format(price) }}</span>
+                </template>
+
+                <template #item-status="{ status }">
+                  <span 
+                    class="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full border"
+                    :class="{
+                      'border-amber-200 bg-amber-50 text-amber-700': status === 'pending',
+                      'border-blue-200 bg-blue-50 text-blue-700': status === 'paid',
+                      'border-purple-200 bg-purple-50 text-purple-700': status === 'shipped',
+                      'border-emerald-200 bg-emerald-50 text-emerald-700': status === 'completed',
+                      'border-red-200 bg-red-50 text-red-700': status === 'disputed',
+                      'border-slate-200 bg-slate-50 text-slate-700': status === 'canceled',
+                    }"
+                  >
+                    {{ getStatusLabel(status) }}
+                  </span>
+                </template>
+
+                <template #item-actions="item">
+                  <div class="flex items-center justify-end gap-2 py-2">
+                    <button 
+                      v-if="item.status === 'pending'"
+                      @click="router.post(route('transactions.update-status', item.id), { status: 'paid' })"
+                      class="inline-flex items-center gap-1 px-3 py-1 bg-blue-500 text-white text-[10px] font-bold rounded-lg hover:bg-blue-600 transition-colors"
+                    >
+                      Tandai Dibayar
+                    </button>
+                    <button 
+                      v-if="item.status === 'paid'"
+                      @click="router.post(route('transactions.update-status', item.id), { status: 'shipped' })"
+                      class="inline-flex items-center gap-1 px-3 py-1 bg-purple-500 text-white text-[10px] font-bold rounded-lg hover:bg-purple-600 transition-colors"
+                    >
+                      Tandai Dikirim
+                    </button>
+                    <button 
+                      v-if="item.status === 'shipped'"
+                      @click="router.post(route('transactions.update-status', item.id), { status: 'completed' })"
+                      class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded-lg hover:bg-emerald-600 transition-colors"
+                    >
+                      Selesaikan
+                    </button>
+                    <button 
+                      v-if="item.status === 'disputed'"
+                      @click="openDisputeDetail(item)"
+                      class="inline-flex items-center gap-1 text-xs font-bold text-red-500 hover:underline"
+                    >
+                      <AlertTriangle class="h-3 w-3" />
+                      Detail Komplain
+                    </button>
+                  </div>
+                </template>
+
+                <template #empty-message>
+                  <div class="py-12 text-center text-muted-foreground">
+                    Belum ada transaksi masuk.
+                  </div>
+                </template>
+              </EasyDataTable>
             </div>
 
             <div class="mt-6">
@@ -637,8 +719,29 @@ const getStatusLabel = (status) => {
                 </p>
               </header>
 
-              <form @submit.prevent="updateStoreSettings" class="mt-6 space-y-6">
-                <!-- Avatar Upload -->
+              <form @submit.prevent="handleSettingsSubmit" class="mt-6 space-y-6">
+                <!-- Profile Type Switcher -->
+                <div class="mb-8 p-1 bg-muted rounded-xl flex gap-1">
+                  <button 
+                    type="button"
+                    @click="tabSettings = 'store'"
+                    class="flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all"
+                    :class="tabSettings === 'store' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                  >
+                    Profil Toko
+                  </button>
+                  <button 
+                    type="button"
+                    @click="tabSettings = 'user'"
+                    class="flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all"
+                    :class="tabSettings === 'user' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                  >
+                    Profil Pribadi
+                  </button>
+                </div>
+
+                <div v-if="tabSettings === 'store'" class="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <!-- Avatar Upload -->
                 <div
                   class="flex flex-col items-center gap-6 border-b border-border pb-6 sm:flex-row sm:items-start"
                 >
@@ -653,8 +756,8 @@ const getStatusLabel = (status) => {
                         class="h-full w-full object-cover"
                       />
                       <img
-                        v-else-if="user.profile?.avatar"
-                        :src="`/storage/${user.profile.avatar}`"
+                        v-else-if="user.profile?.store_logo"
+                        :src="`/storage/${user.profile.store_logo}`"
                         loading="lazy"
                         class="h-full w-full object-cover"
                       />
@@ -671,7 +774,7 @@ const getStatusLabel = (status) => {
                       >
                         <Image class="mb-1 h-6 w-6 text-white" />
                         <span class="text-[10px] font-bold uppercase tracking-wider text-white"
-                          >Ubah</span
+                          >Ubah Logo</span
                         >
                       </div>
                     </div>
@@ -680,7 +783,7 @@ const getStatusLabel = (status) => {
                       ref="photoInput"
                       class="hidden"
                       accept="image/*"
-                      @change="updatePhotoPreview"
+                      @change="updatePhotoPreview('store')"
                     />
                     <div
                       class="absolute -bottom-1 -right-1 rounded-full bg-background p-1 shadow-sm"
@@ -701,9 +804,9 @@ const getStatusLabel = (status) => {
                       yang diunggah akan dapat dicrop secara langsung.
                     </p>
                     <SecondaryButton @click.prevent="photoInput.click()" class="border-2 shadow-sm"
-                      >Unggah Gambar</SecondaryButton
+                      >Ganti Logo Toko</SecondaryButton
                     >
-                    <InputError :message="storeForm.errors.avatar" class="mt-2" />
+                    <InputError :message="storeForm.errors.store_logo" class="mt-2" />
                   </div>
                 </div>
 
@@ -726,92 +829,118 @@ const getStatusLabel = (status) => {
                     <InputError :message="storeForm.errors.store_name" class="mt-1" />
                   </div>
 
-                  <!-- Bio -->
+                  <!-- Store Bio -->
                   <div class="md:col-span-2">
                     <InputLabel
-                      for="bio"
+                      for="store_bio"
                       value="Bio / Deskripsi Singkat Toko"
                       class="mb-1 font-bold"
                     />
                     <textarea
-                      id="bio"
-                      v-model="storeForm.bio"
+                      id="store_bio"
+                      v-model="storeForm.store_bio"
                       rows="4"
                       class="block w-full resize-none rounded-xl border-border bg-background text-foreground shadow-sm placeholder:text-muted-foreground/60 focus:border-primary focus:ring-primary"
                       placeholder="Ceritakan kelebihan toko Anda kepada calon pembeli..."
                     ></textarea>
-                    <InputError :message="storeForm.errors.bio" class="mt-1" />
+                    <InputError :message="storeForm.errors.store_bio" class="mt-1" />
                   </div>
 
-                  <!-- City -->
-                  <div class="md:col-span-1">
-                    <InputLabel for="city" value="Kota / Kabupaten" class="mb-1 font-bold" />
-                    <div class="relative">
-                      <div
-                        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"
-                      >
-                        <MapPin class="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <TextInput
-                        id="city"
-                        v-model="storeForm.city"
-                        type="text"
-                        class="block h-12 w-full rounded-xl pl-9 text-sm"
-                        placeholder="Misal: Jakarta Selatan"
-                      />
-                    </div>
-                    <InputError :message="storeForm.errors.city" class="mt-1" />
-                  </div>
-
-                  <!-- Address -->
-                  <div class="md:col-span-1">
-                    <InputLabel
-                      for="address"
-                      value="Alamat Lengkap (Opsional)"
-                      class="mb-1 font-bold"
-                    />
-                    <TextInput
-                      id="address"
-                      v-model="storeForm.address"
-                      type="text"
-                      class="block h-12 w-full rounded-xl text-sm"
-                      placeholder="Jalan, No Rumah, RT/RW..."
-                    />
-                    <InputError :message="storeForm.errors.address" class="mt-1" />
+                  <!-- Store Location & Address -->
+                  <div class="md:col-span-2">
+                    <AddressForm v-model="storeForm" prefix="store_" />
                   </div>
                 </div>
+              </div>
 
-                <div class="mt-8 flex items-center gap-4 border-t border-border pt-6">
-                  <PrimaryButton
-                    :disabled="storeForm.processing"
-                    class="h-12 rounded-xl px-8 text-sm font-black shadow-lg shadow-primary/20"
-                  >
-                    <span
-                      v-if="storeForm.processing"
-                      class="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"
-                    ></span>
-                    Simpan Perubahan
-                  </PrimaryButton>
-                  <Transition
-                    enter-from-class="opacity-0 -translate-y-2"
-                    leave-to-class="opacity-0 translate-y-2"
-                    class="transition duration-300 ease-out"
-                  >
-                    <div
-                      v-if="storeForm.recentlySuccessful"
-                      class="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-2 text-green-600 dark:text-green-400"
-                    >
-                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M5 13l4 4L19 7"
-                        ></path>
-                      </svg>
-                      <p class="text-sm font-bold">Profil Berhasil Diperbarui!</p>
+                <!-- USER PROFILE SECTION -->
+                <div v-if="tabSettings === 'user'" class="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                   <!-- Personal Avatar Upload -->
+                   <div class="flex flex-col items-center gap-6 border-b border-border pb-6 sm:flex-row sm:items-start">
+                    <div class="group relative shrink-0">
+                      <div class="relative h-28 w-28 overflow-hidden rounded-full border-[6px] border-background bg-muted shadow-2xl ring-1 ring-border transition-all duration-300 group-hover:ring-primary">
+                        <img v-if="personalPhotoPreview" :src="personalPhotoPreview" class="h-full w-full object-cover" />
+                        <img v-else-if="user.profile?.avatar" :src="`/storage/${user.profile.avatar}`" class="h-full w-full object-cover" />
+                        <div v-else class="flex h-full w-full items-center justify-center bg-primary/10 text-4xl font-black text-primary">
+                          {{ user.name.charAt(0) }}
+                        </div>
+                        <div class="absolute inset-0 flex cursor-pointer flex-col items-center justify-center bg-black/50 opacity-0 backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-100" @click="personalPhotoInput.click()">
+                          <Image class="mb-1 h-6 w-6 text-white" />
+                          <span class="text-[10px] font-bold uppercase tracking-wider text-white">Ubah Foto</span>
+                        </div>
+                      </div>
+                      <input type="file" ref="personalPhotoInput" class="hidden" accept="image/*" @change="updatePhotoPreview('personal')" />
                     </div>
-                  </Transition>
+                    <div class="flex-1 pt-2 text-center sm:text-left">
+                      <h3 class="text-lg font-black text-foreground">Foto Profil Pribadi</h3>
+                      <p class="mb-4 mt-1 text-sm leading-relaxed text-muted-foreground">
+                        Foto ini akan muncul saat Anda mengobrol dengan pembeli atau memberikan ulasan.
+                      </p>
+                      <SecondaryButton @click.prevent="personalPhotoInput.click()" class="border-2 shadow-sm">Ganti Foto Profil</SecondaryButton>
+                      <InputError :message="personalForm.errors.avatar" class="mt-2" />
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div class="md:col-span-2">
+                      <InputLabel for="personal_name" value="Nama Lengkap" class="mb-1 font-bold" />
+                      <TextInput id="personal_name" v-model="personalForm.name" type="text" class="block h-12 w-full rounded-xl text-sm font-medium" required />
+                      <InputError :message="personalForm.errors.name" class="mt-1" />
+                    </div>
+                    <div class="md:col-span-1">
+                      <InputLabel for="personal_phone" value="Nomor Telepon" class="mb-1 font-bold" />
+                      <TextInput id="personal_phone" v-model="personalForm.phone" type="text" class="block h-12 w-full rounded-xl text-sm" />
+                      <InputError :message="personalForm.errors.phone" class="mt-1" />
+                    </div>
+                    <div class="md:col-span-1">
+                      <InputLabel for="personal_email" value="Email" class="mb-1 font-bold" />
+                      <TextInput id="personal_email" v-model="personalForm.email" type="email" class="block h-12 w-full rounded-xl text-sm bg-muted/50" disabled />
+                    </div>
+
+                    <div class="md:col-span-1">
+                      <InputLabel for="date_of_birth" value="Tanggal Lahir" class="mb-1 font-bold" />
+                      <div class="relative">
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                          <Calendar class="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <TextInput id="date_of_birth" v-model="personalForm.date_of_birth" type="date" class="block h-12 w-full rounded-xl pl-9 text-sm" />
+                      </div>
+                      <InputError :message="personalForm.errors.date_of_birth" class="mt-1" />
+                    </div>
+
+                    <div class="md:col-span-1">
+                      <InputLabel for="gender" value="Jenis Kelamin" class="mb-1 font-bold" />
+                      <select id="gender" v-model="personalForm.gender" class="block h-12 w-full rounded-xl border-border bg-background text-sm focus:border-primary focus:ring-primary">
+                        <option value="">Pilih Jenis Kelamin</option>
+                        <option value="male">Laki-laki</option>
+                        <option value="female">Perempuan</option>
+                        <option value="other">Lainnya</option>
+                      </select>
+                      <InputError :message="personalForm.errors.gender" class="mt-1" />
+                    </div>
+                    <div class="md:col-span-2">
+                      <InputLabel for="personal_bio" value="Bio Singkat" class="mb-1 font-bold" />
+                      <textarea id="personal_bio" v-model="personalForm.bio" rows="3" class="block w-full resize-none rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"></textarea>
+                    </div>
+
+                    <!-- Personal Location & Address -->
+                    <div class="md:col-span-2">
+                      <AddressForm v-model="personalForm" prefix="" />
+                    </div>
+                  </div>
+
+                  <div class="mt-8 flex items-center gap-4 border-t border-border pt-6">
+                    <PrimaryButton @click="updatePersonalProfile" :disabled="personalForm.processing" class="h-12 rounded-xl px-8 text-sm font-black shadow-lg shadow-primary/20">
+                      <span v-if="personalForm.processing" class="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
+                      Simpan Profil Pribadi
+                    </PrimaryButton>
+                    <Transition enter-from-class="opacity-0 -translate-y-2" leave-to-class="opacity-0 translate-y-2" class="transition duration-300 ease-out">
+                      <div v-if="personalForm.recentlySuccessful" class="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-2 text-green-600 dark:text-green-400">
+                        <CheckCircle class="h-4 w-4" />
+                        <p class="text-sm font-bold">Profil Pribadi Diperbarui!</p>
+                      </div>
+                    </Transition>
+                  </div>
                 </div>
               </form>
             </div>
@@ -955,3 +1084,44 @@ const getStatusLabel = (status) => {
     </div>
   </AppLayout>
 </template>
+
+<style scoped>
+.customize-table {
+  --easy-table-border: 1px solid hsl(var(--border));
+  --easy-table-header-font-size: 12px;
+  --easy-table-header-height: 50px;
+  --easy-table-header-font-color: hsl(var(--muted-foreground));
+  --easy-table-header-background-color: hsl(var(--muted));
+  
+  --easy-table-body-row-font-size: 13px;
+  --easy-table-body-font-color: hsl(var(--foreground));
+  --easy-table-body-row-height: 60px;
+  --easy-table-body-row-background-color: hsl(var(--card));
+  --easy-table-body-row-hover-background-color: hsl(var(--muted) / 0.5);
+  
+  --easy-table-footer-background-color: hsl(var(--card));
+  --easy-table-footer-font-color: hsl(var(--muted-foreground));
+  --easy-table-footer-font-size: 12px;
+  --easy-table-footer-padding: 0px 10px;
+  --easy-table-footer-height: 50px;
+
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+}
+
+:deep(.customize-header) {
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.easy-table-wrapper {
+  @apply rounded-2xl overflow-hidden border border-border;
+}
+
+/* Dark mode specific overrides */
+.dark .customize-table {
+  --easy-table-body-row-hover-background-color: hsl(var(--muted) / 0.3);
+}
+</style>

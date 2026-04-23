@@ -12,15 +12,18 @@ class UserProfile extends Model
 
     protected $fillable = [
         'user_id',
-        'store_name',
         'avatar',
         'phone',
         'address',
         'city',
-        'is_ktp_verified',
         'bio',
         'date_of_birth',
         'gender',
+        'store_name',
+        'store_logo',
+        'store_bio',
+        'store_address',
+        'is_ktp_verified',
     ];
 
     protected $casts = [

@@ -8,12 +8,18 @@ import PrimaryButton from '@/Components/PrimaryButton.vue'
 import TextInput from '@/Components/TextInput.vue'
 import CurrencyInput from '@/Components/CurrencyInput.vue'
 import { ExternalLink, ImagePlus, X, Info } from 'lucide-vue-next'
+import ImageCropperModal from '@/Components/ImageCropperModal.vue'
 import {
-  PRODUCT_BRANDS,
+  PRODUCT_SCHEMA,
   PRODUCT_CONDITIONS,
   RAM_OPTIONS,
   STORAGE_OPTIONS,
-  KELENGKAPAN_OPTIONS,
+  CONNECTIVITY_OPTIONS,
+  POWER_SOURCE_OPTIONS,
+  SWITCH_TYPE_OPTIONS,
+  CFW_STATUS_OPTIONS,
+  getCategoryById,
+  getFieldsByCategory,
 } from '@/constants'
 
 const props = defineProps({
@@ -23,6 +29,7 @@ const props = defineProps({
 const form = useForm({
   category_id: '',
   brand: '',
+  custom_brand: '',
   type: '',
   condition: 'second_like_new',
   is_cod: false,
@@ -30,13 +37,23 @@ const form = useForm({
   price: '',
   description: '',
   specifications: {
+    sub_type: '',
     ram: '',
+    custom_ram: '',
     storage: '',
+    custom_storage: '',
     battery_health: '',
     screen_size: '',
-    processor: '',
-    gpu: '',
-    kelengkapan: '',
+    connectivity: '',
+    power_source: '',
+    switch_type: '',
+    cfw_status: '',
+    shutter_count: '',
+    is_battery_balanced: false,
+    is_drift_free: false,
+    has_original_lens: false,
+    kelengkapan: [], // Now an array for multi-select
+    kelengkapan_note: '',
   },
   images: [],
 })
@@ -51,17 +68,14 @@ watch(
   }
 )
 
-const filteredBrands = computed(() => {
-  return PRODUCT_BRANDS[form.category_id] || PRODUCT_BRANDS['default']
+const currentCategory = computed(() => getCategoryById(form.category_id))
+const selectedCategoryName = computed(() => currentCategory.value?.label.toLowerCase() || '')
+
+const formSections = computed(() => {
+  return getFieldsByCategory(form.category_id, form)
 })
 
-const selectedCategoryName = computed(() => {
-  const cat = props.categories.find((c) => c.id == form.category_id)
-  return cat ? cat.name.toLowerCase() : ''
-})
-
-const showSpecs = computed(() => form.category_id !== '')
-
+// Legacy helper for mixed categories
 const showField = (cats) => {
   if (!selectedCategoryName.value) return false
   const allowed = cats.split(',')
@@ -79,6 +93,8 @@ const openGsmSearch = () => {
     selectedCategoryName.value.includes('tablet')
   ) {
     window.open(`https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=${query}`, '_blank')
+  } else if (selectedCategoryName.value.includes('camera')) {
+    window.open(`https://www.google.com/search?q=${query}+specs+dpreview`, '_blank')
   } else {
     const suffix = selectedCategoryName.value.includes('laptop') ? ' specs laptopmedia' : ' specs'
     window.open(`https://www.google.com/search?q=${query}${suffix}`, '_blank')
@@ -88,19 +104,49 @@ const openGsmSearch = () => {
 const imagePreviews = ref([])
 const fileInput = ref(null)
 
+// Sequential Cropping Logic
+const showCropper = ref(false)
+const pendingFiles = ref([])
+
 const handleFiles = (event) => {
   const files = Array.from(event.target.files)
-  files.forEach((file) => {
-    form.images.push(file)
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      imagePreviews.value.push({
-        url: e.target.result,
-        name: file.name,
-      })
-    }
-    reader.readAsDataURL(file)
-  })
+  const maxFiles = 10
+  const currentTotal = form.images.length
+  const remaining = maxFiles - currentTotal
+
+  if (remaining <= 0) {
+    alert(`Maksimal ${maxFiles} foto diperbolehkan.`)
+    if (fileInput.value) fileInput.value.value = ''
+    return
+  }
+
+  const filesToAdd = files.slice(0, remaining)
+  if (filesToAdd.length > 0) {
+    pendingFiles.value = filesToAdd
+    showCropper.value = true
+  }
+}
+
+const handleCropped = ({ blob, originalFile }) => {
+  const fileName = originalFile.name.replace(/\.[^/.]+$/, '') + '.jpg'
+  const file = new File([blob], fileName, { type: 'image/jpeg' })
+
+  form.images.push(file)
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    imagePreviews.value.push({
+      url: e.target.result,
+      name: fileName,
+    })
+  }
+  reader.readAsDataURL(file)
+}
+
+const handleCropperFinished = () => {
+  showCropper.value = false
+  pendingFiles.value = []
+  if (fileInput.value) fileInput.value.value = ''
 }
 
 const removeFile = (index) => {
@@ -118,14 +164,26 @@ const submit = () => {
 watch(
   () => form.category_id,
   () => {
+    form.brand = ''
+    form.custom_brand = ''
+    form.type = ''
     form.specifications = {
+      sub_type: '',
       ram: '',
+      custom_ram: '',
       storage: '',
+      custom_storage: '',
       battery_health: '',
       screen_size: '',
-      processor: '',
-      gpu: '',
-      kelengkapan: '',
+      connectivity: '',
+      power_source: '',
+      switch_type: '',
+      cfw_status: '',
+      shutter_count: '',
+      is_battery_balanced: false,
+      is_drift_free: false,
+      has_original_lens: false,
+      kelengkapan: [],
     }
   }
 )
@@ -133,10 +191,10 @@ watch(
 
 <template>
   <AppLayout>
-    <Head title="Jual Produk Baru" />
+    <Head title="Jual Produk" />
 
     <template #header>
-      <h2 class="text-xl font-semibold leading-tight text-foreground">Jual Produk Baru</h2>
+      <h2 class="text-xl font-semibold leading-tight text-foreground">Jual Produk</h2>
     </template>
 
     <div class="py-12">
@@ -172,287 +230,182 @@ watch(
             </header>
 
             <form @submit.prevent="submit" class="space-y-8">
-              <!-- SECTION 1: IDENTITAS PRODUK -->
-              <div
+              <!-- SECTION 0: KATEGORI (MUST BE VISIBLE) -->
+              <div class="rounded-3xl border border-border bg-muted/30 p-6 shadow-sm sm:p-8">
+                <h3 class="mb-6 flex items-center gap-2 border-b border-border pb-3 text-lg font-bold">
+                  <span class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs text-primary">0</span>
+                  Pilih Kategori
+                </h3>
+                <div>
+                  <InputLabel for="category_id" value="Kategori Produk" />
+                  <select
+                    id="category_id"
+                    v-model="form.category_id"
+                    class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"
+                    required
+                  >
+                    <option value="">-- Pilih Kategori --</option>
+                    <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                      {{ cat.name }}
+                    </option>
+                  </select>
+                  <InputError class="mt-2" :message="form.errors.category_id" />
+                </div>
+              </div>
+
+              <!-- DYNAMIC SECTIONS & FIELDS -->
+              <div v-for="(section, sIndex) in formSections" :key="section.id"
                 class="rounded-3xl border border-border bg-muted/30 p-6 shadow-sm transition-all duration-300 sm:p-8"
               >
-                <h3
-                  class="mb-6 flex items-center gap-2 border-b border-border pb-3 text-lg font-bold"
-                >
-                  <span
-                    class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs text-primary"
-                    >1</span
-                  >
-                  1. Identitas Produk
+                <h3 class="mb-6 flex items-center gap-2 border-b border-border pb-3 text-lg font-bold">
+                  <span class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs text-primary">
+                    {{ sIndex + 1 }}
+                  </span>
+                  {{ section.label }}
                 </h3>
 
-                <div class="space-y-6">
-                  <div>
-                    <InputLabel for="category_id" value="Kategori" />
-                    <select
-                      id="category_id"
-                      v-model="form.category_id"
-                      class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm transition-all focus:border-primary focus:ring-primary"
-                      required
+                <!-- Sub-Type Selection (If exists) -->
+                <div v-if="section.id === 'main' && currentCategory?.sub_types" class="mb-6">
+                  <InputLabel value="Tipe Spesifik" />
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <button
+                      v-for="st in currentCategory.sub_types"
+                      :key="st.value"
+                      type="button"
+                      @click="form.specifications.sub_type = st.value"
+                      class="rounded-xl border px-4 py-2 text-sm font-medium transition-all"
+                      :class="form.specifications.sub_type === st.value 
+                        ? 'bg-primary text-primary-foreground border-primary shadow-md' 
+                        : 'bg-background text-muted-foreground border-border hover:bg-muted'"
                     >
-                      <option value="">-- Pilih Kategori --</option>
-                      <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-                        {{ cat.name }}
-                      </option>
-                    </select>
-                    <InputError class="mt-2" :message="form.errors.category_id" />
+                      {{ st.label }}
+                    </button>
                   </div>
+                </div>
 
-                  <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div>
-                      <InputLabel for="brand" value="Merek / Brand" />
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <template v-for="field in section.fields" :key="field.key">
+                    <!-- Brand Select -->
+                    <div v-if="field.key === 'brand'">
+                      <InputLabel :for="field.key" :value="field.label" />
                       <select
-                        id="brand"
                         v-model="form.brand"
-                        class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm transition-all focus:border-primary focus:ring-primary"
+                        :id="field.key"
+                        class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"
                         required
                       >
-                        <option value="">-- Pilih Merek --</option>
-                        <option
-                          v-for="brandName in filteredBrands"
-                          :key="brandName"
-                          :value="brandName"
-                        >
-                          {{ brandName }}
+                        <option value="">{{ field.placeholder }}</option>
+                        <option v-for="brand in currentCategory.brands" :key="brand" :value="brand">
+                          {{ brand }}
                         </option>
-                        <option value="Lainnya">Lainnya</option>
                       </select>
                       <InputError class="mt-2" :message="form.errors.brand" />
+                      <div v-if="form.brand === 'Other'" class="mt-2 animate-in fade-in slide-in-from-top-1">
+                        <TextInput v-model="form.custom_brand" placeholder="Sebutkan Merek" class="h-10" />
+                        <InputError class="mt-2" :message="form.errors.custom_brand" />
+                      </div>
                     </div>
 
-                    <div>
-                      <InputLabel for="type" value="Tipe / Model" />
+                    <!-- Type Text -->
+                    <div v-else-if="field.key === 'type'">
+                      <InputLabel :for="field.key" :value="field.label" />
                       <TextInput
-                        id="type"
                         v-model="form.type"
+                        :id="field.key"
                         type="text"
                         class="mt-1 block h-11 w-full"
+                        :placeholder="field.placeholder"
                         required
-                        placeholder="Misal: iPhone 13"
                       />
                       <InputError class="mt-2" :message="form.errors.type" />
                     </div>
-                  </div>
+
+                    <!-- Generic Select -->
+                    <div v-else-if="field.type === 'select'">
+                      <InputLabel :for="field.key" :value="field.label + (field.unit ? ` (${field.unit})` : '')" />
+                      <select
+                        v-model="form.specifications[field.key]"
+                        :id="field.key"
+                        class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"
+                      >
+                        <option value="">{{ field.placeholder || 'Pilih...' }}</option>
+                        <option v-for="opt in field.options" :key="opt" :value="opt">
+                          {{ opt }}
+                        </option>
+                      </select>
+                      <InputError class="mt-2" :message="form.errors['specifications.' + field.key]" />
+                      <!-- Custom Option for select -->
+                      <div v-if="form.specifications[field.key] === 'Other' && ['ram', 'storage'].includes(field.key)" class="mt-2">
+                        <TextInput v-model="form.specifications['custom_' + field.key]" placeholder="Input Manual..." class="h-10" />
+                        <InputError class="mt-2" :message="form.errors['specifications.custom_' + field.key]" />
+                      </div>
+                    </div>
+
+                    <!-- Generic Number/Text -->
+                    <div v-else-if="['number', 'text'].includes(field.type)">
+                      <InputLabel :for="field.key" :value="field.label + (field.unit ? ` (${field.unit})` : '')" />
+                      <TextInput
+                        v-model="form.specifications[field.key]"
+                        :id="field.key"
+                        :type="field.type"
+                        class="mt-1 block h-11 w-full"
+                        :placeholder="field.placeholder"
+                      />
+                      <InputError class="mt-2" :message="form.errors['specifications.' + field.key]" />
+                    </div>
+
+                    <!-- Boolean / Checkbox -->
+                    <div v-else-if="field.type === 'boolean'" class="flex items-center gap-3 pt-8">
+                      <input
+                        type="checkbox"
+                        v-model="form.specifications[field.key]"
+                        :id="field.key"
+                        class="h-5 w-5 rounded border-border text-primary focus:ring-primary"
+                      />
+                      <label :for="field.key" class="text-sm font-medium leading-none cursor-pointer">
+                        {{ field.label }}
+                        <span v-if="field.placeholder" class="block text-[10px] font-normal text-muted-foreground">{{ field.placeholder }}</span>
+                      </label>
+                      <InputError class="mt-2" :message="form.errors['specifications.' + field.key]" />
+                    </div>
+                  </template>
                 </div>
               </div>
 
-              <!-- SECTION 2: INFORMASI PENJUALAN -->
-              <div
+              <!-- SECTION: KELENGKAPAN (SMART CHECKBOX) -->
+              <div v-if="currentCategory"
                 class="rounded-3xl border border-border bg-muted/30 p-6 shadow-sm transition-all duration-300 sm:p-8"
               >
-                <h3
-                  class="mb-6 flex items-center gap-2 border-b border-border pb-3 text-lg font-bold"
-                >
-                  <span
-                    class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs text-primary"
-                    >2</span
-                  >
-                  2. Informasi Penjualan
+                <h3 class="mb-6 flex items-center gap-2 border-b border-border pb-3 text-lg font-bold">
+                   <span class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs text-primary">
+                    {{ formSections.length + 1 }}
+                  </span>
+                  Kelengkapan Produk
                 </h3>
-
-                <div class="space-y-6">
-                  <div>
-                    <InputLabel for="price" value="Harga Produk (Rp)" />
-                    <CurrencyInput
-                      id="price"
-                      v-model="form.price"
-                      :required="true"
-                      placeholder="0"
-                    />
-                    <p class="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <Info class="h-3 w-3" />
-                      Isi harga dengan wajar sesuai kondisi gadget Second.
-                    </p>
-                    <InputError class="mt-2" :message="form.errors.price" />
-                  </div>
-
-                  <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div class="col-span-1 md:col-span-2">
-                      <InputLabel for="condition" value="Kondisi Barang" />
-                      <select
-                        id="condition"
-                        v-model="form.condition"
-                        class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-sm text-foreground shadow-sm transition-all focus:border-primary focus:ring-primary"
-                        required
-                      >
-                        <option
-                          v-for="item in PRODUCT_CONDITIONS"
-                          :key="item.value"
-                          :value="item.value"
-                        >
-                          {{ item.label }}
-                        </option>
-                      </select>
-                      <InputError class="mt-2" :message="form.errors.condition" />
-                    </div>
-
-                    <div
-                      class="mt-2 flex items-center gap-4 rounded-2xl border border-border bg-muted/50 p-4"
-                    >
-                      <div class="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="is_cod"
-                          v-model="form.is_cod"
-                          class="rounded border-border text-primary focus:ring-primary"
-                        />
-                        <InputLabel for="is_cod" value="Fitur COD" class="!mb-0 cursor-pointer" />
-                      </div>
-                      <div class="mx-2 h-6 w-px bg-border"></div>
-                      <div class="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="is_negotiable"
-                          v-model="form.is_negotiable"
-                          class="rounded border-border text-primary focus:ring-primary"
-                        />
-                        <InputLabel
-                          for="is_negotiable"
-                          value="Bisa Nego"
-                          class="!mb-0 cursor-pointer"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <InputLabel for="description" value="Deskripsi Produk" />
-                    <textarea
-                      id="description"
-                      v-model="form.description"
-                      rows="5"
-                      class="mt-1 block w-full rounded-xl border-border bg-background p-3 text-sm text-foreground shadow-sm transition-all focus:border-primary focus:ring-primary"
-                      required
-                      :placeholder="
-                        form.condition === 'second_good' || form.condition === 'minus'
-                          ? 'WAJIB: Jelaskan semua minus secara jujur (LCD retak, baterai drop, dll)...'
-                          : 'Jelaskan kelengkapan, garansi, dan kondisi fisik secara detail...'
-                      "
-                    ></textarea>
-                    <InputError class="mt-2" :message="form.errors.description" />
-                  </div>
-                </div>
-              </div>
-
-              <!-- SECTION 3: SPESIFIKASI TAMBAHAN -->
-              <Transition
-                enter-active-class="transition ease-out duration-200"
-                enter-from-class="opacity-0 -translate-y-4"
-                enter-to-class="opacity-100 translate-y-0"
-              >
-                <div
-                  v-if="showSpecs"
-                  class="rounded-3xl border border-border bg-primary/5 p-6 shadow-sm transition-all duration-300 sm:p-8"
-                >
-                  <h3
-                    class="mb-6 flex items-center gap-2 border-b border-border pb-3 text-lg font-bold"
+                <p class="mb-6 text-xs text-muted-foreground">Centang semua item yang tersedia dalam paket penjualan.</p>
+                
+                <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  <div v-for="item in currentCategory.default_items" :key="item"
+                    class="flex items-center gap-3 rounded-2xl border border-border bg-background p-4 transition-all hover:border-primary/50"
+                    :class="{'border-primary bg-primary/5': form.specifications.kelengkapan.includes(item)}"
                   >
-                    <span
-                      class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs text-primary"
-                      >3</span
-                    >
-                    3. Spesifikasi {{ selectedCategoryName }}
-                  </h3>
-                  <p class="mb-6 text-xs text-muted-foreground">
-                    Informasi spesifikasi membantu calon pembeli mengenal produk lebih dalam.
-                  </p>
-
-                  <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div v-if="showField('smartphone,laptop,tablet')">
-                      <InputLabel for="spec_ram" value="RAM" />
-                      <select
-                        v-model="form.specifications.ram"
-                        id="spec_ram"
-                        class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"
-                      >
-                        <option value="">Pilih RAM</option>
-                        <option v-for="ram in RAM_OPTIONS" :key="ram" :value="ram">
-                          {{ ram }}
-                        </option>
-                      </select>
-                    </div>
-
-                    <div v-if="showField('smartphone,laptop,tablet')">
-                      <InputLabel for="spec_storage" value="Penyimpanan (ROM/SSD)" />
-                      <select
-                        v-model="form.specifications.storage"
-                        id="spec_storage"
-                        class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"
-                      >
-                        <option value="">Pilih Kapasitas</option>
-                        <option v-for="rom in STORAGE_OPTIONS" :key="rom" :value="rom">
-                          {{ rom }}
-                        </option>
-                      </select>
-                    </div>
-
-                    <div v-if="showField('smartphone,tablet')">
-                      <InputLabel for="spec_bh" value="Battery Health (BH) %" />
-                      <TextInput
-                        v-model="form.specifications.battery_health"
-                        type="number"
-                        class="mt-1 block h-11 w-full"
-                        placeholder="Misal: 85"
-                        min="0"
-                        max="100"
-                      />
-                    </div>
-
-                    <div v-if="showField('laptop')">
-                      <InputLabel for="spec_screen" value="Ukuran Layar (Inch)" />
-                      <TextInput
-                        v-model="form.specifications.screen_size"
-                        type="text"
-                        class="mt-1 block h-11 w-full"
-                        placeholder="Misal: 14"
-                      />
-                    </div>
-
-                    <div v-if="showField('laptop')">
-                      <InputLabel for="spec_processor" value="Processor" />
-                      <TextInput
-                        v-model="form.specifications.processor"
-                        type="text"
-                        class="mt-1 block h-11 w-full"
-                        placeholder="Contoh: Intel Core i5 Gen 12"
-                      />
-                    </div>
-
-                    <div v-if="showField('laptop')">
-                      <InputLabel for="spec_gpu" value="VGA / GPU" />
-                      <TextInput
-                        v-model="form.specifications.gpu"
-                        type="text"
-                        class="mt-1 block h-11 w-full"
-                        placeholder="Contoh: NVIDIA RTX 3050"
-                      />
-                    </div>
-
-                    <div v-if="showField('smartphone,laptop,tablet,aksesoris')">
-                      <InputLabel for="spec_kelengkapan" value="Kelengkapan" />
-                      <select
-                        v-model="form.specifications.kelengkapan"
-                        id="spec_kelengkapan"
-                        class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"
-                      >
-                        <option value="">-- Pilih Kelengkapan --</option>
-                        <option
-                          v-for="item in KELENGKAPAN_OPTIONS"
-                          :key="item.value"
-                          :value="item.value"
-                        >
-                          {{ item.label }}
-                        </option>
-                      </select>
-                    </div>
+                    <input
+                      type="checkbox"
+                      :id="item"
+                      :value="item"
+                      v-model="form.specifications.kelengkapan"
+                      class="h-5 w-5 rounded border-border text-primary focus:ring-primary"
+                    />
+                    <label :for="item" class="flex-1 cursor-pointer text-sm font-bold">{{ item }}</label>
                   </div>
                 </div>
-              </Transition>
+                <div class="mt-4">
+                   <InputLabel value="Keterangan Lain (Opsional)" />
+                   <TextInput v-model="form.specifications.kelengkapan_note" placeholder="Misal: Dus ada penyok dikit" class="mt-1" />
+                   <InputError class="mt-2" :message="form.errors['specifications.kelengkapan_note']" />
+                </div>
+                <InputError class="mt-4" :message="form.errors['specifications.kelengkapan']" />
+              </div>
 
               <!-- SECTION 4: MEDIA -->
               <div
@@ -483,7 +436,9 @@ watch(
                           <span class="font-bold text-primary">Klik untuk tambah</span> atau seret
                           ke sini
                         </p>
-                        <p class="mt-1 text-[10px] text-muted-foreground">JPG, PNG up to 2MB</p>
+                        <p class="mt-1 text-[10px] text-muted-foreground">
+                          JPG, PNG up to 2MB. Maksimal 10 foto.
+                        </p>
                       </div>
                       <input
                         id="images"
@@ -546,5 +501,14 @@ watch(
         </div>
       </div>
     </div>
+
+    <!-- Cropper Modal -->
+    <ImageCropperModal
+      :show="showCropper"
+      :files="pendingFiles"
+      @close="handleCropperFinished"
+      @cropped="handleCropped"
+      @finished="handleCropperFinished"
+    />
   </AppLayout>
 </template>

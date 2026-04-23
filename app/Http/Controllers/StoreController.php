@@ -64,48 +64,44 @@ class StoreController extends Controller
     {
         $request->validate([
             'store_name' => ['required', 'string', 'max:255'],
-            'bio' => ['nullable', 'string', 'max:1000'],
-            'address' => ['nullable', 'string', 'max:500'],
+            'store_bio' => ['nullable', 'string', 'max:1000'],
+            'store_address' => ['nullable', 'string', 'max:500'],
+            'store_landmark' => ['nullable', 'string', 'max:255'],
+            'store_province' => ['nullable', 'string', 'max:255'],
+            'store_city' => ['nullable', 'string', 'max:255'],
+            'store_district' => ['nullable', 'string', 'max:255'],
+            'store_village' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:100'],
-            'avatar' => ['nullable', 'image', 'max:2048'], // Max 2MB
+            'store_logo' => ['nullable', 'image', 'max:2048'], // Max 2MB
         ]);
 
         $user = $request->user();
+        $profile = $user->profile()->firstOrCreate(['user_id' => $user->id]);
 
-        // Handle Avatar Upload
-        $avatarPath = $user->profile ? $user->profile->avatar : null;
-        if ($request->hasFile('avatar')) {
-            $file = $request->file('avatar');
+        // Handle Store Logo Upload
+        $logoPath = $profile->store_logo;
+        if ($request->hasFile('store_logo')) {
+            $file = $request->file('store_logo');
             if ($file->isValid()) {
-                // Hapus avatar lama jika ada
-                if ($avatarPath && Storage::disk('public')->exists($avatarPath)) {
-                    Storage::disk('public')->delete($avatarPath);
+                if ($logoPath && Storage::disk('public')->exists($logoPath)) {
+                    Storage::disk('public')->delete($logoPath);
                 }
-
-                // Simpan yang baru dengan cara yang lebih resilient (seperti di ProductController)
-                $tempPath = $file->getRealPath() ?: $file->getPathname();
-                $fileName = $file->hashName();
-                $avatarPath = "avatars/{$fileName}";
-
-                $stream = fopen($tempPath, 'r');
-                Storage::disk('public')->put($avatarPath, $stream);
-                if (is_resource($stream)) {
-                    fclose($stream);
-                }
+                $logoPath = $file->store('avatars/store', 'public');
             }
         }
 
-        // Update atau Create UserProfile
-        $user->profile()->updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'store_name' => $request->store_name,
-                'bio' => $request->bio,
-                'address' => $request->address,
-                'city' => $request->city,
-                'avatar' => $avatarPath,
-            ]
-        );
+        // Update UserProfile
+        $profile->update([
+            'store_name' => $request->store_name,
+            'store_bio' => $request->store_bio,
+            'store_address' => $request->store_address,
+            'store_landmark' => $request->store_landmark,
+            'store_province' => $request->store_province,
+            'store_city' => $request->store_city,
+            'store_district' => $request->store_district,
+            'store_village' => $request->store_village,
+            'store_logo' => $logoPath,
+        ]);
 
         return Redirect::back()->with('status', 'store-updated');
     }

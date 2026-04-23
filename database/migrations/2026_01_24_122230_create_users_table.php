@@ -21,6 +21,8 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password'); // varchar [cite: 58]
             $table->enum('role', ['admin', 'seller', 'buyer'])->default('buyer'); // Menentukan akses user
+            $table->boolean('is_suspended')->default(false);
+            $table->text('suspension_reason')->nullable();
             $table->json('favorites')->nullable(); // Pivot favorite (IDs array)
             $table->rememberToken();
             $table->softDeletes();

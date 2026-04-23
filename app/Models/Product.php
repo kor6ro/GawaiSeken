@@ -82,7 +82,9 @@ class Product extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed()->withDefault([
+            'name' => 'Pemilik Terhapus',
+        ]);
     }
 
     /**
@@ -90,7 +92,9 @@ class Product extends Model
      */
     public function store(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id')->withTrashed()->withDefault([
+            'name' => 'Toko Terhapus',
+        ]);
     }
 
     /**
@@ -98,7 +102,9 @@ class Product extends Model
      */
     public function seller(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id')->withTrashed()->withDefault([
+            'name' => 'Penjual Terhapus',
+        ]);
     }
 
     public function images(): HasMany

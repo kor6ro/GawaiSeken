@@ -8,12 +8,18 @@ import PrimaryButton from '@/Components/PrimaryButton.vue'
 import TextInput from '@/Components/TextInput.vue'
 import CurrencyInput from '@/Components/CurrencyInput.vue'
 import { ImagePlus, X, Info, AlertCircle } from 'lucide-vue-next'
+import ImageCropperModal from '@/Components/ImageCropperModal.vue'
 import {
-  PRODUCT_BRANDS,
+  PRODUCT_SCHEMA,
   PRODUCT_CONDITIONS,
   RAM_OPTIONS,
   STORAGE_OPTIONS,
-  KELENGKAPAN_OPTIONS,
+  CONNECTIVITY_OPTIONS,
+  POWER_SOURCE_OPTIONS,
+  SWITCH_TYPE_OPTIONS,
+  CFW_STATUS_OPTIONS,
+  getCategoryById,
+  getFieldsByCategory,
 } from '@/constants'
 
 const props = defineProps({
@@ -23,7 +29,6 @@ const props = defineProps({
 const formatCondition = (cond) => {
   if (!cond) return 'second_like_new'
   const mapping = {
-    Baru: 'new',
     'Bekas Mulus': 'second_like_new',
     'Bekas - Mulus': 'second_like_new',
     'Bekas Ada minus': 'second_good',
@@ -33,9 +38,15 @@ const formatCondition = (cond) => {
   return mapping[cond] || cond
 }
 
+const selectedCategory = computed(() => getCategoryById(props.product.category_id))
+const isBrandInList = computed(() => selectedCategory.value?.brands.includes(props.product.brand))
+const isRamInList = computed(() => RAM_OPTIONS.includes(props.product.specifications?.ram))
+const isStorageInList = computed(() => STORAGE_OPTIONS.includes(props.product.specifications?.storage))
+
 const form = useForm({
   _method: 'put',
-  brand: props.product.brand,
+  brand: isBrandInList.value ? props.product.brand : 'Other',
+  custom_brand: isBrandInList.value ? '' : props.product.brand,
   type: props.product.type,
   condition: formatCondition(props.product.condition),
   is_cod: props.product.is_cod,
@@ -44,44 +55,82 @@ const form = useForm({
   status: props.product.status,
   description: props.product.description,
   specifications: {
-    ram: props.product.specifications?.ram || '',
-    storage: props.product.specifications?.storage || '',
+    sub_type: props.product.specifications?.sub_type || '',
+    ram: isRamInList.value ? (props.product.specifications?.ram || '') : 'Other',
+    custom_ram: isRamInList.value ? '' : props.product.specifications?.ram,
+    storage: isStorageInList.value ? (props.product.specifications?.storage || '') : 'Other',
+    custom_storage: isStorageInList.value ? '' : props.product.specifications?.storage,
     battery_health: props.product.specifications?.battery_health || '',
     screen_size: props.product.specifications?.screen_size || '',
-    processor: props.product.specifications?.processor || '',
-    gpu: props.product.specifications?.gpu || '',
-    kelengkapan: props.product.specifications?.kelengkapan || '',
+    connectivity: props.product.specifications?.connectivity || '',
+    power_source: props.product.specifications?.power_source || '',
+    switch_type: props.product.specifications?.switch_type || '',
+    cfw_status: props.product.specifications?.cfw_status || '',
+    shutter_count: props.product.specifications?.shutter_count || '',
+    is_battery_balanced: props.product.specifications?.is_battery_balanced || false,
+    is_drift_free: props.product.specifications?.is_drift_free || false,
+    has_original_lens: props.product.specifications?.has_original_lens || false,
+    kelengkapan: Array.isArray(props.product.specifications?.kelengkapan) 
+      ? props.product.specifications.kelengkapan 
+      : (props.product.specifications?.kelengkapan ? [props.product.specifications.kelengkapan] : []),
+    kelengkapan_note: props.product.specifications?.kelengkapan_note || '',
   },
   images: [],
   delete_images: [],
 })
 
-const categoryName = computed(() => props.product.category?.name.toLowerCase() || '')
-const categoryId = computed(() => props.product.category_id)
+const currentCategory = computed(() => getCategoryById(props.product.category_id))
+const selectedCategoryName = computed(() => currentCategory.value?.label.toLowerCase() || '')
 
-const filteredBrands = computed(() => {
-  return PRODUCT_BRANDS[categoryId.value] || PRODUCT_BRANDS['default']
+const formSections = computed(() => {
+  return getFieldsByCategory(props.product.category_id, form)
 })
 
-const showField = (cats) => {
-  const allowed = cats.split(',')
-  return allowed.some((cat) => categoryName.value.includes(cat))
-}
+const filteredBrands = computed(() => currentCategory.value?.brands || [])
 
 const imagePreviews = ref([])
+
+// Sequential Cropping Logic
+const showCropper = ref(false)
+const pendingFiles = ref([])
+
 const handleFiles = (event) => {
   const files = Array.from(event.target.files)
-  files.forEach((file) => {
-    form.images.push(file)
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      imagePreviews.value.push({
-        url: e.target.result,
-        name: file.name,
-      })
-    }
-    reader.readAsDataURL(file)
-  })
+  const maxFiles = 10
+  const currentTotal = form.images.length
+  const remaining = maxFiles - currentTotal
+
+  if (remaining <= 0) {
+    alert(`Maksimal ${maxFiles} foto diperbolehkan.`)
+    return
+  }
+
+  const filesToAdd = files.slice(0, remaining)
+  if (filesToAdd.length > 0) {
+    pendingFiles.value = filesToAdd
+    showCropper.value = true
+  }
+}
+
+const handleCropped = ({ blob, originalFile }) => {
+  const fileName = originalFile.name.replace(/\.[^/.]+$/, '') + '.jpg'
+  const file = new File([blob], fileName, { type: 'image/jpeg' })
+
+  form.images.push(file)
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    imagePreviews.value.push({
+      url: e.target.result,
+      name: fileName,
+    })
+  }
+  reader.readAsDataURL(file)
+}
+
+const handleCropperFinished = () => {
+  showCropper.value = false
+  pendingFiles.value = []
 }
 
 const removeNewFile = (index) => {
@@ -99,6 +148,25 @@ const toggleDeleteExisting = (imageId) => {
 }
 
 const isExistingDeleted = (imageId) => form.delete_images.includes(imageId)
+
+const openGsmSearch = () => {
+  if (!form.brand || !form.type) {
+    alert('Pilih Merek dan isi Tipe terlebih dahulu.')
+    return
+  }
+  const query = encodeURIComponent(form.brand + ' ' + form.type)
+  if (
+    selectedCategoryName.value.includes('smartphone') ||
+    selectedCategoryName.value.includes('tablet')
+  ) {
+    window.open(`https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=${query}`, '_blank')
+  } else if (selectedCategoryName.value.includes('camera')) {
+    window.open(`https://www.google.com/search?q=${query}+specs+dpreview`, '_blank')
+  } else {
+    const suffix = selectedCategoryName.value.includes('laptop') ? ' specs laptopmedia' : ' specs'
+    window.open(`https://www.google.com/search?q=${query}${suffix}`, '_blank')
+  }
+}
 
 const submit = () => {
   form.post(route('products.update', props.product.slug), {
@@ -171,9 +239,19 @@ const submit = () => {
                         <option v-for="brand in filteredBrands" :key="brand" :value="brand">
                           {{ brand }}
                         </option>
-                        <option value="Lainnya">Lainnya</option>
                       </select>
                       <InputError class="mt-2" :message="form.errors.brand" />
+
+                      <div v-if="form.brand === 'Other'" class="mt-3">
+                        <TextInput
+                          v-model="form.custom_brand"
+                          type="text"
+                          class="block h-11 w-full"
+                          placeholder="Sebutkan Merek Lainnya"
+                          required
+                        />
+                        <InputError class="mt-2" :message="form.errors.custom_brand" />
+                      </div>
                     </div>
 
                     <div>
@@ -297,105 +375,167 @@ const submit = () => {
                 </div>
               </div>
 
-              <!-- SECTION 3: SPESIFIKASI TAMBAHAN -->
-              <div class="rounded-3xl border border-border bg-primary/5 p-6 shadow-sm sm:p-8">
-                <h3
-                  class="mb-6 flex items-center gap-2 border-b border-border pb-3 text-lg font-bold"
-                >
-                  <span
-                    class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs text-primary"
-                    >3</span
-                  >
-                  3. Spesifikasi {{ product.category.name }}
+              <!-- DYNAMIC SECTIONS & FIELDS -->
+              <div v-for="(section, sIndex) in formSections" :key="section.id"
+                class="rounded-3xl border border-border bg-muted/30 p-6 shadow-sm transition-all duration-300 sm:p-8"
+              >
+                <h3 class="mb-6 flex items-center gap-2 border-b border-border pb-3 text-lg font-bold">
+                  <span class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs text-primary">
+                    {{ sIndex + 1 }}
+                  </span>
+                  {{ section.label }}
                 </h3>
 
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div v-if="showField('smartphone,laptop,tablet')">
-                    <InputLabel for="spec_ram" value="RAM" />
-                    <select
-                      v-model="form.specifications.ram"
-                      id="spec_ram"
-                      class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"
+                <!-- Sub-Type Selection (If exists) -->
+                <div v-if="section.id === 'main' && currentCategory?.sub_types" class="mb-6">
+                  <InputLabel value="Tipe Spesifik" />
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <button
+                      v-for="st in currentCategory.sub_types"
+                      :key="st.value"
+                      type="button"
+                      @click="form.specifications.sub_type = st.value"
+                      class="rounded-xl border px-4 py-2 text-sm font-medium transition-all"
+                      :class="form.specifications.sub_type === st.value 
+                        ? 'bg-primary text-primary-foreground border-primary shadow-md' 
+                        : 'bg-background text-muted-foreground border-border hover:bg-muted'"
                     >
-                      <option value="">Pilih RAM</option>
-                      <option v-for="ram in RAM_OPTIONS" :key="ram" :value="ram">{{ ram }}</option>
-                    </select>
-                  </div>
-
-                  <div v-if="showField('smartphone,laptop,tablet')">
-                    <InputLabel for="spec_storage" value="Penyimpanan (ROM/SSD)" />
-                    <select
-                      v-model="form.specifications.storage"
-                      id="spec_storage"
-                      class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"
-                    >
-                      <option value="">Pilih Kapasitas</option>
-                      <option v-for="rom in STORAGE_OPTIONS" :key="rom" :value="rom">
-                        {{ rom }}
-                      </option>
-                    </select>
-                  </div>
-
-                  <div v-if="showField('smartphone,tablet')">
-                    <InputLabel for="spec_bh" value="Battery Health (BH) %" />
-                    <TextInput
-                      v-model="form.specifications.battery_health"
-                      type="number"
-                      class="mt-1 block h-11 w-full"
-                      placeholder="Misal: 85"
-                      min="0"
-                      max="100"
-                    />
-                  </div>
-
-                  <div v-if="!categoryName.includes('smartphone')">
-                    <InputLabel for="spec_screen" value="Ukuran Layar (Inch)" />
-                    <TextInput
-                      v-model="form.specifications.screen_size"
-                      type="text"
-                      class="mt-1 block h-11 w-full"
-                      placeholder="Misal: 14"
-                    />
-                  </div>
-
-                  <div v-if="categoryName.includes('laptop')">
-                    <InputLabel for="spec_processor" value="Processor" />
-                    <TextInput
-                      v-model="form.specifications.processor"
-                      type="text"
-                      class="mt-1 block h-11 w-full"
-                      placeholder="Contoh: Intel Core i5 Gen 12"
-                    />
-                  </div>
-
-                  <div v-if="categoryName.includes('laptop')">
-                    <InputLabel for="spec_gpu" value="VGA / GPU" />
-                    <TextInput
-                      v-model="form.specifications.gpu"
-                      type="text"
-                      class="mt-1 block h-11 w-full"
-                      placeholder="Contoh: NVIDIA RTX 3050"
-                    />
-                  </div>
-
-                  <div>
-                    <InputLabel for="spec_kelengkapan" value="Kelengkapan" />
-                    <select
-                      v-model="form.specifications.kelengkapan"
-                      id="spec_kelengkapan"
-                      class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"
-                    >
-                      <option value="">-- Pilih Kelengkapan --</option>
-                      <option
-                        v-for="item in KELENGKAPAN_OPTIONS"
-                        :key="item.value"
-                        :value="item.value"
-                      >
-                        {{ item.label }}
-                      </option>
-                    </select>
+                      {{ st.label }}
+                    </button>
                   </div>
                 </div>
+
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <template v-for="field in section.fields" :key="field.key">
+                    <!-- Brand Select -->
+                    <div v-if="field.key === 'brand'">
+                      <InputLabel :for="field.key" :value="field.label" />
+                      <select
+                        v-model="form.brand"
+                        :id="field.key"
+                        class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"
+                        required
+                      >
+                        <option value="">{{ field.placeholder }}</option>
+                        <option v-for="brand in currentCategory.brands" :key="brand" :value="brand">
+                          {{ brand }}
+                        </option>
+                      </select>
+                      <InputError class="mt-2" :message="form.errors.brand" />
+                      <div v-if="form.brand === 'Other'" class="mt-2">
+                        <TextInput v-model="form.custom_brand" placeholder="Sebutkan Merek" class="h-10" />
+                        <InputError class="mt-2" :message="form.errors.custom_brand" />
+                      </div>
+                    </div>
+
+                    <!-- Type Text -->
+                    <div v-else-if="field.key === 'type'">
+                      <InputLabel :for="field.key" :value="field.label" />
+                      <div class="relative">
+                        <TextInput
+                          v-model="form.type"
+                          :id="field.key"
+                          type="text"
+                          class="mt-1 block h-11 w-full pr-12"
+                          :placeholder="field.placeholder"
+                          required
+                        />
+                        <button
+                          type="button"
+                          @click="openGsmSearch"
+                          class="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-primary hover:bg-primary/10"
+                          title="Cari Spek di GSM Arena/Google"
+                        >
+                          <ExternalLink class="h-4 w-4" />
+                        </button>
+                      </div>
+                      <InputError class="mt-2" :message="form.errors.type" />
+                    </div>
+
+                    <!-- Generic Select -->
+                    <div v-else-if="field.type === 'select'">
+                      <InputLabel :for="field.key" :value="field.label + (field.unit ? ` (${field.unit})` : '')" />
+                      <select
+                        v-model="form.specifications[field.key]"
+                        :id="field.key"
+                        class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"
+                      >
+                        <option value="">{{ field.placeholder || 'Pilih...' }}</option>
+                        <option v-for="opt in field.options" :key="opt" :value="opt">
+                          {{ opt }}
+                        </option>
+                      </select>
+                      <InputError class="mt-2" :message="form.errors['specifications.' + field.key]" />
+                      <div v-if="form.specifications[field.key] === 'Other' && ['ram', 'storage'].includes(field.key)" class="mt-2">
+                        <TextInput v-model="form.specifications['custom_' + field.key]" placeholder="Input Manual..." class="h-10" />
+                        <InputError class="mt-2" :message="form.errors['specifications.custom_' + field.key]" />
+                      </div>
+                    </div>
+
+                    <!-- Generic Number/Text -->
+                    <div v-else-if="['number', 'text'].includes(field.type)">
+                      <InputLabel :for="field.key" :value="field.label + (field.unit ? ` (${field.unit})` : '')" />
+                      <TextInput
+                        v-model="form.specifications[field.key]"
+                        :id="field.key"
+                        :type="field.type"
+                        class="mt-1 block h-11 w-full"
+                        :placeholder="field.placeholder"
+                      />
+                      <InputError class="mt-2" :message="form.errors['specifications.' + field.key]" />
+                    </div>
+
+                    <!-- Boolean / Checkbox -->
+                    <div v-else-if="field.type === 'boolean'" class="flex items-center gap-3 pt-8">
+                      <input
+                        type="checkbox"
+                        v-model="form.specifications[field.key]"
+                        :id="field.key"
+                        class="h-5 w-5 rounded border-border text-primary focus:ring-primary"
+                      />
+                      <label :for="field.key" class="text-sm font-medium leading-none cursor-pointer">
+                        {{ field.label }}
+                        <span v-if="field.placeholder" class="block text-[10px] font-normal text-muted-foreground">{{ field.placeholder }}</span>
+                      </label>
+                      <InputError class="mt-2" :message="form.errors['specifications.' + field.key]" />
+                    </div>
+                  </template>
+                </div>
+              </div>
+
+              <!-- SECTION: KELENGKAPAN (SMART CHECKBOX) -->
+              <div v-if="currentCategory"
+                class="rounded-3xl border border-border bg-muted/30 p-6 shadow-sm transition-all duration-300 sm:p-8"
+              >
+                <h3 class="mb-6 flex items-center gap-2 border-b border-border pb-3 text-lg font-bold">
+                   <span class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs text-primary">
+                    {{ formSections.length + 1 }}
+                  </span>
+                  Kelengkapan Produk
+                </h3>
+                <p class="mb-6 text-xs text-muted-foreground">Centang semua item yang tersedia dalam paket penjualan.</p>
+                
+                <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  <div v-for="item in currentCategory.default_items" :key="item"
+                    class="flex items-center gap-3 rounded-2xl border border-border bg-background p-4 transition-all hover:border-primary/50"
+                    :class="{'border-primary bg-primary/5': form.specifications.kelengkapan.includes(item)}"
+                  >
+                    <input
+                      type="checkbox"
+                      :id="item"
+                      :value="item"
+                      v-model="form.specifications.kelengkapan"
+                      class="h-5 w-5 rounded border-border text-primary focus:ring-primary"
+                    />
+                    <label :for="item" class="flex-1 cursor-pointer text-sm font-bold">{{ item }}</label>
+                  </div>
+                </div>
+                <div class="mt-4">
+                   <InputLabel value="Keterangan Lain (Opsional)" />
+                   <TextInput v-model="form.specifications.kelengkapan_note" placeholder="Misal: Dus ada penyok dikit" class="mt-1" />
+                   <InputError class="mt-2" :message="form.errors['specifications.kelengkapan_note']" />
+                </div>
+                <InputError class="mt-4" :message="form.errors['specifications.kelengkapan']" />
               </div>
 
               <!-- SECTION 4: MEDIA -->
@@ -529,5 +669,14 @@ const submit = () => {
         </div>
       </div>
     </div>
+
+    <!-- Cropper Modal -->
+    <ImageCropperModal
+      :show="showCropper"
+      :files="pendingFiles"
+      @close="handleCropperFinished"
+      @cropped="handleCropped"
+      @finished="handleCropperFinished"
+    />
   </AppLayout>
 </template>

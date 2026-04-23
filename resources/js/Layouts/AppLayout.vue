@@ -253,6 +253,7 @@ const upgradeToSeller = () => {
                 </Link>
 
                 <Link
+                  v-if="auth.user.role !== 'admin'"
                   :href="route('chat.index')"
                   :class="[
                     route().current('chat.*')
@@ -306,24 +307,37 @@ const upgradeToSeller = () => {
 
             <!-- Secondary Actions (Love, Theme) -->
             <div class="mr-2 flex items-center gap-1 border-r border-border/50 px-2">
-              <!-- Keranjang Saya -->
-              <Link
-                v-if="auth.user"
-                :href="route('products.favorites')"
-                :class="[
-                  route().current('products.favorites')
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-muted-foreground hover:bg-accent hover:text-primary',
-                ]"
-                class="group relative rounded-xl p-2 transition"
-                title="Keranjang Saya"
-              >
-                <ShoppingCart class="h-5 w-5 transition-transform group-hover:scale-110" />
-                <span
-                  v-if="auth.user.favorites?.length > 0"
-                  class="absolute right-1 top-1 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary"
-                ></span>
-              </Link>
+              <!-- Aktivitas Belanja (Keranjang & Pesanan) -->
+              <div v-if="auth.user && auth.user.role !== 'admin'" class="relative">
+                <Dropdown align="right" width="48">
+                  <template #trigger>
+                    <button
+                      type="button"
+                      :class="[
+                        route().current('products.favorites') || route().current('profile.orders')
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-muted-foreground hover:bg-accent hover:text-primary',
+                      ]"
+                      class="group relative rounded-xl p-2 transition focus:outline-none"
+                      title="Aktivitas Belanja"
+                    >
+                      <ShoppingCart class="h-5 w-5 transition-transform group-hover:scale-110" />
+                      <span
+                        v-if="auth.user.favorites?.length > 0"
+                        class="absolute right-1 top-1 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary"
+                      ></span>
+                    </button>
+                  </template>
+                  <template #content>
+                    <DropdownLink :href="route('products.favorites')">
+                      <ShoppingCart class="mr-2 inline h-4 w-4" /> Keranjang Saya
+                    </DropdownLink>
+                    <DropdownLink :href="route('profile.orders')">
+                      <ShoppingBag class="mr-2 inline h-4 w-4" /> Pesanan Saya
+                    </DropdownLink>
+                  </template>
+                </Dropdown>
+              </div>
 
               <!-- Mode (Theme Toggle) -->
               <button
@@ -346,33 +360,53 @@ const upgradeToSeller = () => {
                   >
                     <div class="flex items-center gap-2">
                       <div
-                        class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold uppercase text-primary"
+                        class="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xs font-bold uppercase text-primary border border-border/50 shadow-sm"
                       >
-                        {{ auth.user.name.charAt(0) }}
+                        <img
+                          v-if="auth.user.role === 'seller' && auth.user.profile?.store_logo"
+                          :src="`/storage/${auth.user.profile.store_logo}`"
+                          class="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
+                        />
+                        <img
+                          v-else-if="auth.user.profile?.avatar"
+                          :src="`/storage/${auth.user.profile.avatar}`"
+                          class="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
+                        />
+                        <template v-else>
+                          {{ auth.user.name.charAt(0) }}
+                        </template>
                       </div>
                       <div class="mr-1 hidden text-left lg:block">
                         <div class="max-w-[100px] truncate text-[11px] font-bold leading-tight">
-                          {{ auth.user.name }}
+                          {{ auth.user.role === 'seller' ? (auth.user.profile?.store_name || auth.user.name) : auth.user.name }}
                         </div>
-                        <div class="text-[9px] leading-tight text-muted-foreground">
+                        <div class="text-[9px] leading-tight text-muted-foreground flex items-center gap-1">
+                          <Store v-if="auth.user.role === 'seller'" class="h-2 w-2" />
+                          <User v-else class="h-2 w-2" />
                           {{ auth.user.role }}
                         </div>
                       </div>
                     </div>
-                    <ChevronDown class="h-3 w-3 text-muted-foreground" />
+                    <ChevronDown class="h-3 w-3 text-muted-foreground transition-transform duration-200 group-hover:rotate-180" />
                   </button>
                 </template>
 
                 <template #content>
-                  <div class="mb-1 block border-b border-border px-4 py-2 lg:hidden">
-                    <div class="truncate text-sm font-bold">{{ auth.user.name }}</div>
-                    <div class="text-xs text-muted-foreground">{{ auth.user.role }}</div>
+                  <div class="mb-1 block border-b border-border px-4 py-3 lg:hidden">
+                    <div class="flex items-center gap-3">
+                      <div class="h-10 w-10 overflow-hidden rounded-full border border-border bg-muted flex items-center justify-center">
+                        <img v-if="auth.user.role === 'seller' && auth.user.profile?.store_logo" :src="`/storage/${auth.user.profile.store_logo}`" class="h-full w-full object-cover" />
+                        <img v-else-if="auth.user.profile?.avatar" :src="`/storage/${auth.user.profile.avatar}`" class="h-full w-full object-cover" />
+                        <User v-else class="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div class="flex-1 overflow-hidden">
+                        <div class="truncate text-sm font-bold">{{ auth.user.role === 'seller' ? (auth.user.profile?.store_name || auth.user.name) : auth.user.name }}</div>
+                        <div class="text-xs text-muted-foreground">{{ auth.user.role }}</div>
+                      </div>
+                    </div>
                   </div>
                   <DropdownLink v-if="auth.user.role === 'admin'" :href="route('admin.dashboard')">
                     <LayoutDashboard class="mr-2 inline h-4 w-4 text-primary" /> Admin Panel
-                  </DropdownLink>
-                  <DropdownLink :href="route('profile.orders')">
-                    <ShoppingBag class="mr-2 inline h-4 w-4" /> Pesanan Saya
                   </DropdownLink>
                   <DropdownLink :href="route('profile.edit')">
                     <User class="mr-2 inline h-4 w-4" /> Profile
@@ -418,7 +452,7 @@ const upgradeToSeller = () => {
               <Moon v-else class="h-5 w-5" />
             </button>
             <Link
-              v-if="auth.user"
+              v-if="auth.user && auth.user.role !== 'admin'"
               :href="route('chat.index')"
               class="group relative rounded-lg p-2.5 text-muted-foreground transition hover:bg-accent hover:text-foreground"
             >
@@ -497,22 +531,36 @@ const upgradeToSeller = () => {
         <div class="border-t border-border pb-1 pt-4">
           <template v-if="auth.user">
             <div class="flex items-center gap-3 px-4">
-              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                <User class="h-6 w-6 text-muted-foreground" />
+              <div class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-primary/20 bg-muted shadow-inner">
+                <img v-if="auth.user.role === 'seller' && auth.user.profile?.store_logo" :src="`/storage/${auth.user.profile.store_logo}`" class="h-full w-full object-cover" />
+                <img v-else-if="auth.user.profile?.avatar" :src="`/storage/${auth.user.profile.avatar}`" class="h-full w-full object-cover" />
+                <User v-else class="h-7 w-7 text-muted-foreground" />
               </div>
-              <div>
-                <div class="text-base font-medium text-foreground">{{ auth.user.name }}</div>
-                <div class="text-sm font-medium text-muted-foreground">
-                  {{ auth.user.role }} | {{ auth.user.email }}
+              <div class="flex-1 overflow-hidden">
+                <div class="truncate text-base font-bold text-foreground">
+                  {{ auth.user.role === 'seller' ? (auth.user.profile?.store_name || auth.user.name) : auth.user.name }}
+                </div>
+                <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <span class="rounded-full bg-primary/10 px-2 py-0.5 text-primary text-[10px] font-black uppercase">
+                    {{ auth.user.role }}
+                  </span>
+                  <span class="truncate">{{ auth.user.email }}</span>
                 </div>
               </div>
             </div>
             <div class="mt-3 space-y-1">
-              <ResponsiveNavLink :href="route('profile.orders')">
-                <div class="flex items-center gap-2">
-                  <ShoppingBag class="h-4 w-4" /> Pesanan Saya
-                </div>
-              </ResponsiveNavLink>
+              <template v-if="auth.user.role !== 'admin'">
+                <ResponsiveNavLink :href="route('products.favorites')" :active="route().current('products.favorites')">
+                  <div class="flex items-center gap-2">
+                    <ShoppingCart class="h-4 w-4" /> Keranjang Saya
+                  </div>
+                </ResponsiveNavLink>
+                <ResponsiveNavLink :href="route('profile.orders')" :active="route().current('profile.orders')">
+                  <div class="flex items-center gap-2">
+                    <ShoppingBag class="h-4 w-4" /> Pesanan Saya
+                  </div>
+                </ResponsiveNavLink>
+              </template>
               <ResponsiveNavLink :href="route('profile.edit')">
                 <div class="flex items-center gap-2">
                   <Settings class="h-4 w-4" /> Profile Settings

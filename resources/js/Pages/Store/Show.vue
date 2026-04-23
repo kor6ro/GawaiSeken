@@ -113,8 +113,8 @@ const formattedJoined = computed(() => props.stats.joined)
                 class="mx-auto h-32 w-32 overflow-hidden rounded-full bg-background p-1 shadow-lg ring-4 ring-primary/10 md:mx-0"
               >
                 <img
-                  v-if="seller.profile?.avatar"
-                  :src="'/storage/' + seller.profile.avatar"
+                  v-if="seller.profile?.store_logo"
+                  :src="'/storage/' + seller.profile.store_logo"
                   :alt="seller.name"
                   loading="lazy"
                   class="h-full w-full rounded-full object-cover"
@@ -219,7 +219,7 @@ const formattedJoined = computed(() => props.stats.joined)
               </h3>
               <p class="text-sm leading-relaxed text-muted-foreground">
                 {{
-                  seller.profile?.bio ||
+                  seller.profile?.store_bio ||
                   `Halo! Saya member GawaiSeken sejak ${formattedJoined}. Saya menjual barang elektronik bekas berkualitas. Silakan chat untuk bertanya detail kondisi barang.`
                 }}
               </p>

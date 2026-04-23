@@ -89,10 +89,10 @@ const formattedPrice = computed(() => {
 const specifications = computed(() => {
   if (!props.product.specifications) return []
   return Object.entries(props.product.specifications)
-    .filter(([key, value]) => value !== null && value !== '')
+    .filter(([key, value]) => value !== null && value !== '' && key !== 'sub_type')
     .map(([key, value]) => ({
-      label: key.replace(/_/g, ' '),
-      value: value,
+      label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      value: Array.isArray(value) ? value.join(', ') : value,
     }))
 })
 </script>
@@ -273,9 +273,16 @@ const specifications = computed(() => {
                     <div class="flex items-center gap-4">
                       <div class="relative">
                         <div
-                          class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-xl font-black text-primary-foreground shadow-xl transition-transform group-hover:scale-105"
+                          class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary overflow-hidden shadow-xl transition-transform group-hover:scale-105"
                         >
-                          {{ product.store?.name.charAt(0).toUpperCase() }}
+                          <img 
+                            v-if="product.store?.profile?.store_logo" 
+                            :src="`/storage/${product.store.profile.store_logo}`" 
+                            class="h-full w-full object-cover" 
+                          />
+                          <span v-else class="text-xl font-black text-primary-foreground">
+                            {{ (product.store?.profile?.store_name ?? product.store?.name).charAt(0).toUpperCase() }}
+                          </span>
                         </div>
                         <div
                           v-if="

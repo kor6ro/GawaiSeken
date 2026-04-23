@@ -6,6 +6,9 @@ import { createInertiaApp } from '@inertiajs/vue3'
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers'
 import { ZiggyVue } from 'ziggy-js'
 
+import Vue3EasyDataTable from 'vue3-easy-data-table'
+import 'vue3-easy-data-table/dist/style.css'
+
 const appName = import.meta.env.VITE_APP_NAME || 'GawaiSeken'
 
 createInertiaApp({
@@ -16,6 +19,7 @@ createInertiaApp({
     return createApp({ render: () => h(App, props) })
       .use(plugin)
       .use(ZiggyVue, props.initialPage.props.ziggy)
+      .component('EasyDataTable', Vue3EasyDataTable)
       .mount(el)
   },
   progress: {

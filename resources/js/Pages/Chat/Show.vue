@@ -45,9 +45,12 @@ const opponent = computed(() =>
   auth.user.id === props.chat.buyer_id ? props.chat.seller : props.chat.buyer
 )
 const oppName = computed(() => opponent.value.profile?.store_name || opponent.value.name)
-const oppAvatar = computed(() =>
-  opponent.value.profile?.avatar ? `/storage/${opponent.value.profile.avatar}` : null
-)
+const oppAvatar = computed(() => {
+  if (opponent.value.role === 'seller' && opponent.value.profile?.store_logo) {
+    return `/storage/${opponent.value.profile.store_logo}`
+  }
+  return opponent.value.profile?.avatar ? `/storage/${opponent.value.profile.avatar}` : null
+})
 const oppInitial = computed(() => oppName.value.charAt(0).toUpperCase())
 
 const product = props.chat.product
@@ -309,7 +312,11 @@ onUnmounted(() => {
       </Link>
 
       <!-- Opponent info -->
-      <Link :href="route('store.show', opponent.id)" class="chat-header-info">
+      <component 
+        :is="opponent.id ? Link : 'div'"
+        :href="opponent.id ? route('store.show', opponent.id) : null" 
+        class="chat-header-info"
+      >
         <!-- Avatar -->
         <div class="chat-header-avatar-wrap">
           <img v-if="oppAvatar" :src="oppAvatar" loading="lazy" class="chat-header-avatar" />
@@ -344,12 +351,12 @@ onUnmounted(() => {
             <span v-else>{{ auth.user.id === chat.buyer_id ? 'Penjual' : 'Pembeli' }}</span>
           </p>
         </div>
-      </Link>
+      </component>
 
       <!-- Product thumbnail (small) -->
       <div class="flex flex-shrink-0 items-center gap-1">
         <Link
-          v-if="product"
+          v-if="product && product.id"
           :href="route('products.show', product.slug)"
           class="chat-header-product"
           :title="product.title"

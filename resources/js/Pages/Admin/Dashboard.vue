@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AppLayout.vue'
-import { Head, useForm } from '@inertiajs/vue3'
+import { Head, useForm, Link } from '@inertiajs/vue3'
 import { ref } from 'vue'
 import Modal from '@/Components/Modal.vue'
 import SecondaryButton from '@/Components/SecondaryButton.vue'
@@ -9,6 +9,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue'
 import TextInput from '@/Components/TextInput.vue'
 import InputLabel from '@/Components/InputLabel.vue'
 import InputError from '@/Components/InputError.vue'
+import { Users, Package, AlertCircle, CheckSquare } from 'lucide-vue-next'
 
 const props = defineProps({
   pendingVerifications: {
@@ -19,7 +20,16 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  totalUsersCount: Number,
+  totalProductsCount: Number,
 })
+
+const headers = [
+  { text: "User", value: "user" },
+  { text: "Email", value: "email" },
+  { text: "Tanggal Pengajuan", value: "created_at" },
+  { text: "Aksi", value: "actions", width: 150 },
+]
 
 const selectedVerification = ref(null)
 const isRejectModalOpen = ref(false)
@@ -76,52 +86,97 @@ const reject = () => {
     <div class="py-12">
       <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
         <!-- Stats Summary -->
-        <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div class="rounded-2xl border border-border bg-card p-6 shadow-sm">
-            <h3 class="text-sm font-medium text-muted-foreground">Menunggu Verifikasi Seller</h3>
-            <p class="mt-2 text-3xl font-bold text-foreground">{{ pendingVerifications.length }}</p>
-          </div>
-          <Link :href="route('admin.products.index', { status: 'pending' })" class="rounded-2xl border border-border bg-card p-6 shadow-sm hover:border-primary transition-colors">
-            <h3 class="text-sm font-medium text-muted-foreground">Produk Menunggu Moderasi</h3>
-            <p class="mt-2 text-3xl font-bold text-foreground">{{ pendingProductsCount }}</p>
+        <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Link :href="route('admin.users.index')" class="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-primary hover:shadow-md">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Pengguna</h3>
+                <p class="mt-2 text-3xl font-black text-foreground">{{ totalUsersCount || 0 }}</p>
+              </div>
+              <div class="rounded-xl bg-primary/10 p-3 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                <Users class="h-6 w-6" />
+              </div>
+            </div>
           </Link>
-          <Link :href="route('admin.disputes.index')" class="rounded-2xl border border-border bg-card p-6 shadow-sm hover:border-red-500 transition-colors">
-            <h3 class="text-sm font-medium text-muted-foreground">Komplain Transaksi</h3>
-            <p class="mt-2 text-3xl font-bold text-red-500">{{ $page.props.pendingDisputesCount || 0 }}</p>
+
+          <Link :href="route('admin.products.index')" class="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-blue-500 hover:shadow-md">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Produk</h3>
+                <p class="mt-2 text-3xl font-black text-foreground">{{ totalProductsCount || 0 }}</p>
+              </div>
+              <div class="rounded-xl bg-blue-500/10 p-3 text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                <Package class="h-6 w-6" />
+              </div>
+            </div>
+          </Link>
+
+          <Link :href="route('admin.products.index', { status: 'pending' })" class="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-amber-500 hover:shadow-md">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pending Moderasi</h3>
+                <p class="mt-2 text-3xl font-black text-amber-500">{{ pendingProductsCount }}</p>
+              </div>
+              <div class="rounded-xl bg-amber-500/10 p-3 text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                <AlertCircle class="h-6 w-6" />
+              </div>
+            </div>
+          </Link>
+
+          <Link :href="route('admin.disputes.index')" class="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-red-500 hover:shadow-md">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Komplain Aktif</h3>
+                <p class="mt-2 text-3xl font-black text-red-500">{{ $page.props.pendingDisputesCount || 0 }}</p>
+              </div>
+              <div class="rounded-xl bg-red-500/10 p-3 text-red-500 group-hover:bg-red-500 group-hover:text-white transition-colors">
+                <CheckSquare class="h-6 w-6" />
+              </div>
+            </div>
           </Link>
         </div>
 
         <!-- Verification Table -->
-        <div class="overflow-hidden bg-card border border-border shadow sm:rounded-2xl">
+        <div class="bg-card border border-border shadow sm:rounded-2xl overflow-hidden">
           <div class="p-6">
-            <h3 class="mb-4 text-lg font-bold text-foreground">Daftar Pengajuan Verifikasi Seller</h3>
+            <h3 class="mb-4 text-lg font-bold text-foreground flex items-center gap-2">
+              <CheckSquare class="h-5 w-5 text-primary" />
+              Daftar Pengajuan Verifikasi Seller
+            </h3>
             
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-sm text-foreground">
-                <thead class="border-b border-border bg-muted/50 text-xs uppercase text-muted-foreground font-semibold">
-                  <tr>
-                    <th class="px-6 py-4">User</th>
-                    <th class="px-6 py-4">Email</th>
-                    <th class="px-6 py-4">Tanggal Pengajuan</th>
-                    <th class="px-6 py-4 text-right">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-border">
-                  <tr v-for="verification in pendingVerifications" :key="verification.id" class="hover:bg-muted/50 transition-colors">
-                    <td class="px-6 py-4 font-medium">{{ verification.user.name }}</td>
-                    <td class="px-6 py-4 text-muted-foreground">{{ verification.user.email }}</td>
-                    <td class="px-6 py-4 text-muted-foreground">{{ new Date(verification.created_at).toLocaleDateString('id-ID') }}</td>
-                    <td class="px-6 py-4 text-right">
-                      <PrimaryButton @click="openReview(verification)">Review KYC</PrimaryButton>
-                    </td>
-                  </tr>
-                  <tr v-if="pendingVerifications.length === 0">
-                    <td colspan="4" class="px-6 py-8 text-center text-muted-foreground italic">
-                      Tidak ada pengajuan verifikasi yang sedang menunggu.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="easy-table-wrapper">
+              <EasyDataTable
+                :headers="headers"
+                :items="pendingVerifications"
+                hide-footer
+                border-cell
+                table-class-name="customize-table"
+                header-class-name="customize-header"
+              >
+                <template #item-user="{ user }">
+                  <span class="font-medium text-foreground">{{ user.name }}</span>
+                </template>
+
+                <template #item-email="{ user }">
+                  <span class="text-muted-foreground">{{ user.email }}</span>
+                </template>
+
+                <template #item-created_at="{ created_at }">
+                  <span class="text-muted-foreground">{{ new Date(created_at).toLocaleDateString('id-ID') }}</span>
+                </template>
+
+                <template #item-actions="item">
+                  <div class="flex justify-end py-2">
+                    <PrimaryButton @click="openReview(item)">Review KYC</PrimaryButton>
+                  </div>
+                </template>
+
+                <template #empty-message>
+                  <div class="py-12 text-center text-muted-foreground italic">
+                    Tidak ada pengajuan verifikasi yang sedang menunggu.
+                  </div>
+                </template>
+              </EasyDataTable>
             </div>
           </div>
         </div>
@@ -147,7 +202,7 @@ const reject = () => {
                 class="absolute inset-0 h-full w-full object-cover" 
               />
               <a 
-                :href="'/storage/' + selectedVerification?.ktp_image_path" 
+                :src="'/storage/' + selectedVerification?.ktp_image_path" 
                 target="_blank" 
                 class="absolute bottom-2 right-2 rounded-lg bg-black/50 px-3 py-1 text-xs text-white backdrop-blur-md hover:bg-black/70 transition-colors"
               >
@@ -163,7 +218,7 @@ const reject = () => {
                 class="absolute inset-0 h-full w-full object-cover" 
               />
               <a 
-                :href="'/storage/' + selectedVerification?.face_image_path" 
+                :src="'/storage/' + selectedVerification?.face_image_path" 
                 target="_blank" 
                 class="absolute bottom-2 right-2 rounded-lg bg-black/50 px-3 py-1 text-xs text-white backdrop-blur-md hover:bg-black/70 transition-colors"
               >
@@ -214,3 +269,44 @@ const reject = () => {
     </Modal>
   </AuthenticatedLayout>
 </template>
+
+<style scoped>
+.customize-table {
+  --easy-table-border: 1px solid hsl(var(--border));
+  --easy-table-header-font-size: 12px;
+  --easy-table-header-height: 50px;
+  --easy-table-header-font-color: hsl(var(--muted-foreground));
+  --easy-table-header-background-color: hsl(var(--muted));
+  
+  --easy-table-body-row-font-size: 13px;
+  --easy-table-body-font-color: hsl(var(--foreground));
+  --easy-table-body-row-height: 60px;
+  --easy-table-body-row-background-color: hsl(var(--card));
+  --easy-table-body-row-hover-background-color: hsl(var(--muted) / 0.5);
+  
+  --easy-table-footer-background-color: hsl(var(--card));
+  --easy-table-footer-font-color: hsl(var(--muted-foreground));
+  --easy-table-footer-font-size: 12px;
+  --easy-table-footer-padding: 0px 10px;
+  --easy-table-footer-height: 50px;
+
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+}
+
+:deep(.customize-header) {
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.easy-table-wrapper {
+  @apply rounded-2xl overflow-hidden border border-border;
+}
+
+/* Dark mode specific overrides */
+.dark .customize-table {
+  --easy-table-body-row-hover-background-color: hsl(var(--muted) / 0.3);
+}
+</style>

@@ -11,15 +11,18 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Midtrans\Config as MidtransConfig;
+use Midtrans\Transaction as MidtransTransaction;
+use Midtrans\Snap as MidtransSnap;
 
 class TransactionController extends Controller
 {
     public function __construct()
     {
-        \Midtrans\Config::$serverKey = config('services.midtrans.server_key');
-        \Midtrans\Config::$isProduction = config('services.midtrans.is_production');
-        \Midtrans\Config::$isSanitized = true;
-        \Midtrans\Config::$is3ds = true;
+        MidtransConfig::$serverKey = config('services.midtrans.server_key');
+        MidtransConfig::$isProduction = config('services.midtrans.is_production');
+        MidtransConfig::$isSanitized = true;
+        MidtransConfig::$is3ds = true;
     }
 
     public function checkout(Product $product)
@@ -40,12 +43,19 @@ class TransactionController extends Controller
 
         $reference_number = 'TRX-' . strtoupper(Str::random(10));
 
+        // Fee logic: 2.5% for Midtrans coverage + 2.5% profit = 5% total
+        // Plus a flat 2500 for fixed costs
+        $service_fee = 2500 + (int)($product->price * 0.05);
+        $total_amount = $product->price + $service_fee;
+
         $transaction = Transaction::create([
             'reference_number' => $reference_number,
             'product_id' => $product->id,
             'buyer_id' => Auth::id(),
             'seller_id' => $product->user_id,
             'price' => $product->price,
+            'service_fee' => $service_fee,
+            'total_amount' => $total_amount,
             'status' => TransactionStatusEnum::PENDING,
         ]);
 
@@ -53,7 +63,7 @@ class TransactionController extends Controller
         $params = [
             'transaction_details' => [
                 'order_id' => $reference_number,
-                'gross_amount' => (int) $product->price,
+                'gross_amount' => (int) $total_amount,
             ],
             'customer_details' => [
                 'first_name' => Auth::user()->name,
@@ -64,13 +74,19 @@ class TransactionController extends Controller
                     'id' => $product->id,
                     'price' => (int) $product->price,
                     'quantity' => 1,
-                    'name' => $product->title,
+                    'name' => Str::limit($product->title, 45),
+                ],
+                [
+                    'id' => 'service-fee',
+                    'price' => (int) $service_fee,
+                    'quantity' => 1,
+                    'name' => 'Biaya Layanan & Admin',
                 ]
             ]
         ];
 
         try {
-            $snapToken = \Midtrans\Snap::getSnapToken($params);
+            $snapToken = MidtransSnap::getSnapToken($params);
             $transaction->update(['snap_token' => $snapToken]);
         } catch (\Exception $e) {
             // Log error or handle gracefully
@@ -87,8 +103,19 @@ class TransactionController extends Controller
             ->get();
 
         foreach ($orders as $order) {
+            /** @var Transaction $order */
             if ($order->status === TransactionStatusEnum::PENDING) {
-                // Jika belum ada token, atau ingin memastikan token selalu baru & unik jika expired
+                // Sync with Midtrans status in case webhook was missed
+                try {
+                    $status = (object) MidtransTransaction::status($order->reference_number);
+                    if ($status && isset($status->transaction_status)) {
+                        $this->syncStatus($order, $status->transaction_status);
+                    }
+                } catch (\Exception $e) {
+                    // Transaction probably doesn't exist yet in Midtrans or API error
+                }
+
+                // Refresh snap token if missing
                 if (!$order->snap_token) {
                     $this->generateSnapToken($order);
                 }
@@ -195,7 +222,7 @@ class TransactionController extends Controller
             $params = [
                 'transaction_details' => [
                     'order_id' => $transaction->reference_number,
-                    'gross_amount' => (int) $transaction->price,
+                    'gross_amount' => (int) $transaction->total_amount,
                 ],
                 'customer_details' => [
                     'first_name' => Auth::user()->name,
@@ -206,11 +233,17 @@ class TransactionController extends Controller
                         'id' => $transaction->product_id,
                         'price' => (int) $transaction->price,
                         'quantity' => 1,
-                        'name' => $transaction->product->title,
+                        'name' => Str::limit($transaction->product->title, 45),
+                    ],
+                    [
+                        'id' => 'service-fee',
+                        'price' => (int) $transaction->service_fee,
+                        'quantity' => 1,
+                        'name' => 'Biaya Layanan & Admin',
                     ]
                 ]
             ];
-            $snapToken = \Midtrans\Snap::getSnapToken($params);
+            $snapToken = MidtransSnap::getSnapToken($params);
             $transaction->update(['snap_token' => $snapToken]);
             return $snapToken;
         } catch (\Exception $e) {
@@ -232,16 +265,36 @@ class TransactionController extends Controller
             return response()->json(['message' => 'Transaction not found'], 404);
         }
 
-        $status = $request->transaction_status;
-
-        if ($status == 'settlement' || $status == 'capture') {
-            $transaction->update(['status' => TransactionStatusEnum::PAID]);
-        } elseif ($status == 'pending') {
-            $transaction->update(['status' => TransactionStatusEnum::PENDING]);
-        } elseif ($status == 'deny' || $status == 'expire' || $status == 'cancel') {
-            $transaction->update(['status' => TransactionStatusEnum::CANCELED]);
-        }
+        $this->syncStatus($transaction, $request->transaction_status);
 
         return response()->json(['message' => 'OK']);
+    }
+
+    /**
+     * Public method to sync status from Midtrans status string
+     */
+    public function syncStatus(Transaction $transaction, string $midtransStatus)
+    {
+        if ($midtransStatus == 'settlement' || $midtransStatus == 'capture') {
+            $transaction->update(['status' => TransactionStatusEnum::PAID]);
+        } elseif ($midtransStatus == 'pending') {
+            $transaction->update(['status' => TransactionStatusEnum::PENDING]);
+        } elseif ($midtransStatus == 'deny' || $midtransStatus == 'expire' || $midtransStatus == 'cancel') {
+            $transaction->update(['status' => TransactionStatusEnum::CANCELED]);
+        }
+    }
+
+    /**
+     * Simulate payment for local development
+     */
+    public function simulatePayment(Transaction $transaction)
+    {
+        if (config('app.env') !== 'local') {
+            abort(403);
+        }
+
+        $transaction->update(['status' => TransactionStatusEnum::PAID]);
+
+        return back()->with('success', '[SIMULASI] Pembayaran berhasil disimulasi.');
     }
 }

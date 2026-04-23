@@ -3,8 +3,10 @@ import InputError from '@/Components/InputError.vue'
 import InputLabel from '@/Components/InputLabel.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import TextInput from '@/Components/TextInput.vue'
+import AddressForm from '@/Components/AddressForm.vue'
 import { Link, useForm, usePage } from '@inertiajs/vue3'
-import { User, Mail, MapPin, Calendar, CheckCircle2, ShieldCheck } from 'lucide-vue-next'
+import { ref } from 'vue'
+import { User, Mail, Calendar, CheckCircle2, ShieldCheck, Camera, Phone } from 'lucide-vue-next'
 
 const props = defineProps({
   mustVerifyEmail: {
@@ -24,9 +26,39 @@ const form = useForm({
   name: user.name,
   email: user.email,
   address: props.profile?.address || '',
+  province: props.profile?.province || '',
+  city: props.profile?.city || '',
+  district: props.profile?.district || '',
+  village: props.profile?.village || '',
+  landmark: props.profile?.landmark || '',
+  phone: props.profile?.phone || '',
+  bio: props.profile?.bio || '',
   date_of_birth: props.profile?.date_of_birth || '',
   gender: props.profile?.gender || '',
+  avatar: null,
 })
+
+const photoPreview = ref(null)
+const photoInput = ref(null)
+
+const updatePhotoPreview = () => {
+  const photo = photoInput.value.files[0]
+  if (!photo) return
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    photoPreview.value = e.target.result
+  }
+  reader.readAsDataURL(photo)
+  form.avatar = photo
+}
+
+const submit = () => {
+  form.post(route('profile.update'), {
+    preserveScroll: true,
+    forceFormData: true,
+  })
+}
 </script>
 
 <template>
@@ -38,12 +70,57 @@ const form = useForm({
         </div>
         <div>
           <h2 class="text-xl font-bold text-foreground">Informasi Profil</h2>
-          <p class="text-sm text-muted-foreground">Perbarui identitas dan alamat kontak Anda.</p>
+          <p class="text-sm text-muted-foreground">Perbarui identitas dan foto profil Anda.</p>
         </div>
       </div>
     </header>
 
-    <form @submit.prevent="form.patch(route('profile.update'))" class="space-y-8">
+    <form @submit.prevent="submit" class="space-y-8">
+      <!-- Profile Photo -->
+      <div class="flex flex-col items-center gap-6 md:flex-row">
+        <div class="relative group">
+          <div class="h-28 w-28 overflow-hidden rounded-full border-4 border-muted bg-muted shadow-inner">
+            <img
+              v-if="photoPreview"
+              :src="photoPreview"
+              class="h-full w-full object-cover"
+            />
+            <img
+              v-else-if="profile?.avatar"
+              :src="'/storage/' + profile.avatar"
+              class="h-full w-full object-cover"
+            />
+            <div
+              v-else
+              class="flex h-full w-full items-center justify-center bg-primary/20 text-3xl font-black text-primary"
+            >
+              {{ user.name.charAt(0).toUpperCase() }}
+            </div>
+          </div>
+          <button
+            type="button"
+            @click="photoInput.click()"
+            class="absolute bottom-0 right-0 rounded-full bg-primary p-2 text-primary-foreground shadow-lg transition-transform hover:scale-110"
+          >
+            <Camera class="h-4 w-4" />
+          </button>
+          <input
+            type="file"
+            ref="photoInput"
+            class="hidden"
+            accept="image/*"
+            @change="updatePhotoPreview"
+          />
+        </div>
+        <div class="flex-1 text-center md:text-left">
+          <h4 class="text-sm font-bold text-foreground">Foto Profil</h4>
+          <p class="text-xs text-muted-foreground mt-1">
+            Gunakan foto asli agar penjual lebih percaya saat Anda membeli barang. Maks 2MB.
+          </p>
+          <InputError class="mt-2" :message="form.errors.avatar" />
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- Nama -->
         <div class="space-y-2">
@@ -83,6 +160,22 @@ const form = useForm({
           <InputError class="mt-2" :message="form.errors.email" />
         </div>
 
+        <!-- Nomor Telepon -->
+        <div class="space-y-2">
+          <InputLabel for="phone" value="Nomor Telepon (WhatsApp)" class="text-xs uppercase tracking-widest font-bold text-muted-foreground" />
+          <div class="relative group">
+            <TextInput
+              id="phone"
+              type="text"
+              class="block w-full pl-11 bg-muted/30 border-transparent focus:bg-background transition-all rounded-2xl"
+              v-model="form.phone"
+              placeholder="0812xxxx"
+            />
+            <Phone class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          </div>
+          <InputError class="mt-2" :message="form.errors.phone" />
+        </div>
+
         <!-- Tanggal Lahir -->
         <div class="space-y-2">
           <InputLabel for="date_of_birth" value="Tanggal Lahir" class="text-xs uppercase tracking-widest font-bold text-muted-foreground" />
@@ -115,23 +208,26 @@ const form = useForm({
           </div>
           <InputError class="mt-2" :message="form.errors.gender" />
         </div>
+
+        <!-- Bio Pribadi -->
+        <div class="md:col-span-2 space-y-2">
+          <InputLabel for="bio" value="Bio Singkat" class="text-xs uppercase tracking-widest font-bold text-muted-foreground" />
+          <textarea
+            id="bio"
+            v-model="form.bio"
+            rows="3"
+            class="block w-full rounded-2xl border-transparent bg-muted/30 p-4 text-sm focus:border-primary focus:bg-background focus:ring-primary transition-all dark:bg-gray-900"
+            placeholder="Tuliskan sedikit tentang diri Anda..."
+          ></textarea>
+          <InputError class="mt-2" :message="form.errors.bio" />
+        </div>
       </div>
 
-      <!-- Alamat -->
-      <div class="space-y-2">
-        <InputLabel for="address" value="Alamat Lengkap" class="text-xs uppercase tracking-widest font-bold text-muted-foreground" />
-        <div class="relative group">
-          <TextInput
-            id="address"
-            type="text"
-            class="block w-full pl-11 bg-muted/30 border-transparent focus:bg-background transition-all rounded-2xl"
-            v-model="form.address"
-            autocomplete="address"
-          />
-          <MapPin class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-        </div>
-        <InputError class="mt-2" :message="form.errors.address" />
-      </div>
+      <!-- Address Data -->
+      <AddressForm v-model="form" prefix="" />
+
+
+
 
       <!-- Email Verification Notice -->
       <div v-if="mustVerifyEmail && user.email_verified_at === null" class="rounded-[1.5rem] bg-amber-50 p-6 border border-amber-200 dark:bg-amber-900/10 dark:border-amber-900/30">

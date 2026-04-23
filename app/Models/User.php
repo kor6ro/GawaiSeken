@@ -26,6 +26,8 @@ class User extends Authenticatable
         'password',
         'role',
         'favorites',
+        'is_suspended',
+        'suspension_reason',
     ];
 
     /**
@@ -45,6 +47,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'favorites' => 'array',
+            'is_suspended' => 'boolean',
         ];
     }
 
