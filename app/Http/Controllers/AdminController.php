@@ -15,15 +15,56 @@ class AdminController extends Controller
     /**
      * Tampilkan dashboard admin dengan daftar pengajuan verifikasi.
      */
-    public function dashboard(): Response
+    public function dashboard(Request $request): Response
     {
-        return Inertia::render('Admin/Dashboard', [
-            'pendingVerifications' => SellerVerification::with('user')->where('status', 'pending')->get(),
+        // 1. Stats Summary
+        $stats = [
+            'pendingVerificationsCount' => SellerVerification::where('status', 'pending')->count(),
             'pendingProductsCount' => Product::where('status', 'pending')->count(),
             'pendingDisputesCount' => \App\Models\TransactionDispute::where('status', 'pending')->count(),
             'totalUsersCount' => User::count(),
             'totalProductsCount' => Product::count(),
-        ]);
+        ];
+
+        // 2. Pending Verifications (KYC)
+        $pendingVerifications = SellerVerification::with('user')->where('status', 'pending')->get();
+
+        // 3. Products Management
+        $productsQuery = Product::with(['user.profile', 'category', 'images']);
+        if ($request->filled('p_status')) {
+            $productsQuery->where('status', $request->p_status);
+        }
+        if ($request->filled('p_search')) {
+            $productsQuery->where(function($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->p_search . '%')
+                  ->orWhereHas('user', function($qu) use ($request) {
+                      $qu->where('name', 'like', '%' . $request->p_search . '%');
+                  });
+            });
+        }
+        $products = $productsQuery->latest()->paginate(10, ['*'], 'p_page')->withQueryString();
+
+        // 4. Users Management
+        $usersQuery = User::withCount('products')->with('profile');
+        if ($request->filled('u_search')) {
+            $usersQuery->where('name', 'like', '%' . $request->u_search . '%')
+                  ->orWhere('email', 'like', '%' . $request->u_search . '%');
+        }
+        if ($request->filled('u_role')) {
+            $usersQuery->where('role', $request->u_role);
+        }
+        $users = $usersQuery->latest()->paginate(10, ['*'], 'u_page')->withQueryString();
+
+        // 5. Disputes Management
+        $disputes = \App\Models\TransactionDispute::with(['transaction', 'user'])->latest()->paginate(10, ['*'], 'd_page')->withQueryString();
+
+        return Inertia::render('Admin/Dashboard', array_merge($stats, [
+            'pendingVerifications' => $pendingVerifications,
+            'products' => $products,
+            'users' => $users,
+            'disputes' => $disputes,
+            'filters' => $request->only(['p_status', 'p_search', 'u_search', 'u_role']),
+        ]));
     }
 
     /**

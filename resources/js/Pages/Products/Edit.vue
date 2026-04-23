@@ -86,7 +86,12 @@ const formSections = computed(() => {
   return getFieldsByCategory(props.product.category_id, form)
 })
 
-const filteredBrands = computed(() => currentCategory.value?.brands || [])
+const filteredBrands = computed(() => {
+  if (!currentCategory.value) return []
+  const subTypeKey = form.specifications.sub_type
+  const subType = currentCategory.value.sub_types?.find((st) => st.value === subTypeKey)
+  return subType?.brands || currentCategory.value.brands || []
+})
 
 const imagePreviews = ref([])
 
@@ -417,7 +422,7 @@ const submit = () => {
                         required
                       >
                         <option value="">{{ field.placeholder }}</option>
-                        <option v-for="brand in currentCategory.brands" :key="brand" :value="brand">
+                        <option v-for="brand in filteredBrands" :key="brand" :value="brand">
                           {{ brand }}
                         </option>
                       </select>
@@ -459,6 +464,7 @@ const submit = () => {
                         v-model="form.specifications[field.key]"
                         :id="field.key"
                         class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"
+                        :required="field.required"
                       >
                         <option value="">{{ field.placeholder || 'Pilih...' }}</option>
                         <option v-for="opt in field.options" :key="opt" :value="opt">
@@ -481,6 +487,7 @@ const submit = () => {
                         :type="field.type"
                         class="mt-1 block h-11 w-full"
                         :placeholder="field.placeholder"
+                        :required="field.required"
                       />
                       <InputError class="mt-2" :message="form.errors['specifications.' + field.key]" />
                     </div>
@@ -516,7 +523,7 @@ const submit = () => {
                 <p class="mb-6 text-xs text-muted-foreground">Centang semua item yang tersedia dalam paket penjualan.</p>
                 
                 <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                  <div v-for="item in currentCategory.default_items" :key="item"
+                  <div v-for="item in currentCategory.checklists" :key="item"
                     class="flex items-center gap-3 rounded-2xl border border-border bg-background p-4 transition-all hover:border-primary/50"
                     :class="{'border-primary bg-primary/5': form.specifications.kelengkapan.includes(item)}"
                   >

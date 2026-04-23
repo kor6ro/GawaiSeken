@@ -187,6 +187,41 @@ watch(
     }
   }
 )
+
+const isTopLevel = (key) => ['brand', 'type'].includes(key)
+
+const getFieldModel = (key) => {
+  return isTopLevel(key) ? form[key] : form.specifications[key]
+}
+
+const updateFieldModel = (key, value) => {
+  if (isTopLevel(key)) {
+    form[key] = value
+    if (value !== 'Other') form['custom_' + key] = ''
+  } else {
+    form.specifications[key] = value
+    if (value !== 'Other') form.specifications['custom_' + key] = ''
+  }
+}
+
+const getCustomModel = (key) => {
+  return isTopLevel(key) ? form['custom_' + key] : form.specifications['custom_' + key]
+}
+
+const updateCustomModel = (key, value) => {
+  if (isTopLevel(key)) {
+    form['custom_' + key] = value
+  } else {
+    form.specifications['custom_' + key] = value
+  }
+}
+
+const filteredBrands = computed(() => {
+  if (!currentCategory.value) return []
+  const subTypeKey = form.specifications.sub_type
+  const subType = currentCategory.value.sub_types?.find((st) => st.value === subTypeKey)
+  return subType?.brands || currentCategory.value.brands || []
+})
 </script>
 
 <template>
@@ -285,80 +320,65 @@ watch(
 
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <template v-for="field in section.fields" :key="field.key">
-                    <!-- Brand Select -->
-                    <div v-if="field.key === 'brand'">
-                      <InputLabel :for="field.key" :value="field.label" />
-                      <select
-                        v-model="form.brand"
-                        :id="field.key"
-                        class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"
-                        required
-                      >
-                        <option value="">{{ field.placeholder }}</option>
-                        <option v-for="brand in currentCategory.brands" :key="brand" :value="brand">
-                          {{ brand }}
-                        </option>
-                      </select>
-                      <InputError class="mt-2" :message="form.errors.brand" />
-                      <div v-if="form.brand === 'Other'" class="mt-2 animate-in fade-in slide-in-from-top-1">
-                        <TextInput v-model="form.custom_brand" placeholder="Sebutkan Merek" class="h-10" />
-                        <InputError class="mt-2" :message="form.errors.custom_brand" />
-                      </div>
-                    </div>
-
-                    <!-- Type Text -->
-                    <div v-else-if="field.key === 'type'">
-                      <InputLabel :for="field.key" :value="field.label" />
-                      <TextInput
-                        v-model="form.type"
-                        :id="field.key"
-                        type="text"
-                        class="mt-1 block h-11 w-full"
-                        :placeholder="field.placeholder"
-                        required
-                      />
-                      <InputError class="mt-2" :message="form.errors.type" />
-                    </div>
-
-                    <!-- Generic Select -->
-                    <div v-else-if="field.type === 'select'">
+                    <!-- Standard Select Renderer -->
+                    <div v-if="field.type === 'select'">
                       <InputLabel :for="field.key" :value="field.label + (field.unit ? ` (${field.unit})` : '')" />
                       <select
-                        v-model="form.specifications[field.key]"
+                        :value="getFieldModel(field.key)"
+                        @input="updateFieldModel(field.key, $event.target.value)"
                         :id="field.key"
                         class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"
+                        :required="field.required"
                       >
                         <option value="">{{ field.placeholder || 'Pilih...' }}</option>
-                        <option v-for="opt in field.options" :key="opt" :value="opt">
-                          {{ opt }}
-                        </option>
+                        <template v-if="field.key === 'brand'">
+                          <option v-for="brand in filteredBrands" :key="brand" :value="brand">
+                            {{ brand }}
+                          </option>
+                        </template>
+                        <template v-else>
+                          <option v-for="opt in field.options" :key="opt" :value="opt">
+                            {{ opt }}
+                          </option>
+                        </template>
                       </select>
-                      <InputError class="mt-2" :message="form.errors['specifications.' + field.key]" />
-                      <!-- Custom Option for select -->
-                      <div v-if="form.specifications[field.key] === 'Other' && ['ram', 'storage'].includes(field.key)" class="mt-2">
-                        <TextInput v-model="form.specifications['custom_' + field.key]" placeholder="Input Manual..." class="h-10" />
-                        <InputError class="mt-2" :message="form.errors['specifications.custom_' + field.key]" />
+                      
+                      <!-- Auto-Other Text Input -->
+                      <div v-if="field.allowOther && getFieldModel(field.key) === 'Other'" 
+                        class="mt-2 animate-in fade-in slide-in-from-top-1"
+                      >
+                        <TextInput 
+                          :value="getCustomModel(field.key)"
+                          @input="updateCustomModel(field.key, $event.target.value)"
+                          :placeholder="'Sebutkan ' + field.label" 
+                          class="h-10" 
+                          required
+                        />
                       </div>
+                      <InputError class="mt-2" :message="isTopLevel(field.key) ? form.errors[field.key] : form.errors['specifications.' + field.key]" />
                     </div>
 
-                    <!-- Generic Number/Text -->
+                    <!-- Standard Text/Number Renderer -->
                     <div v-else-if="['number', 'text'].includes(field.type)">
                       <InputLabel :for="field.key" :value="field.label + (field.unit ? ` (${field.unit})` : '')" />
                       <TextInput
-                        v-model="form.specifications[field.key]"
+                        :value="getFieldModel(field.key)"
+                        @input="updateFieldModel(field.key, $event.target.value)"
                         :id="field.key"
                         :type="field.type"
                         class="mt-1 block h-11 w-full"
                         :placeholder="field.placeholder"
+                        :required="field.required"
                       />
-                      <InputError class="mt-2" :message="form.errors['specifications.' + field.key]" />
+                      <InputError class="mt-2" :message="isTopLevel(field.key) ? form.errors[field.key] : form.errors['specifications.' + field.key]" />
                     </div>
 
-                    <!-- Boolean / Checkbox -->
+                    <!-- Boolean Renderer -->
                     <div v-else-if="field.type === 'boolean'" class="flex items-center gap-3 pt-8">
                       <input
                         type="checkbox"
-                        v-model="form.specifications[field.key]"
+                        :checked="getFieldModel(field.key)"
+                        @change="updateFieldModel(field.key, $event.target.checked)"
                         :id="field.key"
                         class="h-5 w-5 rounded border-border text-primary focus:ring-primary"
                       />
@@ -385,7 +405,7 @@ watch(
                 <p class="mb-6 text-xs text-muted-foreground">Centang semua item yang tersedia dalam paket penjualan.</p>
                 
                 <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                  <div v-for="item in currentCategory.default_items" :key="item"
+                  <div v-for="item in currentCategory.checklists" :key="item"
                     class="flex items-center gap-3 rounded-2xl border border-border bg-background p-4 transition-all hover:border-primary/50"
                     :class="{'border-primary bg-primary/5': form.specifications.kelengkapan.includes(item)}"
                   >

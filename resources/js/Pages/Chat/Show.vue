@@ -2,6 +2,12 @@
 import { ref, onMounted, nextTick, onUnmounted, computed, watch } from 'vue'
 import { Head, Link, usePage } from '@inertiajs/vue3'
 import axios from 'axios'
+const props = defineProps({
+  chat: Object,
+  isNewChat: Boolean,
+  contextProduct: Object,
+})
+
 import {
   ChevronLeft,
   ImageIcon,
@@ -16,16 +22,18 @@ import {
   MoreVertical,
   Download,
   AlertTriangle,
+  Gavel,
+  ShoppingCart,
+  ChevronDown,
+  Info,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-vue-next'
-import { onlineUserIds, setupOnlinePresence } from '@/onlineState'
 
-const props = defineProps({
-  chat: Object,
-  isNewChat: Boolean,
-})
+import { onlineUserIds, setupOnlinePresence } from '@/onlineState'
+import { isDark } from '@/themeState'
 
 const auth = usePage().props.auth
-const isDark = computed(() => document.documentElement.classList.contains('dark'))
 const messages = ref(props.chat.messages || [])
 const newMessage = ref('')
 const isTyping = ref(false)
@@ -35,6 +43,94 @@ const isOpponentOnline = computed(() =>
 const lightboxUrl = ref(null)
 const chatId = ref(props.isNewChat ? `product-${props.chat.product_id}` : props.chat.id)
 const currentIsNewChat = ref(props.isNewChat)
+
+// Context Product State
+const showProductContext = ref(!!props.contextProduct)
+const isContextMinimized = ref(false)
+
+// Negotiation Modal State
+const showNegoModal = ref(false)
+const negoPrice = ref(props.contextProduct?.price || 0)
+const negoMessage = ref('')
+const isSubmittingNego = ref(false)
+
+// Purchase Modal State
+const showBuyModal = ref(false)
+const isSubmittingBuy = ref(false)
+
+// Notification State
+const notification = ref(null)
+const showNotification = (type, message) => {
+  notification.value = { type, message }
+  setTimeout(() => {
+    notification.value = null
+  }, 4000)
+}
+
+const formatNumber = (num) => {
+  return new Intl.NumberFormat('id-ID').format(num)
+}
+
+const toggleProductContext = () => {
+  isContextMinimized.value = !isContextMinimized.value
+}
+
+const startNego = () => {
+  if (!props.contextProduct?.is_negotiable) {
+    showNotification('error', 'Produk ini tidak dapat dinegosiasi.')
+    return
+  }
+  showNegoModal.value = true
+}
+
+const submitNego = async () => {
+  if (isSubmittingNego.value) return
+  isSubmittingNego.value = true
+  try {
+    await axios.post(route('negotiations.store', props.contextProduct.slug), {
+      proposed_price: negoPrice.value,
+      message: negoMessage.value
+    })
+    
+    // Also send a message to the chat
+    newMessage.value = `Saya mengajukan penawaran untuk "${props.contextProduct.title}" seharga Rp ${formatNumber(negoPrice.value)}.`
+    await sendMessage()
+    
+    showNegoModal.value = false
+    showNotification('success', 'Penawaran berhasil dikirim!')
+  } catch (e) {
+    showNotification('error', e.response?.data?.message || 'Gagal mengirim penawaran.')
+  } finally {
+    isSubmittingNego.value = false
+  }
+}
+
+const startTransaction = () => {
+  if (!props.contextProduct) return
+  showBuyModal.value = true
+}
+
+const confirmTransaction = () => {
+  if (isSubmittingBuy.value) return
+  isSubmittingBuy.value = true
+  
+  const form = document.createElement('form')
+  form.method = 'POST'
+  form.action = route('transactions.checkout', props.contextProduct.slug)
+  
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+  if (csrfToken) {
+    const input = document.createElement('input')
+    input.type = 'hidden'
+    input.name = '_token'
+    input.value = csrfToken
+    form.appendChild(input)
+  }
+  
+  document.body.appendChild(form)
+  form.submit()
+}
+
 
 const chatContainer = ref(null)
 const messagesEnd = ref(null)
@@ -198,7 +294,10 @@ const sendMessage = async () => {
   scrollToBottom()
 
   try {
-    const { data } = await axios.post(route('chat.store', chatId.value), { message: text })
+    const { data } = await axios.post(route('chat.store', chatId.value), { 
+      message: text,
+      product_id: props.contextProduct?.id 
+    })
 
     if (currentIsNewChat.value) {
       currentIsNewChat.value = false
@@ -240,6 +339,9 @@ const sendImage = async (event) => {
 
   const fd = new FormData()
   fd.append('image', file)
+  if (props.contextProduct?.id) {
+    fd.append('product_id', props.contextProduct.id)
+  }
   if (fileInput.value) fileInput.value.value = ''
 
   try {
@@ -353,26 +455,51 @@ onUnmounted(() => {
         </div>
       </component>
 
-      <!-- Product thumbnail (small) -->
-      <div class="flex flex-shrink-0 items-center gap-1">
-        <Link
-          v-if="product && product.id"
-          :href="route('products.show', product.slug)"
-          class="chat-header-product"
-          :title="product.title"
-        >
-          <img
-            v-if="productImage"
-            :src="'/storage/' + productImage"
-            loading="lazy"
-            class="h-full w-full object-cover"
-          />
-          <div v-else class="flex h-full w-full items-center justify-center bg-muted">
-            <Package class="h-4 w-4 text-muted-foreground" />
-          </div>
-        </Link>
-      </div>
+      <!-- Empty right space for balance -->
+      <div class="w-9 flex-shrink-0"></div>
     </header>
+    
+    <!-- ===================== PRODUCT CONTEXT BAR ===================== -->
+    <transition name="context-slide">
+      <div v-if="contextProduct && showProductContext" class="product-context-bar" :class="{ 'is-minimized': isContextMinimized }">
+        <div class="product-context-content">
+          <div class="product-context-main" @click="toggleProductContext">
+            <div class="product-context-img">
+              <img v-if="contextProduct.images?.[0]?.image_path" :src="'/storage/' + contextProduct.images[0].image_path" loading="lazy" />
+              <div v-else class="flex h-full w-full items-center justify-center bg-muted">
+                <Package class="h-4 w-4 text-muted-foreground" />
+              </div>
+            </div>
+            <div class="product-context-info">
+              <h4 class="product-context-title">{{ contextProduct.title }}</h4>
+              <p class="product-context-price">Rp {{ formatNumber(contextProduct.price) }}</p>
+            </div>
+            <button class="product-context-toggle">
+              <ChevronDown class="h-4 w-4 transition-transform duration-300" :class="{ 'rotate-180': isContextMinimized }" />
+            </button>
+          </div>
+
+          <div v-if="!isContextMinimized" class="product-context-actions">
+            <button 
+              v-if="auth.user.id !== contextProduct.user_id && contextProduct.is_negotiable" 
+              @click="startNego" 
+              class="context-btn context-btn-nego"
+            >
+              <Gavel class="h-3.5 w-3.5" />
+              Nego
+            </button>
+            <button 
+              v-if="auth.user.id !== contextProduct.user_id" 
+              @click="startTransaction" 
+              class="context-btn context-btn-buy"
+            >
+              <ShoppingCart class="h-3.5 w-3.5" />
+              Beli
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
 
     <!-- ===================== MESSAGES ===================== -->
     <main
@@ -559,6 +686,154 @@ onUnmounted(() => {
         </div>
       </transition>
     </Teleport>
+
+    <!-- ===================== NEGO MODAL ===================== -->
+    <Teleport to="body">
+      <transition name="modal-fade">
+        <div v-if="showNegoModal" class="modal-overlay" @click.self="showNegoModal = false">
+          <div class="modal-card">
+            <div class="modal-header">
+              <h3 class="modal-title">Tawar Produk</h3>
+              <button @click="showNegoModal = false" class="modal-close">
+                <X class="h-5 w-5" />
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="flex items-center gap-4 mb-6 p-3 bg-muted/30 rounded-xl border border-border/50">
+                <img :src="'/storage/' + contextProduct.images[0].image_path" class="h-16 w-16 rounded-lg object-cover shadow-sm" />
+                <div>
+                  <h4 class="font-semibold text-sm line-clamp-1">{{ contextProduct.title }}</h4>
+                  <p class="text-xs text-muted-foreground mb-1">Harga Asli: Rp {{ formatNumber(contextProduct.price) }}</p>
+                  <p class="text-xs font-bold text-primary">Penawaran Anda:</p>
+                </div>
+              </div>
+
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-xs font-medium text-muted-foreground mb-1.5 ml-1">Harga yang ditawarkan (Rp)</label>
+                  <div class="relative">
+                    <span class="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">Rp</span>
+                    <input 
+                      v-model="negoPrice" 
+                      type="number" 
+                      class="modal-input"
+                      style="padding-left: 60px !important;"
+                      placeholder="Masukkan harga..."
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-medium text-muted-foreground mb-1.5 ml-1">Pesan untuk Penjual (Opsional)</label>
+                  <textarea 
+                    v-model="negoMessage" 
+                    class="modal-input min-h-[100px] py-3" 
+                    placeholder="Contoh: Boleh kurang dikit gan? Masih pelajar..."
+                  ></textarea>
+                </div>
+
+                <div class="flex items-start gap-2 p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                  <Info class="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <p class="text-[11px] text-amber-700 dark:text-amber-400">
+                    Penawaran berlaku selama 24 jam. Penjual dapat menerima, menolak, atau memberikan penawaran balik.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button @click="showNegoModal = false" class="modal-btn-secondary">Batal</button>
+              <button 
+                @click="submitNego" 
+                :disabled="isSubmittingNego || !negoPrice || negoPrice >= contextProduct.price" 
+                class="modal-btn-primary"
+              >
+                <template v-if="isSubmittingNego">
+                  <div class="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Mengirim...
+                </template>
+                <template v-else>
+                  Kirim Penawaran
+                </template>
+              </button>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </Teleport>
+
+    <!-- ===================== BUY MODAL ===================== -->
+    <Teleport to="body">
+      <transition name="modal-fade">
+        <div v-if="showBuyModal" class="modal-overlay" @click.self="showBuyModal = false">
+          <div class="modal-card">
+            <div class="modal-header">
+              <h3 class="modal-title">Konfirmasi Pembelian</h3>
+              <button @click="showBuyModal = false" class="modal-close">
+                <X class="h-5 w-5" />
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
+                  <ShoppingCart class="h-8 w-8" />
+                </div>
+                <h4 class="text-lg font-bold">Lanjutkan ke Pembayaran?</h4>
+                <p class="text-sm text-muted-foreground">Anda akan diarahkan ke halaman pembayaran untuk menyelesaikan transaksi ini.</p>
+              </div>
+
+              <div class="p-4 bg-muted/30 rounded-2xl border border-border/50">
+                <div class="flex gap-4 items-center">
+                  <img :src="'/storage/' + contextProduct.images[0].image_path" class="h-16 w-16 rounded-xl object-cover" />
+                  <div class="min-w-0">
+                    <h5 class="font-semibold text-sm truncate">{{ contextProduct.title }}</h5>
+                    <p class="text-primary font-black">Rp {{ formatNumber(contextProduct.price) }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-6 flex items-start gap-3 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                <Info class="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                <p class="text-[11px] text-blue-700 dark:text-blue-400">
+                  Pembayaran Anda akan ditahan oleh sistem GawaiSeken sampai Anda menerima barang dengan aman.
+                </p>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button @click="showBuyModal = false" class="modal-btn-secondary">Batal</button>
+              <button 
+                @click="confirmTransaction" 
+                :disabled="isSubmittingBuy" 
+                class="modal-btn-primary"
+              >
+                <template v-if="isSubmittingBuy">
+                  <div class="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Memproses...
+                </template>
+                <template v-else>
+                  Beli Sekarang
+                </template>
+              </button>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </Teleport>
+
+    <!-- ===================== TOAST NOTIFICATION ===================== -->
+    <Teleport to="body">
+      <transition name="toast-fade">
+        <div v-if="notification" class="toast-container" :class="notification.type">
+          <div class="toast-icon">
+            <CheckCircle v-if="notification.type === 'success'" class="h-5 w-5" />
+            <AlertCircle v-else class="h-5 w-5" />
+          </div>
+          <div class="toast-message">{{ notification.message }}</div>
+          <button @click="notification = null" class="toast-close">
+            <X class="h-4 w-4" />
+          </button>
+        </div>
+      </transition>
+    </Teleport>
   </div>
 </template>
 
@@ -573,6 +848,7 @@ onUnmounted(() => {
   overflow: hidden;
   background: hsl(var(--background));
   color: hsl(var(--foreground));
+  position: relative;
 }
 
 /* ============================================
@@ -1068,5 +1344,343 @@ onUnmounted(() => {
 .lightbox-fade-enter-from,
 .lightbox-fade-leave-to {
   opacity: 0;
+}
+
+/* ============================================
+   PRODUCT CONTEXT BAR
+   ============================================ */
+.product-context-bar {
+  position: absolute;
+  top: 65px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  width: 90%;
+  max-width: 450px;
+  background: hsl(var(--background) / 0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--border) / 0.5);
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-context-bar.is-minimized {
+  width: auto;
+  min-width: 200px;
+}
+
+.product-context-content {
+  padding: 10px 16px;
+}
+
+.product-context-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.product-context-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border) / 0.5);
+  background: hsl(var(--muted));
+}
+.product-context-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-context-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.product-context-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.product-context-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: hsl(var(--primary));
+}
+
+.product-context-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: hsl(var(--muted-foreground));
+  transition: background 0.15s;
+}
+.product-context-toggle:hover {
+  background: hsl(var(--muted));
+}
+
+.product-context-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.context-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.15s;
+}
+
+.context-btn-nego {
+  background: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+}
+.context-btn-nego:hover {
+  background: hsl(var(--secondary) / 0.8);
+}
+
+.context-btn-buy {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+.context-btn-buy:hover {
+  background: hsl(var(--primary) / 0.9);
+}
+
+.product-context-bar.is-minimized .product-context-actions {
+  display: none;
+}
+
+/* ============================================
+   MODAL STYLES
+   ============================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 420px;
+  background: hsl(var(--background));
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid hsl(var(--border) / 0.5);
+  animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.9) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid hsl(var(--border) / 0.3);
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.modal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--muted-foreground));
+  transition: all 0.15s;
+}
+.modal-close:hover {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-input {
+  width: 100%;
+  background: hsl(var(--muted) / 0.5);
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  transition: all 0.2s;
+  outline: none;
+}
+.modal-input:focus {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--background));
+  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.1);
+}
+
+.modal-footer {
+  padding: 16px 24px 24px;
+  display: flex;
+  gap: 12px;
+}
+
+.modal-btn-primary {
+  flex: 1;
+  height: 44px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-radius: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s;
+}
+.modal-btn-primary:hover:not(:disabled) {
+  background: hsl(var(--primary) / 0.9);
+  transform: translateY(-1px);
+}
+.modal-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+.modal-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-btn-secondary {
+  flex: 1;
+  height: 44px;
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.modal-btn-secondary:hover {
+  background: hsl(var(--muted) / 0.8);
+}
+
+/* Transitions */
+.context-slide-enter-active, .context-slide-leave-active {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.context-slide-enter-from, .context-slide-leave-to {
+  transform: translate(-50%, -120%);
+  opacity: 0;
+}
+
+.modal-fade-enter-active, .modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.modal-fade-enter-from, .modal-fade-leave-to {
+  opacity: 0;
+}
+
+/* ============================================
+   TOAST NOTIFICATIONS
+   ============================================ */
+.toast-container {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  min-width: 300px;
+  max-width: 90vw;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: toastIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.toast-container.success {
+  background: rgba(34, 197, 94, 0.9);
+  color: white;
+}
+.toast-container.error {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+}
+
+.toast-icon {
+  flex-shrink: 0;
+}
+
+.toast-message {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+.toast-close:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Toast Transitions */
+.toast-fade-enter-active, .toast-fade-leave-active {
+  transition: all 0.3s ease;
+}
+.toast-fade-enter-from, .toast-fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -20px);
 }
 </style>

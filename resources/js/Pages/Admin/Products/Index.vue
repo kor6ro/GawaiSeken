@@ -327,9 +327,8 @@ const submitAction = () => {
   --easy-table-rows-per-page-selector-width: 70px;
   --easy-table-rows-per-page-selector-option-padding: 10px;
 
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid hsl(var(--border));
 }
 
 :deep(.customize-header) {
@@ -339,7 +338,7 @@ const submitAction = () => {
 }
 
 .easy-table-wrapper {
-  @apply rounded-2xl overflow-hidden border border-border;
+  @apply rounded-xl overflow-hidden border border-border shadow-sm bg-card;
 }
 
 /* Dark mode specific overrides */

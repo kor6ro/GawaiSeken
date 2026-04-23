@@ -14,6 +14,38 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    /**
+     * Dashboard Aktivitas Pembeli (Keranjang, Penawaran, Pesanan).
+     */
+    public function dashboard(Request $request): Response
+    {
+        $user = $request->user();
+
+        // 1. Keranjang (Favorit)
+        $favoriteIds = $user->favorites ?? [];
+        $favorites = \App\Models\Product::whereIn('id', $favoriteIds)
+            ->with(['images', 'user.profile', 'category'])
+            ->get();
+
+        // 2. Penawaran (Negotiations as Buyer)
+        $negotiations = \App\Models\Negotiation::where('buyer_id', $user->id)
+            ->with(['product.images', 'seller.profile'])
+            ->latest()
+            ->get();
+
+        // 3. Pesanan (Transactions as Buyer)
+        $orders = \App\Models\Transaction::where('buyer_id', $user->id)
+            ->with(['product.images', 'seller.profile', 'negotiation'])
+            ->latest()
+            ->get();
+
+        return Inertia::render('Buyer/Dashboard', [
+            'favorites' => $favorites,
+            'negotiations' => $negotiations,
+            'orders' => $orders,
+        ]);
+    }
+
     public function edit(Request $request): Response
     {
         return Inertia::render('Profile/Edit', [
@@ -40,7 +72,8 @@ class ProfileController extends Controller
 
         if ($request->hasFile('avatar')) {
             $file = $request->file('avatar');
-            if ($file->isValid()) {
+            // Check isValid() and getRealPath() to avoid ValueError on PHP 8.4
+            if ($file->isValid() && $file->getRealPath()) {
                 if ($avatarPath && Storage::disk('public')->exists($avatarPath)) {
                     Storage::disk('public')->delete($avatarPath);
                 }

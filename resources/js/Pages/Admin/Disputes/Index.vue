@@ -156,9 +156,8 @@ const getStatusLabel = (status) => {
   --easy-table-footer-padding: 0px 10px;
   --easy-table-footer-height: 50px;
 
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid hsl(var(--border));
 }
 
 :deep(.customize-header) {
@@ -168,7 +167,7 @@ const getStatusLabel = (status) => {
 }
 
 .easy-table-wrapper {
-  @apply rounded-2xl overflow-hidden border border-border;
+  @apply rounded-xl overflow-hidden border border-border shadow-sm bg-card;
 }
 
 /* Dark mode specific overrides */

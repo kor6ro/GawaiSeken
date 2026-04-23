@@ -12,6 +12,7 @@ defineProps({
 <template>
   <Link
     :href="href"
+    v-bind="$attrs"
     class="block w-full px-4 py-2 text-start text-sm leading-5 text-muted-foreground transition duration-150 ease-in-out hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:outline-none"
   >
     <slot />

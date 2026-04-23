@@ -117,6 +117,16 @@ class Product extends Model
         return $this->hasMany(Chat::class);
     }
 
+    public function negotiations(): HasMany
+    {
+        return $this->hasMany(Negotiation::class);
+    }
+
+    public function activeNegotiation(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Negotiation::class)->latestOfMany();
+    }
+
     public function getRouteKeyName()
     {
         return 'slug';

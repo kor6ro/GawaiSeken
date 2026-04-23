@@ -40,9 +40,21 @@ class DashboardController extends Controller
                 ->whereNull('read_at')
                 ->count();
         } catch (\Exception $e) {
-            // Jika tabel belum di-update, set ke 0 agar dashboard tidak error
             $unreadMessagesCount = 0;
         }
+
+        // Data 4: Total Pendapatan (Hanya transaksi yang selesai)
+        $totalRevenue = Transaction::where('seller_id', $user->id)
+            ->where('status', TransactionStatusEnum::COMPLETED)
+            ->sum('price');
+
+        // Data 5: Pesanan Perlu Diproses (Pending, Paid, COD Requested)
+        $pendingOrders = Transaction::where('seller_id', $user->id)
+            ->whereIn('status', [
+                TransactionStatusEnum::PAID, 
+                TransactionStatusEnum::COD_REQUESTED
+            ])
+            ->count();
 
         $isMobile = preg_match('/Mobile|Android|iPhone/i', request()->userAgent());
         $perPage = $isMobile ? 6 : 10;
@@ -77,13 +89,21 @@ class DashboardController extends Controller
             ->latest()
             ->paginate($perPage, ['*'], 'transactions');
 
+        $negotiations = \App\Models\Negotiation::where('seller_id', $user->id)
+            ->with(['product.images', 'buyer.profile'])
+            ->latest()
+            ->paginate($perPage, ['*'], 'negotiations');
+
         return Inertia::render('Dashboard', [
             'user' => $user,
             'productsCount' => $productsCount,
             'transactionsCount' => $transactionsCount,
             'unreadMessagesCount' => $unreadMessagesCount,
+            'totalRevenue' => $totalRevenue,
+            'pendingOrders' => $pendingOrders,
             'myProducts' => $myProducts,
-            'transactions' => $transactions
+            'transactions' => $transactions,
+            'negotiations' => $negotiations
         ]);
     }
 }

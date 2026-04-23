@@ -4,9 +4,11 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\NegotiationController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StoreController;
+use App\Http\Controllers\TransactionController;
 use App\Models\Product;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +43,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
 Route::middleware('auth')->group(function () {
     // --- FITUR AKUN (User Personal) ---
+    Route::get('/aktivitas', [ProfileController::class, 'dashboard'])->name('buyer.dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     // Hanya update Nama Asli & Email
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -73,12 +76,30 @@ Route::middleware('auth')->group(function () {
     Route::post('/chat/initiate/{product}', [ChatController::class, 'initiate'])->name('chat.initiate');
 
     // --- TRANSACTION & DISPUTE ---
-    Route::post('/products/{product}/checkout', [\App\Http\Controllers\TransactionController::class, 'checkout'])->name('transactions.checkout');
-    Route::get('/profile/orders', [\App\Http\Controllers\TransactionController::class, 'orders'])->name('profile.orders');
-    Route::post('/transactions/{transaction}/status', [\App\Http\Controllers\TransactionController::class, 'updateStatus'])->name('transactions.update-status');
-    Route::post('/transactions/{transaction}/repay', [\App\Http\Controllers\TransactionController::class, 'repay'])->name('transactions.repay');
-    Route::post('/transactions/{transaction}/simulate-payment', [\App\Http\Controllers\TransactionController::class, 'simulatePayment'])->name('transactions.simulate-payment');
-    Route::post('/transactions/{transaction}/dispute', [\App\Http\Controllers\TransactionController::class, 'storeDispute'])->name('transactions.dispute');
+    Route::post('/products/{product}/checkout', [TransactionController::class, 'checkout'])->name('transactions.checkout');
+    Route::get('/profile/orders', [TransactionController::class, 'orders'])->name('profile.orders');
+    Route::post('/transactions/{transaction}/status', [TransactionController::class, 'updateStatus'])->name('transactions.update-status');
+    Route::post('/transactions/{transaction}/repay', [TransactionController::class, 'repay'])->name('transactions.repay');
+    Route::post('/transactions/{transaction}/simulate-payment', [TransactionController::class, 'simulatePayment'])->name('transactions.simulate-payment');
+    Route::post('/transactions/{transaction}/dispute', [TransactionController::class, 'storeDispute'])->name('transactions.dispute');
+
+    // Rekber flow
+    Route::post('/transactions/{transaction}/ship', [TransactionController::class, 'confirmShipment'])->name('transactions.ship');
+    Route::post('/transactions/{transaction}/deliver', [TransactionController::class, 'confirmDelivery'])->name('transactions.deliver');
+
+    // COD flow
+    Route::post('/transactions/{transaction}/cod-confirm', [TransactionController::class, 'confirmCod'])->name('transactions.cod-confirm');
+    Route::post('/transactions/{transaction}/cod-reject', [TransactionController::class, 'rejectCod'])->name('transactions.cod-reject');
+    Route::post('/transactions/{transaction}/cod-complete', [TransactionController::class, 'completeCod'])->name('transactions.cod-complete');
+
+    // --- NEGO ---
+    Route::get('/profile/negotiations', [NegotiationController::class, 'index'])->name('profile.negotiations');
+    Route::post('/products/{product}/negotiate', [NegotiationController::class, 'store'])->name('negotiations.store');
+    Route::post('/negotiations/{negotiation}/accept', [NegotiationController::class, 'accept'])->name('negotiations.accept');
+    Route::post('/negotiations/{negotiation}/reject', [NegotiationController::class, 'reject'])->name('negotiations.reject');
+    Route::post('/negotiations/{negotiation}/counter', [NegotiationController::class, 'counter'])->name('negotiations.counter');
+    Route::post('/negotiations/{negotiation}/accept-counter', [NegotiationController::class, 'acceptCounter'])->name('negotiations.accept-counter');
+    Route::get('/seller/negotiations', [NegotiationController::class, 'sellerIndex'])->name('seller.negotiations')->middleware('seller');
 
     // --- REGIONS API ---
     Route::get('/api/regions/provinces', function () {

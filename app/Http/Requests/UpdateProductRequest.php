@@ -69,7 +69,8 @@ class UpdateProductRequest extends FormRequest
             $rules['specifications.custom_storage'] = 'required_if:specifications.storage,Other|nullable|string';
         }
         if (in_array('battery_health', $allowedFields)) {
-            $rules['specifications.battery_health'] = 'nullable|numeric|min:0|max:100';
+            // Mandatory for Smartphone (ID 1)
+            $rules['specifications.battery_health'] = ($categoryId === 1) ? 'required|numeric|min:0|max:100' : 'nullable|numeric|min:0|max:100';
         }
         if (in_array('screen_size', $allowedFields)) {
             $rules['specifications.screen_size'] = 'nullable|string';
@@ -100,5 +101,48 @@ class UpdateProductRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    /**
+     * Handle 'Other' options and clean up data after validation.
+     * This ensures the database gets the real value instead of 'Other'.
+     */
+    protected function passedValidation(): void
+    {
+        // 1. Resolve Brand
+        if ($this->brand === 'Other' && $this->filled('custom_brand')) {
+            $this->merge(['brand' => $this->custom_brand]);
+        }
+
+        // 2. Resolve Dynamic Specs and Clean JSON
+        $specs = $this->specifications;
+        if (is_array($specs)) {
+            $categoryId = (int) ($this->category_id ?? $this->route('product')->category_id);
+            $allowedKeys = \App\Constants\ProductSchema::getAllowedFields(
+                $categoryId, 
+                $specs['sub_type'] ?? null, 
+                $specs['connectivity'] ?? null
+            );
+            
+            // Core spec keys that are always allowed if present
+            $coreKeys = ['sub_type', 'kelengkapan', 'kelengkapan_note'];
+            $finalAllowedKeys = array_merge($allowedKeys, $coreKeys);
+
+            $cleanSpecs = [];
+            foreach ($specs as $key => $value) {
+                // Resolve 'Other' values for specific fields
+                if (in_array($key, ['ram', 'storage']) && $value === 'Other') {
+                    $customKey = "custom_{$key}";
+                    $value = $specs[$customKey] ?? $value;
+                }
+
+                // Only keep allowed keys
+                if (in_array($key, $finalAllowedKeys)) {
+                    $cleanSpecs[$key] = $value;
+                }
+            }
+            
+            $this->merge(['specifications' => $cleanSpecs]);
+        }
     }
 }

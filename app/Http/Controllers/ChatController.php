@@ -20,7 +20,9 @@ class ChatController extends Controller
     {
         $userId = Auth::id();
 
-        $chats = Chat::query()->where('buyer_id', '=', $userId)
+        // Get unique chats between the current user and others
+        $chats = Chat::query()
+            ->where('buyer_id', '=', $userId)
             ->orWhere('seller_id', '=', $userId)
             ->with([
                 'product.images',
@@ -44,31 +46,44 @@ class ChatController extends Controller
     // =========================================================
     // SHOW – View a single chat thread
     // =========================================================
-    public function show($id): Response|\Illuminate\Http\RedirectResponse
+    public function show(Request $request, $id): Response|\Illuminate\Http\RedirectResponse
     {
+        $userId = Auth::id();
+        $contextProduct = null;
+
         if (str_starts_with($id, 'product-')) {
             $productId = str_replace('product-', '', $id);
-            $product = Product::with(['images', 'user.profile'])->findOrFail($productId);
+            $contextProduct = Product::with(['images', 'user.profile'])->findOrFail($productId);
+            $sellerId = $contextProduct->user_id;
 
-            // Check if chat already exists anyway
-            $chat = Chat::query()->where('product_id', '=', $product->id)
-                ->where('buyer_id', '=', Auth::id())
-                ->first(['*']);
+            if ($sellerId === $userId) {
+                return redirect()->route('home')->with('error', 'Anda tidak bisa chat dengan produk sendiri.');
+            }
+
+            // Find existing chat between these two users for THIS specific product
+            $chat = Chat::where('product_id', $productId)
+                ->where(function($q) use ($userId, $sellerId) {
+                    $q->where(function($sq) use ($userId, $sellerId) {
+                        $sq->where('buyer_id', $userId)->where('seller_id', $sellerId);
+                    })->orWhere(function($sq) use ($userId, $sellerId) {
+                        $sq->where('buyer_id', $sellerId)->where('seller_id', $userId);
+                    });
+                })
+                ->first();
 
             if ($chat) {
-                return redirect()->route('chat.show', $chat);
+                return redirect()->route('chat.show', ['chat' => $chat->id]);
             }
 
             // Create a virtual chat object
             $chat = new Chat([
-                'product_id' => $product->id,
-                'buyer_id' => Auth::id(),
-                'seller_id' => $product->user_id,
+                'product_id' => $contextProduct->id,
+                'buyer_id' => $userId,
+                'seller_id' => $sellerId,
             ]);
 
-            // Set relations for the view
-            $chat->setRelation('product', $product);
-            $chat->setRelation('seller', $product->user);
+            $chat->setRelation('product', $contextProduct);
+            $chat->setRelation('seller', $contextProduct->user);
             $chat->setRelation('buyer', Auth::user());
             $chat->setRelation('messages', collect());
 
@@ -82,6 +97,13 @@ class ChatController extends Controller
             ])->findOrFail($id);
 
             $this->authorizeChat($chat);
+
+            // Set context product from query param or chat's original product
+            if ($request->has('product_id')) {
+                $contextProduct = Product::with(['images', 'user.profile'])->find($request->query('product_id'));
+            } else if ($chat->product_id) {
+                $contextProduct = $chat->product;
+            }
 
             // Mark opponent messages as read
             $updated = ChatMessage::query()->where('chat_id', '=', $chat->id)
@@ -99,6 +121,7 @@ class ChatController extends Controller
         return Inertia::render('Chat/Show', [
             'chat' => $chat,
             'isNewChat' => $isNewChat,
+            'contextProduct' => $contextProduct,
         ]);
     }
 
@@ -110,12 +133,27 @@ class ChatController extends Controller
         if (str_starts_with($id, 'product-')) {
             $productId = str_replace('product-', '', $id);
             $product = Product::findOrFail($productId);
+            $userId = Auth::id();
+            $sellerId = $product->user_id;
 
-            $chat = Chat::firstOrCreate([
-                'product_id' => $product->id,
-                'buyer_id' => Auth::id(),
-                'seller_id' => $product->user_id,
-            ]);
+            // Find existing chat for this product
+            $chat = Chat::where('product_id', $productId)
+                ->where(function($q) use ($userId, $sellerId) {
+                    $q->where(function($sq) use ($userId, $sellerId) {
+                        $sq->where('buyer_id', $userId)->where('seller_id', $sellerId);
+                    })->orWhere(function($sq) use ($userId, $sellerId) {
+                        $sq->where('buyer_id', $sellerId)->where('seller_id', $userId);
+                    });
+                })
+                ->first();
+
+            if (!$chat) {
+                $chat = Chat::create([
+                    'product_id' => $product->id,
+                    'buyer_id' => $userId,
+                    'seller_id' => $sellerId,
+                ]);
+            }
         } else {
             $chat = Chat::findOrFail($id);
             $this->authorizeChat($chat);
@@ -128,6 +166,9 @@ class ChatController extends Controller
             'type' => 'text',
             'message' => $request->input('message'),
         ]);
+
+        // We no longer update the chat's product_id here to prevent "overwriting"
+        // The chat thread is now permanently tied to the product it was started with.
 
         $chat->update(['last_message_at' => now()]);
 
@@ -145,12 +186,26 @@ class ChatController extends Controller
         if (str_starts_with($id, 'product-')) {
             $productId = str_replace('product-', '', $id);
             $product = Product::findOrFail($productId);
+            $userId = Auth::id();
+            $sellerId = $product->user_id;
 
-            $chat = Chat::firstOrCreate([
-                'product_id' => $product->id,
-                'buyer_id' => Auth::id(),
-                'seller_id' => $product->user_id,
-            ]);
+            $chat = Chat::where('product_id', $productId)
+                ->where(function($q) use ($userId, $sellerId) {
+                    $q->where(function($sq) use ($userId, $sellerId) {
+                        $sq->where('buyer_id', $userId)->where('seller_id', $sellerId);
+                    })->orWhere(function($sq) use ($userId, $sellerId) {
+                        $sq->where('buyer_id', $sellerId)->where('seller_id', $userId);
+                    });
+                })
+                ->first();
+
+            if (!$chat) {
+                $chat = Chat::create([
+                    'product_id' => $product->id,
+                    'buyer_id' => $userId,
+                    'seller_id' => $sellerId,
+                ]);
+            }
         } else {
             $chat = Chat::findOrFail($id);
             $this->authorizeChat($chat);
@@ -160,13 +215,22 @@ class ChatController extends Controller
             'image' => 'required|image|mimes:jpg,jpeg,png,gif,webp|max:5120',
         ]);
 
-        $path = $request->file('image')->store('chat_images', 'public');
+        $file = $request->file('image');
+
+        // Check isValid() and getRealPath() to avoid ValueError on PHP 8.4
+        if (!$file->isValid() || !$file->getRealPath()) {
+            return response()->json(['error' => 'Gagal membaca file gambar.'], 422);
+        }
+
+        $path = $file->store('chat_images', 'public');
 
         $message = $chat->messages()->create([
             'sender_id' => Auth::id(),
             'type' => 'image',
             'image_path' => $path,
         ]);
+
+        // No product_id update to prevent overwriting thread context
 
         $chat->update(['last_message_at' => now()]);
 

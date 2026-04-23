@@ -13,6 +13,9 @@ import {
   Clock,
   Handshake,
   AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  Undo2,
 } from 'lucide-vue-next'
 import Modal from '@/Components/Modal.vue'
 
@@ -135,6 +138,42 @@ const conditionBadgeClass = computed(() => {
         class="flex items-center gap-1 rounded-md bg-indigo-500 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-white shadow-sm"
       >
         <span>Nego</span>
+      </div>
+    </div>
+
+    <!-- Negotiation Status Badge (Cart Context) -->
+    <div v-if="product.active_negotiation" class="pointer-events-none absolute left-0 right-0 top-1/2 z-20 -translate-y-1/2 px-3">
+      <div 
+        class="flex flex-col items-center gap-1 rounded-2xl border border-white/20 px-3 py-3 text-center text-white shadow-2xl backdrop-blur-md transition-all duration-300 group-hover:scale-105"
+        :class="{
+          'bg-emerald-600/90': product.active_negotiation.status === 'accepted',
+          'bg-indigo-600/90': product.active_negotiation.status === 'countered',
+          'bg-slate-800/90': product.active_negotiation.status === 'pending',
+          'bg-red-600/90': product.active_negotiation.status === 'rejected',
+        }"
+      >
+        <div class="flex items-center gap-1.5">
+          <CheckCircle2 v-if="product.active_negotiation.status === 'accepted'" class="h-4 w-4" />
+          <Undo2 v-else-if="product.active_negotiation.status === 'countered'" class="h-4 w-4" />
+          <Clock v-else-if="product.active_negotiation.status === 'pending'" class="h-4 w-4" />
+          <AlertTriangle v-else-if="product.active_negotiation.status === 'rejected'" class="h-4 w-4" />
+          <span class="text-[9px] font-black uppercase tracking-[0.1em]">
+            {{ 
+              product.active_negotiation.status === 'accepted' ? 'Nego Diterima' : 
+              product.active_negotiation.status === 'countered' ? 'Ada Counter Offer' : 
+              product.active_negotiation.status === 'rejected' ? 'Nego Ditolak' : 'Nego Diproses'
+            }}
+          </span>
+        </div>
+        <div v-if="product.active_negotiation.status === 'countered'" class="text-sm font-black mt-1">
+          Rp{{ new Intl.NumberFormat('id-ID').format(product.active_negotiation.counter_price) }}
+        </div>
+        <div v-else-if="product.active_negotiation.status === 'pending'" class="text-[10px] font-bold opacity-80 mt-0.5">
+          Menunggu Seller
+        </div>
+        <div v-else-if="product.active_negotiation.status === 'accepted'" class="text-sm font-black mt-1">
+          Rp{{ new Intl.NumberFormat('id-ID').format(product.active_negotiation.agreed_price) }}
+        </div>
       </div>
     </div>
 

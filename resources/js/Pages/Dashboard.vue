@@ -21,6 +21,15 @@ import {
   X,
   Calendar,
   Phone,
+  Truck,
+  Tag,
+  Users,
+  CreditCard,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-vue-next'
 import { router } from '@inertiajs/vue3'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
@@ -40,13 +49,79 @@ const props = defineProps({
   productsCount: Number,
   transactionsCount: Number,
   unreadMessagesCount: Number,
+  totalRevenue: Number,
+  pendingOrders: Number,
   myProducts: Object,
   transactions: Object,
+  negotiations: Object,
 })
 
-const tab = ref('overview')
+const tab = ref(new URLSearchParams(window.location.search).get('tab') || 'overview')
 const tabSettings = ref('store') // 'store' or 'user'
 const loading = ref(false)
+
+watch(tab, (newTab) => {
+  const url = new URL(window.location)
+  url.searchParams.set('tab', newTab)
+  window.history.pushState({}, '', url)
+})
+
+// ─── Negotiation Logic ───
+const expandedItems = ref({})
+const toggleExpand = (id) => { expandedItems.value[id] = !expandedItems.value[id] }
+
+const counterForms = ref({})
+const getCounterForm = (id) => {
+    if (!counterForms.value[id]) {
+        counterForms.value[id] = { counter_price: '', seller_message: '' }
+    }
+    return counterForms.value[id]
+}
+
+const acceptNegotiation = (id) => {
+    if (confirm('Terima penawaran harga dari buyer?'))
+        router.post(route('negotiations.accept', id))
+}
+
+const rejectNegotiation = (id, message) => {
+    if (confirm('Tolak penawaran ini?'))
+        router.post(route('negotiations.reject', id), { seller_message: message })
+}
+
+const counterNegotiation = (id, form) => {
+    if (!form.counter_price) return alert('Masukkan harga counter terlebih dahulu.')
+    router.post(route('negotiations.counter', id), form)
+}
+
+const formatRp = (v) => 'Rp ' + new Intl.NumberFormat('id-ID').format(v)
+const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) : '-'
+const expiresIn = (d) => {
+    const diff = new Date(d) - new Date()
+    if (diff <= 0) return 'Kadaluarsa'
+    const hours = Math.floor(diff / 1000 / 3600)
+    const mins  = Math.floor((diff / 1000 % 3600) / 60)
+    return `${hours}j ${mins}m lagi`
+}
+
+const statusConfig = {
+    pending:   { label: 'Menunggu Respons', color: 'amber' },
+    accepted:  { label: 'Diterima ✓', color: 'green' },
+    rejected:  { label: 'Ditolak', color: 'red' },
+    countered: { label: 'Counter-Offer Dikirim', color: 'indigo' },
+    expired:   { label: 'Kadaluarsa', color: 'slate' },
+}
+
+const badgeClass = (status) => {
+    const colorMap = {
+        amber:  'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400',
+        green:  'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400',
+        red:    'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400',
+        indigo: 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400',
+        slate:  'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400',
+    }
+    return colorMap[statusConfig[status]?.color] ?? colorMap.slate
+}
+// ─────────────────────────
 
 // Use shallowRef to avoid massive reactivity tracking on product array
 const allMyProducts = shallowRef([...props.myProducts.data])
@@ -263,15 +338,62 @@ const openDisputeDetail = (transaction) => {
 }
 
 const getStatusLabel = (status) => {
-  switch (status) {
-    case 'pending': return 'Menunggu Pembayaran'
-    case 'paid': return 'Dibayar'
-    case 'shipped': return 'Dikirim'
-    case 'completed': return 'Selesai'
-    case 'disputed': return 'Komplain'
-    case 'canceled': return 'Dibatalkan'
-    default: return status
+  const labels = {
+    pending:       'Menunggu Pembayaran',
+    paid:          'Dibayar — Dalam Escrow',
+    processing:    'Diproses Seller',
+    shipped:       'Dikirim',
+    delivered:     'Diterima Buyer',
+    completed:     'Selesai ✓',
+    disputed:      'Sengketa',
+    canceled:      'Dibatalkan',
+    cod_requested: 'COD — Tunggu Konfirmasi',
+    cod_confirmed: 'COD — Jadwal Dikonfirmasi',
   }
+  return labels[status] ?? status
+}
+
+// ─── Modal Resi ─────────────────────────────────────────────────────────────
+const shipModal = ref(false)
+const selectedShipTransaction = ref(null)
+const shipForm = useForm({ tracking_number: '', courier_name: '', seller_notes: '' })
+
+const openShipModal = (item) => {
+  selectedShipTransaction.value = item
+  shipForm.reset()
+  shipModal.value = true
+}
+
+const submitShipment = () => {
+  shipForm.post(route('transactions.ship', selectedShipTransaction.value.id), {
+    preserveScroll: true,
+    onSuccess: () => { shipModal.value = false },
+  })
+}
+
+// ─── Aksi COD ────────────────────────────────────────────────────────────────
+const codModal = ref(false)
+const selectedCodTransaction = ref(null)
+const codForm = useForm({ cod_location: '', cod_scheduled_at: '', seller_notes: '' })
+
+const openCodModal = (item) => {
+  selectedCodTransaction.value = item
+  codForm.cod_location     = item.cod_location || ''
+  codForm.cod_scheduled_at = item.cod_scheduled_at?.substring(0,16) || ''
+  codForm.seller_notes     = ''
+  codModal.value = true
+}
+
+const submitCodConfirm = () => {
+  codForm.post(route('transactions.cod-confirm', selectedCodTransaction.value.id), {
+    preserveScroll: true,
+    onSuccess: () => { codModal.value = false },
+  })
+}
+
+const rejectCod = (item) => {
+  if (confirm('Tolak permintaan COD dari buyer ini?'))
+    router.post(route('transactions.cod-reject', item.id))
 }
 
 const productHeaders = [
@@ -302,42 +424,34 @@ const transactionHeaders = [
     <div class="py-12">
       <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
         <!-- TAB NAVIGATION BUTTONS -->
-        <div class="mx-auto flex max-w-md space-x-1 rounded-xl bg-muted p-1 sm:mx-0">
+        <div class="mx-auto flex max-w-2xl space-x-1 rounded-xl bg-muted p-1 sm:mx-0">
           <button
             @click="tab = 'overview'"
-            :class="
-              tab === 'overview'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            "
+            :class="tab === 'overview' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
             class="flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-bold transition-all duration-200 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
           >
-            <LayoutDashboard class="h-4 w-4" />
-            Ringkasan
+            <LayoutDashboard class="h-4 w-4" /> Ringkasan
           </button>
           <button
             @click="tab = 'transactions'"
-            :class="
-              tab === 'transactions'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            "
+            :class="tab === 'transactions' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
             class="flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-bold transition-all duration-200 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
           >
-            <ShoppingBag class="h-4 w-4" />
-            Pesanan
+            <ShoppingBag class="h-4 w-4" /> Pesanan
+          </button>
+          <button
+            @click="tab = 'negotiations'"
+            :class="tab === 'negotiations' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+            class="flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-bold transition-all duration-200 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+          >
+            <Tag class="h-4 w-4" /> Penawaran
           </button>
           <button
             @click="tab = 'settings'"
-            :class="
-              tab === 'settings'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            "
+            :class="tab === 'settings' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
             class="flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-bold transition-all duration-200 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
           >
-            <Settings class="h-4 w-4" />
-            Pengaturan
+            <Settings class="h-4 w-4" /> Pengaturan
           </button>
         </div>
 
@@ -352,42 +466,56 @@ const transactionHeaders = [
                 Ringkasan performa penjualan Anda saat ini.
               </p>
             </header>
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+            <div class="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+              <!-- Pendapatan -->
               <div class="rounded-2xl border border-border bg-muted p-4 transition-colors sm:p-6">
                 <div class="mb-2 flex items-center justify-between">
-                  <p
-                    class="text-xs font-medium uppercase tracking-wider text-muted-foreground sm:text-sm"
-                  >
-                    Produk Aktif
+                  <p class="text-[10px] font-black uppercase tracking-wider text-muted-foreground sm:text-xs">
+                    Total Pendapatan
                   </p>
-                  <Package class="h-5 w-5 text-primary" />
+                  <CreditCard class="h-4 w-4 text-indigo-500 sm:h-5 sm:w-5" />
                 </div>
-                <p class="mt-2 text-2xl font-black text-primary sm:text-3xl">{{ productsCount }}</p>
-              </div>
-              <div class="rounded-2xl border border-border bg-muted p-4 transition-colors sm:p-6">
-                <div class="mb-2 flex items-center justify-between">
-                  <p
-                    class="text-xs font-medium uppercase tracking-wider text-muted-foreground sm:text-sm"
-                  >
-                    Total Terjual
-                  </p>
-                  <ShoppingBag class="h-5 w-5 text-green-500" />
-                </div>
-                <p class="mt-2 text-2xl font-black text-green-600 dark:text-green-400 sm:text-3xl">
-                  {{ transactionsCount }}
+                <p class="mt-2 text-lg font-black text-indigo-600 dark:text-indigo-400 sm:text-2xl truncate">
+                  Rp {{ new Intl.NumberFormat('id-ID').format(totalRevenue || 0) }}
                 </p>
               </div>
+
+              <!-- Pesanan Aktif -->
+              <div @click="tab = 'transactions'" class="rounded-2xl border border-border bg-muted p-4 transition-colors cursor-pointer hover:bg-accent/50 hover:border-amber-500/30 sm:p-6">
+                <div class="mb-2 flex items-center justify-between">
+                  <p class="text-[10px] font-black uppercase tracking-wider text-muted-foreground sm:text-xs">
+                    Pesanan Aktif
+                  </p>
+                  <Clock class="h-4 w-4 text-amber-500 sm:h-5 sm:w-5" />
+                </div>
+                <p class="mt-2 text-xl font-black text-amber-600 dark:text-amber-400 sm:text-3xl">
+                  {{ pendingOrders || 0 }}
+                </p>
+              </div>
+
+              <!-- Total Terjual -->
+              <div @click="tab = 'transactions'" class="rounded-2xl border border-border bg-muted p-4 transition-colors cursor-pointer hover:bg-accent/50 hover:border-emerald-500/30 sm:p-6">
+                <div class="mb-2 flex items-center justify-between">
+                  <p class="text-[10px] font-black uppercase tracking-wider text-muted-foreground sm:text-xs">
+                    Total Terjual
+                  </p>
+                  <ShoppingBag class="h-4 w-4 text-emerald-500 sm:h-5 sm:w-5" />
+                </div>
+                <p class="mt-2 text-xl font-black text-emerald-600 dark:text-emerald-400 sm:text-3xl">
+                  {{ transactionsCount || 0 }}
+                </p>
+              </div>
+
+              <!-- Produk Aktif -->
               <div class="rounded-2xl border border-border bg-muted p-4 transition-colors sm:p-6">
                 <div class="mb-2 flex items-center justify-between">
-                  <p
-                    class="text-xs font-medium uppercase tracking-wider text-muted-foreground sm:text-sm"
-                  >
-                    Pesan Baru
+                  <p class="text-[10px] font-black uppercase tracking-wider text-muted-foreground sm:text-xs">
+                    Produk Aktif
                   </p>
-                  <MessageCircle class="h-5 w-5 text-orange-500" />
+                  <Package class="h-4 w-4 text-blue-500 sm:h-5 sm:w-5" />
                 </div>
-                <p class="mt-2 text-2xl font-black text-orange-500 sm:text-3xl">
-                  {{ unreadMessagesCount }}
+                <p class="mt-2 text-xl font-black text-blue-600 dark:text-blue-400 sm:text-3xl">
+                  {{ productsCount || 0 }}
                 </p>
               </div>
             </div>
@@ -410,8 +538,7 @@ const transactionHeaders = [
               </Link>
             </div>
 
-            <div class="overflow-hidden border border-border shadow-sm sm:rounded-lg">
-              <!-- Desktop Table -->
+            <!-- Desktop Table -->
             <div class="easy-table-wrapper hidden md:block">
               <EasyDataTable
                 :headers="productHeaders"
@@ -448,13 +575,15 @@ const transactionHeaders = [
                 <template #item-status="item">
                   <div class="flex flex-col items-center gap-1 py-2">
                     <button
-                      @click="toggleStatus(item)"
-                      class="group relative inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold transition-all hover:scale-105 active:scale-95"
-                      :class="
+                      @click="item.availability !== 'sold' && toggleStatus(item)"
+                      :disabled="item.availability === 'sold'"
+                      class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold transition-all"
+                      :class="[
+                        item.availability === 'sold' ? 'opacity-60 cursor-not-allowed' : 'active:scale-90 hover:scale-105',
                         item.availability === 'available'
-                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400'
-                          : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400'
-                      "
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400'
+                          : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400'
+                      ]"
                     >
                       <CheckCircle v-if="item.availability === 'available'" class="h-3.5 w-3.5" />
                       <Circle v-else class="h-3.5 w-3.5" />
@@ -482,13 +611,18 @@ const transactionHeaders = [
 
                 <template #item-actions="item">
                   <div class="flex items-center justify-end gap-2 py-2">
-                    <Link
-                      :href="route('products.edit', item.slug)"
-                      class="inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-xs font-semibold uppercase tracking-widest text-foreground shadow-sm transition hover:bg-muted"
-                    >
-                      Edit
-                    </Link>
-                    <DangerButton @click="confirmDeletion(item)">Hapus</DangerButton>
+                    <template v-if="item.availability !== 'sold'">
+                      <Link
+                        :href="route('products.edit', item.slug)"
+                        class="inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-xs font-semibold uppercase tracking-widest text-foreground shadow-sm transition hover:bg-muted"
+                      >
+                        Edit
+                      </Link>
+                      <DangerButton @click="confirmDeletion(item)">Hapus</DangerButton>
+                    </template>
+                    <div v-else class="text-xs italic text-muted-foreground mr-2 border border-border px-3 py-1.5 rounded-md bg-muted">
+                      Terkunci (Terjual)
+                    </div>
                   </div>
                 </template>
 
@@ -534,13 +668,15 @@ const transactionHeaders = [
                   <div class="flex items-center justify-between gap-4 border-t border-border pt-2">
                     <div class="flex flex-col gap-1">
                       <button
-                        @click="toggleStatus(item)"
-                        class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold transition-all active:scale-90"
-                        :class="
+                        @click="item.availability !== 'sold' && toggleStatus(item)"
+                        :disabled="item.availability === 'sold'"
+                        class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold transition-all"
+                        :class="[
+                          item.availability === 'sold' ? 'opacity-60 cursor-not-allowed' : 'active:scale-90',
                           item.availability === 'available'
                             ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/30 dark:bg-emerald-900/20 dark:text-emerald-400'
                             : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400'
-                        "
+                        ]"
                       >
                         <CheckCircle v-if="item.availability === 'available'" class="h-3 w-3" />
                         <Circle v-else class="h-3 w-3" />
@@ -562,21 +698,23 @@ const transactionHeaders = [
                       }}</span>
                     </div>
                     <div class="flex items-center gap-2">
-                      <Link
-                        :href="route('products.edit', item.slug)"
-                        class="rounded-lg p-2 text-muted-foreground transition hover:bg-accent"
-                      >
-                        <Edit3 class="h-5 w-5" />
-                      </Link>
-                      <button
-                        @click="confirmDeletion(item)"
-                        class="rounded-lg p-2 text-red-500 transition hover:bg-red-500/10"
-                      >
-                        <Trash2 class="h-5 w-5" />
-                      </button>
+                      <template v-if="item.availability !== 'sold'">
+                        <Link
+                          :href="route('products.edit', item.slug)"
+                          class="rounded-lg p-2 text-muted-foreground transition hover:bg-accent"
+                        >
+                          <Edit3 class="h-5 w-5" />
+                        </Link>
+                        <button
+                          @click="confirmDeletion(item)"
+                          class="rounded-lg p-2 text-red-500 transition hover:bg-red-500/10"
+                        >
+                          <Trash2 class="h-5 w-5" />
+                        </button>
+                      </template>
+                      <span v-else class="text-[10px] italic text-muted-foreground">Terkunci</span>
                     </div>
                   </div>
-                </div>
               </div>
             </div>
 
@@ -611,94 +749,128 @@ const transactionHeaders = [
             </div>
 
             <div class="easy-table-wrapper">
-              <EasyDataTable
-                :headers="transactionHeaders"
-                :items="transactions.data"
-                hide-footer
-                border-cell
-                table-class-name="customize-table"
-                header-class-name="customize-header"
-              >
-                <template #item-transaction="{ reference_number, product }">
-                  <div class="flex items-center gap-3 py-2">
-                    <div class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md border border-border bg-muted">
-                      <img v-if="product.images?.length > 0" :src="`/storage/${product.images[0].image_path}`" class="h-full w-full object-cover" />
+                <EasyDataTable
+                  :headers="transactionHeaders"
+                  :items="transactions.data"
+                  hide-footer
+                  border-cell
+                  table-class-name="customize-table"
+                  header-class-name="customize-header"
+                >
+                  <template #item-transaction="{ reference_number, product }">
+                    <div class="flex items-center gap-3 py-2">
+                      <div class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md border border-border bg-muted">
+                        <img v-if="product.images?.length > 0" :src="`/storage/${product.images[0].image_path}`" class="h-full w-full object-cover" />
+                      </div>
+                      <div class="min-w-0">
+                        <div class="font-bold truncate text-foreground">#{{ reference_number }}</div>
+                        <div class="text-[10px] text-muted-foreground/80 truncate max-w-[150px]">{{ product.title }}</div>
+                      </div>
                     </div>
-                    <div class="min-w-0">
-                      <div class="font-bold truncate text-foreground">#{{ reference_number }}</div>
-                      <div class="text-[10px] text-muted-foreground/80 truncate max-w-[150px]">{{ product.title }}</div>
+                  </template>
+
+                  <template #item-buyer="{ buyer }">
+                    <div class="py-2">
+                      <div class="text-sm font-medium text-foreground">{{ buyer.name }}</div>
+                      <div class="text-[10px] text-muted-foreground/80">{{ buyer.email }}</div>
                     </div>
-                  </div>
-                </template>
+                  </template>
 
-                <template #item-buyer="{ buyer }">
-                  <div class="py-2">
-                    <div class="text-sm font-medium text-foreground">{{ buyer.name }}</div>
-                    <div class="text-[10px] text-muted-foreground/80">{{ buyer.email }}</div>
-                  </div>
-                </template>
+                  <template #item-total="{ price }">
+                    <span class="font-bold text-foreground">Rp {{ new Intl.NumberFormat('id-ID').format(price) }}</span>
+                  </template>
 
-                <template #item-total="{ price }">
-                  <span class="font-bold text-foreground">Rp {{ new Intl.NumberFormat('id-ID').format(price) }}</span>
-                </template>
+              <!-- ─── Transaction Actions (Seller) ─────────────────────────── -->
+                  <template #item-status="{ status, payment_method }">
+                    <div class="flex flex-col items-start gap-1 py-2">
+                      <span
+                        class="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full border"
+                        :class="{
+                          'border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400': ['pending','cod_requested'].includes(status),
+                          'border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400': status === 'paid',
+                          'border-indigo-200 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400': status === 'processing',
+                          'border-purple-200 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400': status === 'shipped',
+                          'border-teal-200 bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-400': ['delivered','cod_confirmed'].includes(status),
+                          'border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400': status === 'completed',
+                          'border-red-200 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400': status === 'disputed',
+                          'border-slate-200 bg-slate-50 text-slate-700 dark:bg-slate-800 dark:text-slate-400': status === 'canceled',
+                        }"
+                      >
+                        {{ getStatusLabel(status) }}
+                      </span>
+                      <span v-if="payment_method === 'cod'" class="inline-flex items-center gap-0.5 text-[8px] font-black uppercase text-orange-500">
+                        <Users class="h-2.5 w-2.5" /> COD
+                      </span>
+                      <span v-else class="inline-flex items-center gap-0.5 text-[8px] font-black uppercase text-blue-500">
+                        <CreditCard class="h-2.5 w-2.5" /> Rekber
+                      </span>
+                    </div>
+                  </template>
 
-                <template #item-status="{ status }">
-                  <span 
-                    class="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full border"
-                    :class="{
-                      'border-amber-200 bg-amber-50 text-amber-700': status === 'pending',
-                      'border-blue-200 bg-blue-50 text-blue-700': status === 'paid',
-                      'border-purple-200 bg-purple-50 text-purple-700': status === 'shipped',
-                      'border-emerald-200 bg-emerald-50 text-emerald-700': status === 'completed',
-                      'border-red-200 bg-red-50 text-red-700': status === 'disputed',
-                      'border-slate-200 bg-slate-50 text-slate-700': status === 'canceled',
-                    }"
-                  >
-                    {{ getStatusLabel(status) }}
-                  </span>
-                </template>
+                  <template #item-actions="item">
+                    <div class="flex flex-wrap items-center justify-end gap-1.5 py-2">
+                      <!-- REKBER FLOW -->
+                      <template v-if="item.payment_method === 'rekber' || !item.payment_method">
+                        <button
+                          v-if="item.status === 'paid'"
+                          @click="openShipModal(item)"
+                          class="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white text-[10px] font-bold rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                          <Truck class="h-3 w-3" /> Input Resi
+                        </button>
+                        <button
+                          v-if="item.status === 'pending' || item.status === 'paid'"
+                          @click="router.post(route('transactions.update-status', item.id), { status: 'processing' })"
+                          v-show="item.status === 'paid'"
+                          class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-500 text-white text-[10px] font-bold rounded-lg hover:bg-indigo-600 transition-colors"
+                        >
+                          Tandai Diproses
+                        </button>
+                      </template>
 
-                <template #item-actions="item">
-                  <div class="flex items-center justify-end gap-2 py-2">
-                    <button 
-                      v-if="item.status === 'pending'"
-                      @click="router.post(route('transactions.update-status', item.id), { status: 'paid' })"
-                      class="inline-flex items-center gap-1 px-3 py-1 bg-blue-500 text-white text-[10px] font-bold rounded-lg hover:bg-blue-600 transition-colors"
-                    >
-                      Tandai Dibayar
-                    </button>
-                    <button 
-                      v-if="item.status === 'paid'"
-                      @click="router.post(route('transactions.update-status', item.id), { status: 'shipped' })"
-                      class="inline-flex items-center gap-1 px-3 py-1 bg-purple-500 text-white text-[10px] font-bold rounded-lg hover:bg-purple-600 transition-colors"
-                    >
-                      Tandai Dikirim
-                    </button>
-                    <button 
-                      v-if="item.status === 'shipped'"
-                      @click="router.post(route('transactions.update-status', item.id), { status: 'completed' })"
-                      class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded-lg hover:bg-emerald-600 transition-colors"
-                    >
-                      Selesaikan
-                    </button>
-                    <button 
-                      v-if="item.status === 'disputed'"
-                      @click="openDisputeDetail(item)"
-                      class="inline-flex items-center gap-1 text-xs font-bold text-red-500 hover:underline"
-                    >
-                      <AlertTriangle class="h-3 w-3" />
-                      Detail Komplain
-                    </button>
-                  </div>
-                </template>
+                      <!-- COD FLOW -->
+                      <template v-if="item.payment_method === 'cod'">
+                        <button
+                          v-if="item.status === 'cod_requested'"
+                          @click="openCodModal(item)"
+                          class="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-[10px] font-bold rounded-lg hover:bg-teal-700 transition-colors"
+                        >
+                          <Users class="h-3 w-3" /> Konfirmasi COD
+                        </button>
+                        <button
+                          v-if="item.status === 'cod_requested'"
+                          @click="rejectCod(item)"
+                          class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold rounded-lg hover:bg-red-100 transition-colors"
+                        >
+                          Tolak COD
+                        </button>
+                        <button
+                          v-if="item.status === 'cod_confirmed'"
+                          @click="router.post(route('transactions.cod-complete', item.id))"
+                          class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white text-[10px] font-bold rounded-lg hover:bg-orange-600 transition-colors"
+                        >
+                          COD Selesai
+                        </button>
+                      </template>
 
-                <template #empty-message>
-                  <div class="py-12 text-center text-muted-foreground">
-                    Belum ada transaksi masuk.
-                  </div>
-                </template>
-              </EasyDataTable>
-            </div>
+                      <!-- Dispute -->
+                      <button
+                        v-if="item.status === 'disputed'"
+                        @click="openDisputeDetail(item)"
+                        class="inline-flex items-center gap-1 text-xs font-bold text-red-500 hover:underline"
+                      >
+                        <AlertTriangle class="h-3 w-3" /> Detail Komplain
+                      </button>
+                    </div>
+                  </template>
+
+                  <template #empty-message>
+                    <div class="py-12 text-center text-muted-foreground">
+                      Belum ada transaksi masuk.
+                    </div>
+                  </template>
+                </EasyDataTable>
+              </div>
 
             <div class="mt-6">
               <Pagination :links="transactions.links" />
@@ -706,7 +878,142 @@ const transactionHeaders = [
           </div>
         </div>
 
-        <!-- TAB 3: SETTINGS -->
+        <!-- TAB 3: NEGOTIATIONS -->
+        <div v-show="tab === 'negotiations'" class="transition-all duration-300">
+          <div class="space-y-6">
+            <div class="mb-8 flex items-center gap-4">
+              <div class="rounded-2xl bg-primary/10 p-3 text-primary">
+                <Tag class="h-6 w-6" />
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-foreground">Penawaran Harga dari Buyer</h3>
+                <p class="text-sm text-muted-foreground">Terima, counter, atau tolak penawaran yang masuk.</p>
+              </div>
+            </div>
+
+            <!-- Empty -->
+            <div v-if="negotiations?.data?.length === 0" class="flex flex-col items-center py-24 text-center">
+              <Tag class="mb-4 h-16 w-16 text-muted-foreground/25" />
+              <h4 class="text-lg font-bold text-muted-foreground">Belum ada penawaran masuk</h4>
+              <p class="mt-1 text-sm text-muted-foreground">Aktifkan opsi NEGO di produk Anda agar buyer bisa menawar.</p>
+            </div>
+
+            <!-- List -->
+            <div v-else class="space-y-5">
+              <div v-for="nego in negotiations?.data" :key="nego.id"
+                   class="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+
+                <!-- Header -->
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/20 px-5 py-3">
+                  <div class="flex items-center gap-3">
+                    <div class="h-8 w-8 overflow-hidden rounded-full border border-border bg-muted">
+                      <img v-if="nego.buyer?.profile?.avatar" :src="`/storage/${nego.buyer.profile.avatar}`" class="h-full w-full object-cover" />
+                      <div v-else class="flex h-full w-full items-center justify-center text-xs font-bold text-primary">{{ nego.buyer?.name?.charAt(0) }}</div>
+                    </div>
+                    <div>
+                      <p class="text-sm font-bold text-foreground">{{ nego.buyer?.name }}</p>
+                      <p class="text-[10px] text-muted-foreground">{{ formatDate(nego.created_at) }}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider" :class="badgeClass(nego.status)">
+                      {{ statusConfig[nego.status]?.label ?? nego.status }}
+                    </span>
+                    <span v-if="['pending','countered'].includes(nego.status)" class="flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <Clock class="h-3 w-3" /> {{ expiresIn(nego.expires_at) }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Body -->
+                <div class="p-5">
+                  <!-- Product -->
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl border border-border bg-muted">
+                      <img v-if="nego.product?.images?.length" :src="`/storage/${nego.product.images[0].image_path}`" class="h-full w-full object-cover" />
+                      <div v-else class="flex h-full w-full items-center justify-center"><Package class="h-6 w-6 text-muted-foreground/30" /></div>
+                    </div>
+                    <div>
+                      <p class="font-bold text-foreground truncate max-w-xs">{{ nego.product?.title }}</p>
+                      <div class="mt-1 flex items-center gap-3 text-sm">
+                        <span class="text-muted-foreground line-through">{{ formatRp(nego.product?.price) }}</span>
+                        <span class="font-black text-primary">{{ formatRp(nego.proposed_price) }}</span>
+                        <span class="rounded-full bg-red-100 px-2 py-0.5 text-[9px] font-bold text-red-600 dark:bg-red-900/20 dark:text-red-400">
+                          -{{ Math.round((1 - nego.proposed_price / nego.product?.price) * 100) }}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Message -->
+                  <div v-if="nego.message" class="mb-4 rounded-xl border border-border bg-muted/30 p-3 text-sm italic text-muted-foreground">
+                    "{{ nego.message }}"
+                  </div>
+
+                  <!-- Counter info -->
+                  <div v-if="nego.counter_price" class="mb-4 rounded-xl border border-indigo-200 bg-indigo-50/50 p-3 text-sm dark:border-indigo-800 dark:bg-indigo-900/10">
+                    <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">Counter-offer Anda: </span>
+                    <span class="font-black text-indigo-700 dark:text-indigo-300">{{ formatRp(nego.counter_price) }}</span>
+                    <p v-if="nego.seller_message" class="mt-1 text-xs italic text-muted-foreground">"{{ nego.seller_message }}"</p>
+                  </div>
+
+                  <!-- Toggle Aksi -->
+                  <button v-if="['pending','countered'].includes(nego.status)"
+                          @click="toggleExpand(nego.id)"
+                          class="flex w-full items-center justify-center gap-1 rounded-xl border border-border py-2 text-xs font-bold text-muted-foreground hover:bg-muted transition-colors">
+                    <component :is="expandedItems[nego.id] ? ChevronUp : ChevronDown" class="h-4 w-4" />
+                    {{ expandedItems[nego.id] ? 'Tutup' : 'Buka Aksi' }}
+                  </button>
+
+                  <!-- Action Panel -->
+                  <Transition enter-from-class="opacity-0 -translate-y-2" leave-to-class="opacity-0 -translate-y-2"
+                              enter-active-class="transition-all duration-200" leave-active-class="transition-all duration-200">
+                    <div v-if="expandedItems[nego.id] && nego.status === 'pending'" class="mt-4 space-y-4 border-t border-border pt-4">
+                      <!-- Terima -->
+                      <button @click="acceptNegotiation(nego.id)"
+                              class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-3 text-sm font-bold text-white shadow-lg shadow-green-600/20 hover:bg-green-700 transition-colors">
+                        <CheckCircle2 class="h-4 w-4" /> Terima Harga {{ formatRp(nego.proposed_price) }}
+                      </button>
+
+                      <!-- Counter -->
+                      <div class="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 dark:border-indigo-800 dark:bg-indigo-900/10">
+                        <p class="mb-3 text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Beri Counter-Offer</p>
+                        <div class="flex gap-2">
+                          <div class="relative flex-1">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">Rp</span>
+                            <input v-model="getCounterForm(nego.id).counter_price"
+                                   type="number" placeholder="Harga counter..."
+                                   class="w-full rounded-xl border border-border bg-background pl-8 pr-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/20" />
+                          </div>
+                          <button @click="counterNegotiation(nego.id, getCounterForm(nego.id))"
+                                  class="shrink-0 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 transition-colors">
+                            Kirim
+                          </button>
+                        </div>
+                        <input v-model="getCounterForm(nego.id).seller_message"
+                               type="text" placeholder="Pesan untuk buyer (opsional)..."
+                               class="mt-2 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none" />
+                      </div>
+
+                      <!-- Tolak -->
+                      <button @click="rejectNegotiation(nego.id, getCounterForm(nego.id).seller_message)"
+                              class="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50/50 py-2.5 text-sm font-bold text-red-600 hover:bg-red-100 transition-colors dark:bg-red-900/10 dark:border-red-800">
+                        <XCircle class="h-4 w-4" /> Tolak Penawaran
+                      </button>
+                    </div>
+                  </Transition>
+                </div>
+              </div>
+
+              <div class="mt-8" v-if="negotiations?.links">
+                <Pagination :links="negotiations.links" />
+              </div>
+            </div>
+        </div>
+      </div>
+
+
+        <!-- TAB 4: SETTINGS -->
         <div v-show="tab === 'settings'" class="transition-all duration-300">
           <div
             class="border border-border bg-card p-4 text-card-foreground shadow-sm sm:rounded-lg sm:p-8"
@@ -1080,6 +1387,84 @@ const transactionHeaders = [
             </div>
           </div>
         </Modal>
+
+        <!-- ─── Modal Input Resi ──────────────────────────────────────────── -->
+        <Modal :show="shipModal" @close="shipModal = false" maxWidth="md">
+          <div class="p-6">
+            <div class="mb-6 flex items-center justify-between border-b border-border pb-4">
+              <h3 class="flex items-center gap-2 text-lg font-bold">
+                <Truck class="h-5 w-5 text-purple-600" /> Input Nomor Resi
+              </h3>
+              <button @click="shipModal = false" class="text-muted-foreground hover:text-foreground">
+                <X class="h-5 w-5" />
+              </button>
+            </div>
+            <form @submit.prevent="submitShipment" class="space-y-4">
+              <div>
+                <InputLabel value="Nama Ekspedisi" />
+                <TextInput v-model="shipForm.courier_name" placeholder="JNE, J&T, SiCepat, dll." class="mt-1 block w-full" required />
+                <InputError :message="shipForm.errors.courier_name" class="mt-1" />
+              </div>
+              <div>
+                <InputLabel value="Nomor Resi" />
+                <TextInput v-model="shipForm.tracking_number" placeholder="Masukkan nomor resi..." class="mt-1 block w-full font-mono" required />
+                <InputError :message="shipForm.errors.tracking_number" class="mt-1" />
+              </div>
+              <div>
+                <InputLabel value="Catatan untuk Buyer (opsional)" />
+                <textarea v-model="shipForm.seller_notes" rows="2" placeholder="Misal: Barang sudah dikemas rapi, sudah di-bubblewrap..."
+                          class="mt-1 block w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+              </div>
+              <div class="flex justify-end gap-2 pt-2">
+                <SecondaryButton type="button" @click="shipModal = false">Batal</SecondaryButton>
+                <PrimaryButton type="submit" :disabled="shipForm.processing">
+                  <Truck class="mr-2 h-4 w-4" /> Simpan & Konfirmasi Pengiriman
+                </PrimaryButton>
+              </div>
+            </form>
+          </div>
+        </Modal>
+
+        <!-- ─── Modal Konfirmasi COD ──────────────────────────────────────── -->
+        <Modal :show="codModal" @close="codModal = false" maxWidth="md">
+          <div class="p-6">
+            <div class="mb-6 flex items-center justify-between border-b border-border pb-4">
+              <h3 class="flex items-center gap-2 text-lg font-bold">
+                <Users class="h-5 w-5 text-teal-600" /> Konfirmasi Meetup COD
+              </h3>
+              <button @click="codModal = false" class="text-muted-foreground hover:text-foreground">
+                <X class="h-5 w-5" />
+              </button>
+            </div>
+            <form @submit.prevent="submitCodConfirm" class="space-y-4">
+              <div>
+                <InputLabel value="Lokasi Meetup" />
+                <TextInput v-model="codForm.cod_location" placeholder="Nama tempat / alamat lengkap..." class="mt-1 block w-full" required />
+                <InputError :message="codForm.errors.cod_location" class="mt-1" />
+              </div>
+              <div>
+                <InputLabel value="Waktu Meetup" />
+                <TextInput v-model="codForm.cod_scheduled_at" type="datetime-local" class="mt-1 block w-full" required />
+                <InputError :message="codForm.errors.cod_scheduled_at" class="mt-1" />
+              </div>
+              <div>
+                <InputLabel value="Pesan untuk Buyer (opsional)" />
+                <textarea v-model="codForm.seller_notes" rows="2" placeholder="Misal: Saya pakai baju merah, hubungi sebelum datang..."
+                          class="mt-1 block w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+              </div>
+              <div class="rounded-xl border border-teal-200 bg-teal-50/50 p-3 text-sm text-teal-700 dark:border-teal-800 dark:bg-teal-900/10 dark:text-teal-300">
+                ℹ️ Setelah dikonfirmasi, buyer akan menerima notifikasi detail meetup ini.
+              </div>
+              <div class="flex justify-end gap-2 pt-2">
+                <SecondaryButton type="button" @click="codModal = false">Batal</SecondaryButton>
+                <PrimaryButton type="submit" :disabled="codForm.processing">
+                  <Users class="mr-2 h-4 w-4" /> Konfirmasi COD
+                </PrimaryButton>
+              </div>
+            </form>
+          </div>
+        </Modal>
+
       </div>
     </div>
   </AppLayout>
@@ -1105,9 +1490,8 @@ const transactionHeaders = [
   --easy-table-footer-padding: 0px 10px;
   --easy-table-footer-height: 50px;
 
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid hsl(var(--border));
 }
 
 :deep(.customize-header) {
@@ -1117,7 +1501,7 @@ const transactionHeaders = [
 }
 
 .easy-table-wrapper {
-  @apply rounded-2xl overflow-hidden border border-border;
+  @apply rounded-xl overflow-hidden border border-border shadow-sm bg-card;
 }
 
 /* Dark mode specific overrides */

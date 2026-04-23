@@ -29,7 +29,7 @@ class ProductSchema
         ],
         'wearable' => [
             'id' => 4,
-            'label' => 'Wearable',
+            'label' => 'Smartwatch & Wearable',
             'fields' => ['battery_health', 'screen_size', 'connectivity'],
             'brands' => ['Apple', 'Samsung', 'Huawei', 'Xiaomi', 'Garmin', 'Amazfit', 'Fitbit', 'Suunto'],
         ],
@@ -55,12 +55,6 @@ class ProductSchema
             ],
             'brands' => ['Sony', 'Microsoft', 'Nintendo', 'Valve', 'Asus', 'MSI', 'Lenovo', 'Logitech', 'Razer'],
         ],
-        'networking' => [
-            'id' => 7,
-            'label' => 'Networking',
-            'fields' => ['connectivity'],
-            'brands' => ['TP-Link', 'D-Link', 'Tenda', 'Mikrotik', 'Cisco', 'Ubiquiti', 'Huawei', 'ZTE'],
-        ],
         'powermanagement' => [
             'id' => 8,
             'label' => 'Power Management',
@@ -74,21 +68,29 @@ class ProductSchema
         ],
         'peripherals' => [
             'id' => 9,
-            'label' => 'Peripherals',
+            'label' => 'Peripherals & Monitor',
             'fields' => ['connectivity'],
             'sub_types' => [
+                'monitor' => ['screen_size', 'connectivity'],
                 'mouse' => ['connectivity'],
                 'keyboard' => ['connectivity', 'switch_type'],
                 'webcam' => ['connectivity'],
                 'microphone' => ['connectivity'],
             ],
-            'brands' => ['Logitech', 'Razer', 'Corsair', 'SteelSeries', 'Keychron', 'VortexSeries', 'Fantech', 'Rexus'],
+            'brands' => ['LG', 'Samsung', 'Asus', 'Dell', 'Logitech', 'Razer', 'Corsair', 'Keychron', 'VortexSeries'],
         ],
-        'camera' => [
+        'photography' => [
             'id' => 10,
-            'label' => 'Camera',
-            'fields' => ['shutter_count', 'storage', 'battery_health', 'screen_size', 'connectivity', 'has_original_lens'],
-            'brands' => ['Canon', 'Nikon', 'Sony', 'Fujifilm', 'Lumix', 'Olympus', 'GoPro', 'DJI'],
+            'label' => 'Fotografi & Videografi',
+            'fields' => ['connectivity'],
+            'sub_types' => [
+                'body' => ['shutter_count', 'storage', 'battery_health', 'screen_size', 'has_original_lens'],
+                'lens' => [],
+                'gimbal' => ['battery_health'],
+                'tripod' => [],
+                'lighting' => ['power_source'],
+            ],
+            'brands' => ['Canon', 'Nikon', 'Sony', 'Fujifilm', 'Lumix', 'DJI', 'GoPro', 'Zhiyun', 'Godox', 'Sigma', 'Tamron', 'Insta360'],
         ],
         'storage' => [
             'id' => 11,
@@ -104,27 +106,14 @@ class ProductSchema
         ],
         'office' => [
             'id' => 12,
-            'label' => 'Office & Monitor',
+            'label' => 'Office & Printer',
             'fields' => ['connectivity'],
             'sub_types' => [
-                'monitor' => ['screen_size', 'connectivity'],
                 'printer' => ['connectivity'],
                 'scanner' => ['connectivity'],
                 'projector' => ['connectivity'],
             ],
-            'brands' => ['LG', 'Samsung', 'Asus', 'Dell', 'HP', 'Epson', 'Canon', 'ViewSonic', 'BenQ'],
-        ],
-        'photography_acc' => [
-            'id' => 13,
-            'label' => 'Fotografi & Videografi',
-            'fields' => ['connectivity'],
-            'sub_types' => [
-                'lens' => [],
-                'gimbal' => ['battery_health'],
-                'tripod' => [],
-                'lighting' => ['power_source'],
-            ],
-            'brands' => ['Sony', 'Canon', 'Nikon', 'Fujifilm', 'DJI', 'Zhiyun', 'Godox', 'Sigma', 'Tamron'],
+            'brands' => ['Epson', 'Canon', 'HP', 'Brother', 'Fujitsu', 'BenQ', 'ViewSonic'],
         ],
     ];
 

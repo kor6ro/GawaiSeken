@@ -1,7 +1,8 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AppLayout.vue'
 import { Head, useForm, Link } from '@inertiajs/vue3'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import Pagination from '@/Components/Pagination.vue'
 import Modal from '@/Components/Modal.vue'
 import SecondaryButton from '@/Components/SecondaryButton.vue'
 import DangerButton from '@/Components/DangerButton.vue'
@@ -9,19 +10,27 @@ import PrimaryButton from '@/Components/PrimaryButton.vue'
 import TextInput from '@/Components/TextInput.vue'
 import InputLabel from '@/Components/InputLabel.vue'
 import InputError from '@/Components/InputError.vue'
-import { Users, Package, AlertCircle, CheckSquare } from 'lucide-vue-next'
+import { Users, Package, AlertCircle, CheckSquare, ShieldCheck, Tag, ShoppingBag, LayoutDashboard, Search, Eye, Ban, CheckCircle2, XCircle, Trash2, ArrowRight } from 'lucide-vue-next'
 
 const props = defineProps({
-  pendingVerifications: {
-    type: Array,
-    default: () => [],
-  },
-  pendingProductsCount: {
-    type: Number,
-    default: 0,
-  },
+  pendingVerifications: Array,
+  pendingVerificationsCount: Number,
+  pendingProductsCount: Number,
+  pendingDisputesCount: Number,
   totalUsersCount: Number,
   totalProductsCount: Number,
+  products: Object,
+  users: Object,
+  disputes: Object,
+  filters: Object,
+})
+
+const tab = ref(new URLSearchParams(window.location.search).get('tab') || 'overview')
+
+watch(tab, (newTab) => {
+  const url = new URL(window.location)
+  url.searchParams.set('tab', newTab)
+  window.history.pushState({}, '', url)
 })
 
 const headers = [
@@ -29,6 +38,31 @@ const headers = [
   { text: "Email", value: "email" },
   { text: "Tanggal Pengajuan", value: "created_at" },
   { text: "Aksi", value: "actions", width: 150 },
+]
+
+const userHeaders = [
+  { text: "Nama", value: "user" },
+  { text: "Email", value: "email" },
+  { text: "Role", value: "role" },
+  { text: "Produk", value: "products_count" },
+  { text: "Status", value: "status" },
+  { text: "Aksi", value: "actions", width: 100 },
+]
+
+const productHeaders = [
+  { text: "Produk", value: "product" },
+  { text: "Penjual", value: "seller" },
+  { text: "Harga", value: "price" },
+  { text: "Status", value: "status" },
+  { text: "Aksi", value: "actions", width: 100 },
+]
+
+const disputeHeaders = [
+  { text: "Referensi", value: "reference" },
+  { text: "Pelapor", value: "reporter" },
+  { text: "Tipe", value: "type" },
+  { text: "Status", value: "status" },
+  { text: "Aksi", value: "actions", width: 100 },
 ]
 
 const selectedVerification = ref(null)
@@ -83,11 +117,45 @@ const reject = () => {
       </h2>
     </template>
 
-    <div class="py-12">
-      <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <!-- Stats Summary -->
+    <div class="py-8">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <!-- Tab Navigation -->
+        <div class="mb-8 flex flex-wrap items-center gap-2 rounded-2xl bg-muted p-1.5 shadow-inner sm:w-fit">
+          <button
+            @click="tab = 'overview'"
+            :class="tab === 'overview' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+            class="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200 sm:flex-none"
+          >
+            <LayoutDashboard class="h-4 w-4" /> Ringkasan
+          </button>
+          <button
+            @click="tab = 'users'"
+            :class="tab === 'users' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+            class="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200 sm:flex-none"
+          >
+            <Users class="h-4 w-4" /> Pengguna
+          </button>
+          <button
+            @click="tab = 'products'"
+            :class="tab === 'products' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+            class="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200 sm:flex-none"
+          >
+            <Package class="h-4 w-4" /> Produk
+          </button>
+          <button
+            @click="tab = 'disputes'"
+            :class="tab === 'disputes' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+            class="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200 sm:flex-none"
+          >
+            <AlertCircle class="h-4 w-4" /> Komplain
+          </button>
+        </div>
+
+        <!-- TAB CONTENT -->
+        <div v-show="tab === 'overview'" class="transition-all duration-300">
+          <!-- Stats Summary -->
         <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Link :href="route('admin.users.index')" class="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-primary hover:shadow-md">
+          <button @click="tab = 'users'" class="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-primary hover:shadow-md text-left">
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Pengguna</h3>
@@ -97,9 +165,9 @@ const reject = () => {
                 <Users class="h-6 w-6" />
               </div>
             </div>
-          </Link>
+          </button>
 
-          <Link :href="route('admin.products.index')" class="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-blue-500 hover:shadow-md">
+          <button @click="tab = 'products'" class="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-blue-500 hover:shadow-md text-left">
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Produk</h3>
@@ -109,9 +177,9 @@ const reject = () => {
                 <Package class="h-6 w-6" />
               </div>
             </div>
-          </Link>
+          </button>
 
-          <Link :href="route('admin.products.index', { status: 'pending' })" class="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-amber-500 hover:shadow-md">
+          <button @click="tab = 'products'" class="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-amber-500 hover:shadow-md text-left">
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pending Moderasi</h3>
@@ -121,19 +189,19 @@ const reject = () => {
                 <AlertCircle class="h-6 w-6" />
               </div>
             </div>
-          </Link>
+          </button>
 
-          <Link :href="route('admin.disputes.index')" class="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-red-500 hover:shadow-md">
+          <button @click="tab = 'disputes'" class="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-red-500 hover:shadow-md text-left">
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Komplain Aktif</h3>
-                <p class="mt-2 text-3xl font-black text-red-500">{{ $page.props.pendingDisputesCount || 0 }}</p>
+                <p class="mt-2 text-3xl font-black text-red-500">{{ pendingDisputesCount || 0 }}</p>
               </div>
               <div class="rounded-xl bg-red-500/10 p-3 text-red-500 group-hover:bg-red-500 group-hover:text-white transition-colors">
                 <CheckSquare class="h-6 w-6" />
               </div>
             </div>
-          </Link>
+          </button>
         </div>
 
         <!-- Verification Table -->
@@ -177,6 +245,182 @@ const reject = () => {
                   </div>
                 </template>
               </EasyDataTable>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: USERS -->
+        <div v-show="tab === 'users'" class="transition-all duration-300">
+          <div class="bg-card border border-border shadow sm:rounded-2xl overflow-hidden">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-foreground flex items-center gap-2">
+                  <Users class="h-5 w-5 text-primary" />
+                  Manajemen Pengguna
+                </h3>
+              </div>
+
+              <div class="easy-table-wrapper">
+                <EasyDataTable
+                  :headers="userHeaders"
+                  :items="users.data"
+                  hide-footer
+                  border-cell
+                  table-class-name="customize-table"
+                  header-class-name="customize-header"
+                >
+                  <template #item-user="{ name, profile }">
+                    <div class="flex items-center gap-3 py-2">
+                      <div class="h-8 w-8 overflow-hidden rounded-full border border-border bg-muted">
+                        <img v-if="profile?.avatar" :src="`/storage/${profile.avatar}`" class="h-full w-full object-cover" />
+                        <div v-else class="flex h-full w-full items-center justify-center text-xs font-bold text-primary">{{ name.charAt(0) }}</div>
+                      </div>
+                      <span class="font-bold text-foreground">{{ name }}</span>
+                    </div>
+                  </template>
+
+                  <template #item-role="{ role }">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border"
+                      :class="role === 'admin' ? 'bg-red-50 text-red-600 border-red-200' : (role === 'seller' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-slate-50 text-slate-600 border-slate-200')">
+                      {{ role }}
+                    </span>
+                  </template>
+
+                  <template #item-status="{ is_suspended }">
+                    <span v-if="is_suspended" class="text-red-500 font-bold flex items-center gap-1 text-xs">
+                      <Ban class="h-3 w-3" /> Suspended
+                    </span>
+                    <span v-else class="text-emerald-500 font-bold flex items-center gap-1 text-xs">
+                      <CheckCircle2 class="h-3 w-3" /> Active
+                    </span>
+                  </template>
+
+                  <template #item-actions="item">
+                    <Link :href="route('admin.users.index', { search: item.email })" class="text-primary hover:underline font-bold text-xs">
+                      Detail
+                    </Link>
+                  </template>
+                </EasyDataTable>
+              </div>
+              <div class="mt-6">
+                <Pagination :links="users.links" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: PRODUCTS -->
+        <div v-show="tab === 'products'" class="transition-all duration-300">
+          <div class="bg-card border border-border shadow sm:rounded-2xl overflow-hidden">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-foreground flex items-center gap-2">
+                  <Package class="h-5 w-5 text-blue-500" />
+                  Moderasi Produk
+                </h3>
+              </div>
+
+              <div class="easy-table-wrapper">
+                <EasyDataTable
+                  :headers="productHeaders"
+                  :items="products.data"
+                  hide-footer
+                  border-cell
+                  table-class-name="customize-table"
+                  header-class-name="customize-header"
+                >
+                  <template #item-product="{ title, images }">
+                    <div class="flex items-center gap-3 py-2">
+                      <div class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md border border-border bg-muted">
+                        <img v-if="images?.length > 0" :src="`/storage/${images[0].image_path}`" class="h-full w-full object-cover" />
+                      </div>
+                      <span class="font-bold text-foreground truncate max-w-[200px]">{{ title }}</span>
+                    </div>
+                  </template>
+
+                  <template #item-seller="{ user }">
+                    <span class="text-sm text-muted-foreground">{{ user.name }}</span>
+                  </template>
+
+                  <template #item-price="{ price }">
+                    <span class="font-bold text-foreground">Rp {{ new Intl.NumberFormat('id-ID').format(price) }}</span>
+                  </template>
+
+                  <template #item-status="{ status }">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border"
+                      :class="{
+                        'bg-amber-50 text-amber-600 border-amber-200': status === 'pending',
+                        'bg-emerald-50 text-emerald-600 border-emerald-200': status === 'active',
+                        'bg-red-50 text-red-600 border-red-200': ['rejected', 'banned'].includes(status)
+                      }">
+                      {{ status }}
+                    </span>
+                  </template>
+
+                  <template #item-actions="item">
+                    <Link :href="route('admin.products.index', { search: item.title })" class="text-primary hover:underline font-bold text-xs">
+                      Kelola
+                    </Link>
+                  </template>
+                </EasyDataTable>
+              </div>
+              <div class="mt-6">
+                <Pagination :links="products.links" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: DISPUTES -->
+        <div v-show="tab === 'disputes'" class="transition-all duration-300">
+          <div class="bg-card border border-border shadow sm:rounded-2xl overflow-hidden">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-foreground flex items-center gap-2">
+                  <AlertCircle class="h-5 w-5 text-red-500" />
+                  Pusat Resolusi (Disputes)
+                </h3>
+              </div>
+
+              <div class="easy-table-wrapper">
+                <EasyDataTable
+                  :headers="disputeHeaders"
+                  :items="disputes.data"
+                  hide-footer
+                  border-cell
+                  table-class-name="customize-table"
+                  header-class-name="customize-header"
+                >
+                  <template #item-reference="{ transaction }">
+                    <span class="font-bold text-foreground">#{{ transaction.reference_number }}</span>
+                  </template>
+
+                  <template #item-reporter="{ user }">
+                    <span class="text-sm text-muted-foreground">{{ user.name }}</span>
+                  </template>
+
+                  <template #item-type="{ reason }">
+                    <span class="text-xs text-foreground italic">"{{ reason }}"</span>
+                  </template>
+
+                  <template #item-status="{ status }">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border"
+                      :class="status === 'pending' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'">
+                      {{ status }}
+                    </span>
+                  </template>
+
+                  <template #item-actions="item">
+                    <Link :href="route('admin.disputes.show', item.id)" class="text-primary hover:underline font-bold text-xs flex items-center gap-1">
+                      Resolusi <ArrowRight class="h-3 w-3" />
+                    </Link>
+                  </template>
+                </EasyDataTable>
+              </div>
+              <div class="mt-6">
+                <Pagination :links="disputes.links" />
+              </div>
             </div>
           </div>
         </div>
@@ -290,9 +534,8 @@ const reject = () => {
   --easy-table-footer-padding: 0px 10px;
   --easy-table-footer-height: 50px;
 
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid hsl(var(--border));
 }
 
 :deep(.customize-header) {
@@ -302,7 +545,7 @@ const reject = () => {
 }
 
 .easy-table-wrapper {
-  @apply rounded-2xl overflow-hidden border border-border;
+  @apply rounded-xl overflow-hidden border border-border shadow-sm bg-card;
 }
 
 /* Dark mode specific overrides */

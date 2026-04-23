@@ -1,100 +1,110 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { Head, Link, usePage, router } from '@inertiajs/vue3'
+import { ref, computed, reactive } from 'vue'
+import { Head, Link, usePage, router, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import {
-  Home,
-  ChevronRight,
-  ExternalLink,
-  Globe,
-  ArrowRight,
-  MapPin,
-  Store,
-  MessageCircle,
-  Edit3,
-  ShieldCheck,
-  ShoppingCart,
-  X,
-  Flag,
-  AlertTriangle,
-  Heart,
+  Home, ChevronRight, ExternalLink, Globe, ArrowRight,
+  MapPin, Store, MessageCircle, Edit3, ShieldCheck,
+  ShoppingCart, X, Flag, AlertTriangle, Heart,
+  HandCoins, Truck, Users, CheckCircle, Clock, ArrowRightLeft,
 } from 'lucide-vue-next'
 import Modal from '@/Components/Modal.vue'
 
 const props = defineProps({
   product: Object,
+  myNegotiation: Object,
+  myActiveTransaction: Object,
 })
+
+const auth = usePage().props.auth
 
 const activeImage = ref(
   props.product.images.length > 0
     ? `/storage/${props.product.images[0].image_path}`
     : '/images/placeholder-product.png'
 )
+
+// ── Modals
 const showRemoveModal = ref(false)
+const showBuyModal = ref(false)
+const showNegoModal = ref(false)
+const showCodModal = ref(false)
 
-const auth = usePage().props.auth
+// ── Forms
+const rekberForm = useForm({ payment_method: 'rekber', shipping_address: '', negotiation_id: null })
+const codForm = useForm({ payment_method: 'cod', cod_location: '', cod_scheduled_at: '', negotiation_id: null })
+const negoForm = useForm({ proposed_price: Math.floor(Number(props.product.price)), message: '' })
 
-const isFavorited = computed(() => {
-  return auth.user?.favorites?.includes(props.product.id)
-})
+const submitRekber = () => {
+  if (props.myNegotiation?.status === 'accepted') rekberForm.negotiation_id = props.myNegotiation.id
+  rekberForm.post(route('transactions.checkout', props.product.slug), {
+    onSuccess: () => { showBuyModal.value = false },
+  })
+}
+
+const submitCod = () => {
+  if (props.myNegotiation?.status === 'accepted') codForm.negotiation_id = props.myNegotiation.id
+  codForm.post(route('transactions.checkout', props.product.slug), {
+    onSuccess: () => { showCodModal.value = false },
+  })
+}
+
+const submitNego = () => {
+  negoForm.post(route('negotiations.store', props.product.slug), {
+    onSuccess: () => { showNegoModal.value = false },
+  })
+}
+
+const acceptCounter = () => {
+  router.post(route('negotiations.accept-counter', props.myNegotiation.id), {}, { preserveScroll: true })
+}
+
+// ── Favorite
+const isFavorited = computed(() => auth.user?.favorites?.includes(props.product.id))
 
 const toggleFavorite = () => {
-  if (!auth.user) {
-    router.get(route('login'))
-    return
-  }
-  if (isFavorited.value) {
-    showRemoveModal.value = true
-  } else {
-    submitToggle()
-  }
+  if (!auth.user) { router.get(route('login')); return }
+  if (isFavorited.value) showRemoveModal.value = true
+  else submitToggle()
 }
 
 const submitToggle = () => {
   showRemoveModal.value = false
-  router.post(
-    route('products.toggle-favorite', props.product.id),
-    {},
-    {
-      preserveScroll: true,
-    }
-  )
+  router.post(route('products.toggle-favorite', props.product.id), {}, { preserveScroll: true })
 }
 
 const reportProduct = () => {
-  if (!auth.user) {
-    router.get(route('login'))
-    return
-  }
+  if (!auth.user) { router.get(route('login')); return }
   const reason = prompt('Alasan melaporkan produk ini?')
-  if (reason) {
-    router.post(
-      route('products.report', props.product.id),
-      { reason },
-      {
-        preserveScroll: true,
-      }
-    )
-  }
+  if (reason) router.post(route('products.report', props.product.id), { reason }, { preserveScroll: true })
 }
 
-const formattedPrice = computed(() => {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(props.product.price)
-})
+// ── Helpers
+const fmt = (n) => new Intl.NumberFormat('id-ID').format(n)
 
 const specifications = computed(() => {
   if (!props.product.specifications) return []
   return Object.entries(props.product.specifications)
-    .filter(([key, value]) => value !== null && value !== '' && key !== 'sub_type')
-    .map(([key, value]) => ({
-      label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-      value: Array.isArray(value) ? value.join(', ') : value,
+    .filter(([k, v]) => v !== null && v !== '' && k !== 'sub_type')
+    .map(([k, v]) => ({
+      label: k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      value: Array.isArray(v) ? v.join(', ') : v,
     }))
 })
+
+const negoStatusLabel = computed(() => {
+  const s = props.myNegotiation?.status
+  if (s === 'pending') return { text: 'Menunggu respons seller', color: 'text-amber-500' }
+  if (s === 'countered') return { text: 'Seller kirim counter-offer!', color: 'text-blue-500' }
+  if (s === 'accepted') return { text: 'Penawaran diterima! Lanjutkan checkout', color: 'text-emerald-600' }
+  return null
+})
+
+const isOwner = computed(() => auth.user?.id === props.product.user_id)
+const hasActiveTransaction = computed(() => !!props.myActiveTransaction)
+
+// Produk ini menggunakan route checkout dengan product slug
+const checkoutRoute = computed(() => route('transactions.checkout', props.product.slug))
 </script>
 
 <template>
@@ -323,69 +333,102 @@ const specifications = computed(() => {
                     </Link>
                   </div>
 
-                  <div v-if="auth.user">
-                    <div class="flex gap-4">
-                      <div v-if="auth.user.id !== product.user_id" class="flex flex-col gap-3 flex-1">
-                        <Link
-                          :href="route('transactions.checkout', product.slug)"
-                          method="post"
-                          as="button"
-                          class="flex w-full transform items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-black text-primary-foreground shadow-xl transition-all duration-300 hover:bg-primary/90 active:scale-95"
-                        >
-                          <ShoppingCart class="h-5 w-5" />
-                          Beli Sekarang
-                        </Link>
-                        <Link
-                          :href="route('chat.initiate', product.slug)"
-                          method="post"
-                          as="button"
-                          class="flex w-full transform items-center justify-center gap-2 rounded-2xl border-2 border-primary/20 bg-primary/5 py-4 text-sm font-black text-primary transition-all duration-300 hover:bg-primary/10 active:scale-95"
-                        >
-                          <MessageCircle class="h-5 w-5" />
-                          Chat Penjual
-                        </Link>
-                      </div>
-                      <Link
-                        v-else
-                        :href="route('products.edit', product.slug)"
-                        class="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-accent py-4 text-sm font-black text-accent-foreground shadow-xl transition-all duration-300 hover:bg-accent/80"
-                      >
-                        <Edit3 class="h-5 w-5" />
-                        Edit Produk
-                      </Link>
+                  <!-- OWNER: edit button -->
+                  <div v-if="isOwner" class="flex gap-3">
+                    <Link :href="route('products.edit', product.slug)"
+                      class="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-accent py-4 text-sm font-black text-accent-foreground shadow-xl transition-all hover:bg-accent/80">
+                      <Edit3 class="h-5 w-5" /> Edit Produk
+                    </Link>
+                  </div>
 
-                      <!-- Favorite Toggle Button -->
-                      <button
-                        @click="toggleFavorite"
-                        class="flex transform items-center justify-center rounded-2xl border-2 p-4 shadow-lg transition-all duration-300 active:scale-90"
-                        :class="
-                          isFavorited
-                            ? 'border-rose-200 bg-rose-50 text-rose-500 hover:bg-rose-100'
-                            : 'border-border bg-background text-muted-foreground hover:border-blue-200 hover:text-blue-500'
-                        "
-                      >
-                        <X v-if="isFavorited" class="h-6 w-6" />
-                        <Heart v-else class="h-6 w-6" />
+                  <!-- NOT LOGGED IN -->
+                  <Link v-else-if="!auth.user" :href="route('login')"
+                    class="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-black text-primary-foreground shadow-xl">
+                    Login untuk Beli / Chat
+                  </Link>
+
+                  <!-- BUYER ACTIONS -->
+                  <div v-else class="space-y-3">
+
+                    <!-- Active Transaction Banner -->
+                    <div v-if="hasActiveTransaction"
+                      class="flex items-center gap-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 text-sm text-amber-700 dark:text-amber-400">
+                      <Clock class="h-5 w-5 shrink-0" />
+                      <div>
+                        <p class="font-black">Transaksi Sedang Berjalan</p>
+                        <p class="text-xs mt-0.5">Anda sudah memiliki transaksi aktif untuk produk ini.</p>
+                      </div>
+                      <Link :href="route('profile.orders')" class="ml-auto shrink-0 text-xs font-black underline">Lihat</Link>
+                    </div>
+
+                    <!-- Negotiation Status Banner -->
+                    <div v-if="myNegotiation && !hasActiveTransaction"
+                      class="rounded-2xl border p-4 space-y-2"
+                      :class="{
+                        'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-700': myNegotiation.status === 'pending',
+                        'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700': myNegotiation.status === 'countered',
+                        'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-700': myNegotiation.status === 'accepted',
+                      }">
+                      <div class="flex items-center gap-2">
+                        <HandCoins class="h-4 w-4" />
+                        <span class="text-xs font-black uppercase tracking-wider" :class="negoStatusLabel?.color">{{ negoStatusLabel?.text }}</span>
+                      </div>
+                      <div class="text-xs space-y-1">
+                        <p>Penawaran Anda: <strong>Rp {{ fmt(myNegotiation.proposed_price) }}</strong></p>
+                        <p v-if="myNegotiation.counter_price">Counter Seller: <strong>Rp {{ fmt(myNegotiation.counter_price) }}</strong></p>
+                        <p v-if="myNegotiation.agreed_price">Harga Disepakati: <strong class="text-emerald-600">Rp {{ fmt(myNegotiation.agreed_price) }}</strong></p>
+                      </div>
+                      <!-- Accept counter-offer -->
+                      <button v-if="myNegotiation.status === 'countered'" @click="acceptCounter"
+                        class="w-full rounded-xl bg-blue-500 py-2.5 text-xs font-black text-white hover:bg-blue-600 transition">
+                        Terima Counter-Offer Seller
                       </button>
                     </div>
 
-                    <!-- Report Button -->
-                    <button
-                      v-if="auth.user.id !== product.user_id"
-                      @click="reportProduct"
-                      class="mt-4 flex w-full items-center justify-center gap-2 py-2 text-xs font-bold text-muted-foreground transition-colors hover:text-amber-600"
-                    >
-                      <Flag class="h-3.5 w-3.5" />
-                      Laporkan masalah pada produk ini
-                    </button>
+                    <!-- Main Action Buttons -->
+                    <div v-if="!hasActiveTransaction" class="flex flex-col gap-2">
+                      <!-- Beli Rekber -->
+                      <button @click="showBuyModal = true"
+                        class="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-black text-primary-foreground shadow-xl transition hover:bg-primary/90 active:scale-95">
+                        <Truck class="h-5 w-5" />
+                        Beli via Rekber
+                        <span v-if="myNegotiation?.status === 'accepted'" class="ml-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px]">Harga Nego</span>
+                      </button>
+
+                      <!-- Beli COD -->
+                      <button v-if="product.is_cod" @click="showCodModal = true"
+                        class="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-blue-500 bg-blue-500/10 py-4 text-sm font-black text-blue-600 dark:text-blue-400 transition hover:bg-blue-500/20 active:scale-95">
+                        <Users class="h-5 w-5" />
+                        Beli via COD (Ketemu Langsung)
+                      </button>
+
+                      <!-- Nego -->
+                      <button v-if="product.is_negotiable && !myNegotiation" @click="showNegoModal = true"
+                        class="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-indigo-400 bg-indigo-400/10 py-4 text-sm font-black text-indigo-600 dark:text-indigo-400 transition hover:bg-indigo-400/20 active:scale-95">
+                        <HandCoins class="h-5 w-5" />
+                        Tawar Harga
+                      </button>
+
+                      <!-- Chat -->
+                      <Link :href="route('chat.initiate', product.slug)" method="post" as="button"
+                        class="flex w-full items-center justify-center gap-2 rounded-2xl border border-border py-3 text-sm font-bold text-muted-foreground transition hover:bg-accent active:scale-95">
+                        <MessageCircle class="h-4 w-4" /> Chat Penjual
+                      </Link>
+                    </div>
+
+                    <!-- Favorite + Report -->
+                    <div class="flex items-center gap-2 pt-1">
+                      <button @click="toggleFavorite"
+                        class="flex items-center justify-center rounded-2xl border-2 p-3 transition active:scale-90"
+                        :class="isFavorited ? 'border-rose-200 bg-rose-50 text-rose-500' : 'border-border text-muted-foreground hover:text-rose-500'">
+                        <Heart class="h-5 w-5" :class="{ 'fill-current': isFavorited }" />
+                      </button>
+                      <button @click="reportProduct"
+                        class="flex flex-1 items-center justify-center gap-1 py-2 text-xs font-bold text-muted-foreground hover:text-amber-600 transition">
+                        <Flag class="h-3.5 w-3.5" /> Laporkan produk ini
+                      </button>
+                    </div>
                   </div>
-                  <Link
-                    v-else
-                    :href="route('login')"
-                    class="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-black text-primary-foreground shadow-xl"
-                  >
-                    Login untuk Chat & Keranjang
-                  </Link>
                 </div>
               </div>
             </div>
@@ -394,6 +437,7 @@ const specifications = computed(() => {
       </div>
     </div>
 
+    <!-- Modal: Hapus Favorit -->
     <Modal :show="showRemoveModal" @close="showRemoveModal = false" maxWidth="sm">
       <div class="rounded-2xl bg-white p-6 dark:bg-slate-900">
         <div class="mb-4 flex justify-center">
@@ -401,26 +445,102 @@ const specifications = computed(() => {
             <AlertTriangle class="h-8 w-8" />
           </div>
         </div>
-        <h3 class="mb-2 text-center text-lg font-black text-slate-900 dark:text-white">
-          Hapus dari Keranjang?
-        </h3>
-        <p class="mb-6 text-center text-sm text-slate-500 dark:text-slate-400">
-          Apakah Anda yakin ingin menghapus produk ini dari keranjang Anda?
-        </p>
-        <div class="flex gap-3">
-          <button
-            @click="showRemoveModal = false"
-            class="flex-1 rounded-xl bg-slate-100 py-2.5 font-bold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-          >
-            Batal
-          </button>
-          <button
-            @click="submitToggle"
-            class="flex-1 rounded-xl bg-red-500 py-2.5 font-bold text-white shadow-lg shadow-red-500/20 transition hover:bg-red-600"
-          >
-            Ya, Hapus
-          </button>
+        <h3 class="mb-2 text-center text-lg font-black text-slate-900 dark:text-white">Hapus dari Favorit?</h3>
+        <div class="flex gap-3 mt-4">
+          <button @click="showRemoveModal = false" class="flex-1 rounded-xl bg-slate-100 py-2.5 font-bold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300">Batal</button>
+          <button @click="submitToggle" class="flex-1 rounded-xl bg-red-500 py-2.5 font-bold text-white shadow-lg shadow-red-500/20 transition hover:bg-red-600">Ya, Hapus</button>
         </div>
+      </div>
+    </Modal>
+
+    <!-- Modal: Beli via Rekber -->
+    <Modal :show="showBuyModal" @close="showBuyModal = false" maxWidth="md">
+      <div class="bg-card text-card-foreground rounded-2xl p-6">
+        <h3 class="text-xl font-black mb-1">Beli via Rekening Bersama</h3>
+        <p class="text-sm text-muted-foreground mb-5">Dana Anda ditahan hingga barang diterima.</p>
+        <div class="rounded-2xl bg-muted/50 border border-border p-4 mb-5 space-y-1 text-sm">
+          <div class="flex justify-between">
+            <span class="text-muted-foreground">Harga Produk</span>
+            <span class="font-bold">Rp {{ fmt(myNegotiation?.status === 'accepted' ? myNegotiation.agreed_price : product.price) }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-muted-foreground">Biaya Layanan</span>
+            <span class="text-xs text-muted-foreground">Rp 5.000 + 1% (maks Rp 25.000)</span>
+          </div>
+        </div>
+        <form @submit.prevent="submitRekber" class="space-y-4">
+          <div>
+            <label class="block text-xs font-black uppercase tracking-wider mb-1.5">Alamat Pengiriman <span class="text-red-500">*</span></label>
+            <textarea v-model="rekberForm.shipping_address" rows="3" required placeholder="Alamat lengkap pengiriman..."
+              class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:ring-2 focus:ring-primary/30 resize-none"></textarea>
+            <p v-if="rekberForm.errors.shipping_address" class="text-xs text-red-500 mt-1">{{ rekberForm.errors.shipping_address }}</p>
+          </div>
+          <div class="flex gap-3">
+            <button type="button" @click="showBuyModal = false" class="flex-1 rounded-xl bg-muted py-3 font-bold text-sm transition hover:bg-muted/80">Batal</button>
+            <button type="submit" :disabled="rekberForm.processing"
+              class="flex-1 rounded-xl bg-primary py-3 text-sm font-black text-primary-foreground shadow-lg shadow-primary/20 transition hover:bg-primary/90 disabled:opacity-60">
+              {{ rekberForm.processing ? 'Memproses...' : 'Konfirmasi Beli' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </Modal>
+
+    <!-- Modal: Beli via COD -->
+    <Modal :show="showCodModal" @close="showCodModal = false" maxWidth="md">
+      <div class="bg-card text-card-foreground rounded-2xl p-6">
+        <h3 class="text-xl font-black mb-1">Beli via COD</h3>
+        <p class="text-sm text-muted-foreground mb-5">Tentukan lokasi dan waktu bertemu dengan penjual.</p>
+        <form @submit.prevent="submitCod" class="space-y-4">
+          <div>
+            <label class="block text-xs font-black uppercase tracking-wider mb-1.5">Lokasi Pertemuan <span class="text-red-500">*</span></label>
+            <input v-model="codForm.cod_location" type="text" required placeholder="Contoh: Alfamart Jl. Sudirman No. 12"
+              class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:ring-2 focus:ring-primary/30" />
+            <p v-if="codForm.errors.cod_location" class="text-xs text-red-500 mt-1">{{ codForm.errors.cod_location }}</p>
+          </div>
+          <div>
+            <label class="block text-xs font-black uppercase tracking-wider mb-1.5">Jadwal Pertemuan <span class="text-red-500">*</span></label>
+            <input v-model="codForm.cod_scheduled_at" type="datetime-local" required
+              class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:ring-2 focus:ring-primary/30" />
+            <p v-if="codForm.errors.cod_scheduled_at" class="text-xs text-red-500 mt-1">{{ codForm.errors.cod_scheduled_at }}</p>
+          </div>
+          <div class="flex gap-3">
+            <button type="button" @click="showCodModal = false" class="flex-1 rounded-xl bg-muted py-3 font-bold text-sm transition hover:bg-muted/80">Batal</button>
+            <button type="submit" :disabled="codForm.processing"
+              class="flex-1 rounded-xl bg-blue-500 py-3 text-sm font-black text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600 disabled:opacity-60">
+              {{ codForm.processing ? 'Memproses...' : 'Kirim Permintaan COD' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </Modal>
+
+    <!-- Modal: Nego -->
+    <Modal :show="showNegoModal" @close="showNegoModal = false" maxWidth="md">
+      <div class="bg-card text-card-foreground rounded-2xl p-6">
+        <h3 class="text-xl font-black mb-1">Tawar Harga</h3>
+        <p class="text-sm text-muted-foreground mb-5">Harga asli: <strong>Rp {{ fmt(product.price) }}</strong>. Penawaran harus lebih rendah.</p>
+        <form @submit.prevent="submitNego" class="space-y-4">
+          <div>
+            <label class="block text-xs font-black uppercase tracking-wider mb-1.5">Harga Penawaran (Rp) <span class="text-red-500">*</span></label>
+            <input v-model="negoForm.proposed_price" type="number" required :max="product.price - 1" min="1000"
+              placeholder="Masukkan harga penawaran..."
+              class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:ring-2 focus:ring-primary/30" />
+            <p v-if="negoForm.errors.proposed_price" class="text-xs text-red-500 mt-1">{{ negoForm.errors.proposed_price }}</p>
+          </div>
+          <div>
+            <label class="block text-xs font-black uppercase tracking-wider mb-1.5">Pesan (Opsional)</label>
+            <textarea v-model="negoForm.message" rows="2" placeholder="Alasan penawaran Anda..."
+              class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:ring-2 focus:ring-primary/30 resize-none"></textarea>
+          </div>
+          <div class="flex gap-3">
+            <button type="button" @click="showNegoModal = false" class="flex-1 rounded-xl bg-muted py-3 font-bold text-sm transition hover:bg-muted/80">Batal</button>
+            <button type="submit" :disabled="negoForm.processing"
+              class="flex-1 rounded-xl bg-indigo-500 py-3 text-sm font-black text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-600 disabled:opacity-60">
+              {{ negoForm.processing ? 'Mengirim...' : 'Kirim Penawaran' }}
+            </button>
+          </div>
+        </form>
       </div>
     </Modal>
   </AppLayout>

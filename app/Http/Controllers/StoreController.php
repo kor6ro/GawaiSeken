@@ -82,7 +82,8 @@ class StoreController extends Controller
         $logoPath = $profile->store_logo;
         if ($request->hasFile('store_logo')) {
             $file = $request->file('store_logo');
-            if ($file->isValid()) {
+            // Check isValid() and getRealPath() to avoid ValueError on PHP 8.4
+            if ($file->isValid() && $file->getRealPath()) {
                 if ($logoPath && Storage::disk('public')->exists($logoPath)) {
                     Storage::disk('public')->delete($logoPath);
                 }

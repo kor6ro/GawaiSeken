@@ -67,8 +67,8 @@ class ProductController extends Controller
 
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $index => $file) {
-                    $tmpName = $file?->getPathname();
-                    if ($file->isValid() && ! empty($tmpName)) {
+                    $tmpName = $file?->getRealPath();
+                    if ($file->isValid() && $tmpName) {
                         try {
                             // Simpan file sementara ke disk 'local' secara manual
                             // untuk menghindari kegagalan internal UploadedFile::store()
@@ -156,17 +156,18 @@ class ProductController extends Controller
 
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $index => $file) {
-                    $tmpName = $file?->getPathname();
-                    if ($file->isValid() && ! empty($tmpName)) {
+                    $tmpName = $file?->getRealPath();
+                    if ($file->isValid() && $tmpName) {
                         $extension = $file->getClientOriginalExtension() ?: 'jpg';
                         $fileName = Str::uuid()->toString().'.'.$extension;
                         $tempPath = 'tmp/'.$fileName;
-                        $written = Storage::disk('local')->put($tempPath, file_get_contents($tmpName));
-                        if (! $written) {
-                            continue;
-                        }
-
+                        
                         try {
+                            $written = Storage::disk('local')->put($tempPath, file_get_contents($tmpName));
+                            if (! $written) {
+                                continue;
+                            }
+                            
                             // Proses sinkron agar foto langsung tersimpan meski worker queue tidak berjalan
                             ProcessProductImage::dispatchSync($product, $tempPath, $fileName);
                         } catch (\Throwable $e) {
@@ -192,12 +193,42 @@ class ProductController extends Controller
         // Pastikan load relasi store/toko agar bisa menampilkan info penjual
         $product->load(['store.profile', 'images', 'category']);
 
-        return Inertia::render('Products/Show', compact('product'));
+        // Data nego aktif buyer untuk produk ini (jika login)
+        $myNegotiation = null;
+        $myActiveTransaction = null;
+
+        if (Auth::check() && Auth::id() !== $product->user_id) {
+            $myNegotiation = \App\Models\Negotiation::where('product_id', $product->id)
+                ->where('buyer_id', Auth::id())
+                ->whereIn('status', ['pending', 'countered', 'accepted'])
+                ->where(function ($q) {
+                    $q->where('expires_at', '>', now())->orWhere('status', 'accepted');
+                })
+                ->latest()
+                ->first();
+
+            $myActiveTransaction = \App\Models\Transaction::where('product_id', $product->id)
+                ->where('buyer_id', Auth::id())
+                ->whereNotIn('status', ['completed', 'canceled'])
+                ->first();
+        }
+
+        return Inertia::render('Products/Show', [
+            'product'             => $product,
+            'myNegotiation'       => $myNegotiation,
+            'myActiveTransaction' => $myActiveTransaction,
+        ]);
     }
 
     public function destroy(Product $product)
     {
         Gate::authorize('delete', $product);
+
+        // Jangan izinkan penghapusan jika produk sudah terjual (availability = sold)
+        // karena dibutuhkan untuk riwayat transaksi
+        if ($product->availability === 'sold') {
+            return redirect()->back()->with('error', 'Produk yang sudah terjual tidak dapat dihapus.');
+        }
 
         // 2. Hapus File Gambar dari Storage (Agar hemat penyimpanan)
         if ($product->images->isNotEmpty()) {
@@ -311,7 +342,13 @@ class ProductController extends Controller
 
         $products = Product::whereIn('id', $favoriteIds)
             ->where('user_id', '!=', $user->id)
-            ->with(['images', 'category', 'store.profile'])
+            ->with(['images', 'category', 'store.profile', 'activeNegotiation' => function($q) use ($user) {
+                $q->where('buyer_id', $user->id)
+                  ->whereIn('status', ['pending', 'countered', 'accepted', 'rejected'])
+                  ->where(function ($query) {
+                      $query->where('expires_at', '>', now())->orWhere('status', 'accepted')->orWhere('status', 'rejected');
+                  });
+            }])
             ->latest()
             ->paginate($perPage);
 

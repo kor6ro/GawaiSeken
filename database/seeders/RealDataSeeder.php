@@ -27,11 +27,11 @@ class RealDataSeeder extends Seeder
             ]
         );
 
-        // 1. Get Categories
-        $smartphone = Category::where('slug', 'smartphone')->first() ?? Category::create(['name' => 'Smartphone', 'slug' => 'smartphone']);
-        $laptop = Category::where('slug', 'laptop')->first() ?? Category::create(['name' => 'Laptop', 'slug' => 'laptop']);
-        $tablet = Category::where('slug', 'tablet')->first() ?? Category::create(['name' => 'Tablet', 'slug' => 'tablet']);
-        $aksesoris = Category::where('slug', 'aksesoris')->first() ?? Category::create(['name' => 'Aksesoris', 'slug' => 'aksesoris']);
+        // 1. Get Categories (They are already created by CategorySeeder)
+        $smartphone = Category::where('slug', 'smartphone')->first();
+        $laptop = Category::where('slug', 'laptop')->first();
+        $tablet = Category::where('slug', 'tablet')->first();
+        $audio = Category::where('slug', 'audio')->first();
 
         // 2. Create Buyers
         $buyers = [
@@ -147,7 +147,7 @@ class RealDataSeeder extends Seeder
                         'image' => 'products/rog.jpg',
                     ],
                     [
-                        'category_id' => $aksesoris->id,
+                        'category_id' => $audio->id,
                         'title' => 'Sony WH-1000XM4 Noise Cancelling',
                         'brand' => 'Sony',
                         'type' => 'Headphone',

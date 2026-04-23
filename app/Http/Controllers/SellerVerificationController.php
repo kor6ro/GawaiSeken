@@ -34,28 +34,57 @@ class SellerVerificationController extends Controller
 
         $user = auth()->user();
 
+        $ktp = $request->file('ktp_image');
+        $face = $request->file('face_image');
+
+        // Debugging & robust check
+        if (!$ktp->isValid()) {
+            return back()->withErrors(['ktp_image' => 'Upload KTP gagal: ' . $ktp->getErrorMessage()]);
+        }
+        if (!$face->isValid()) {
+            return back()->withErrors(['face_image' => 'Upload Selfie gagal: ' . $face->getErrorMessage()]);
+        }
+
+        $ktpTmp = $ktp->getPathname();
+        $faceTmp = $face->getPathname();
+
+        if (!is_readable($ktpTmp) || !is_readable($faceTmp)) {
+            return back()->withErrors(['ktp_image' => 'File sementara tidak dapat dibaca oleh server.']);
+        }
+
         // Hapus file lama jika ada
         if ($user->sellerVerification) {
-            Storage::disk('public')->delete([
+            $oldPaths = array_filter([
                 $user->sellerVerification->ktp_image_path,
                 $user->sellerVerification->face_image_path
             ]);
+
+            if (!empty($oldPaths)) {
+                Storage::disk('public')->delete($oldPaths);
+            }
         }
 
-        // Simpan file baru ke storage/app/public/kyc
-        $ktpPath = $request->file('ktp_image')->store('kyc/ktp', 'public');
-        $facePath = $request->file('face_image')->store('kyc/face', 'public');
+        // Simpan file menggunakan put() untuk menghindari getRealPath() yang mungkin bermasalah di Windows
+        try {
+            $ktpName = 'kyc/ktp/' . $ktp->hashName();
+            $faceName = 'kyc/face/' . $face->hashName();
 
-        SellerVerification::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'ktp_image_path' => $ktpPath,
-                'face_image_path' => $facePath,
-                'status' => 'pending',
-                'rejection_note' => null,
-            ]
-        );
+            Storage::disk('public')->put($ktpName, file_get_contents($ktpTmp));
+            Storage::disk('public')->put($faceName, file_get_contents($faceTmp));
 
-        return back()->with('success', 'Dokumen KYC berhasil diunggah. Mohon tunggu verifikasi admin.');
+            SellerVerification::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'ktp_image_path' => $ktpName,
+                    'face_image_path' => $faceName,
+                    'status' => 'pending',
+                    'rejection_note' => null,
+                ]
+            );
+
+            return back()->with('success', 'Dokumen KYC berhasil diunggah. Mohon tunggu verifikasi admin.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['ktp_image' => 'Gagal menyimpan file: ' . $e->getMessage()]);
+        }
     }
 }
