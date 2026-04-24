@@ -61,6 +61,11 @@ class TransactionController extends Controller
             'negotiation_id'   => ['nullable', 'integer', 'exists:negotiations,id'],
         ]);
 
+        $rekberEnabled = \App\Models\Setting::where('key', 'rekber_enabled')->value('value') === '1';
+        if ($request->payment_method === 'rekber' && !$rekberEnabled) {
+            return back()->with('error', 'Fitur Rekber saat ini sedang dalam pemeliharaan (maintenance) dan tidak dapat digunakan.');
+        }
+
         // Resolusi harga — cek nego yang sudah diterima
         $negotiation = null;
         $finalPrice  = $product->price;

@@ -33,6 +33,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/disputes', [AdminController::class, 'disputes'])->name('disputes.index');
     Route::get('/disputes/{dispute}', [AdminController::class, 'showDispute'])->name('disputes.show');
     Route::post('/disputes/{dispute}/resolve', [AdminController::class, 'resolveDispute'])->name('disputes.resolve');
+
+    // Settings
+    Route::post('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');
 });
 
 Route::get('/', [HomeController::class, 'index'])->name('home');

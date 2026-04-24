@@ -10,7 +10,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue'
 import TextInput from '@/Components/TextInput.vue'
 import InputLabel from '@/Components/InputLabel.vue'
 import InputError from '@/Components/InputError.vue'
-import { Users, Package, AlertCircle, CheckSquare, ShieldCheck, Tag, ShoppingBag, LayoutDashboard, Search, Eye, Ban, CheckCircle2, XCircle, Trash2, ArrowRight } from 'lucide-vue-next'
+import { Users, Package, AlertCircle, CheckSquare, ShieldCheck, Tag, ShoppingBag, LayoutDashboard, Search, Eye, Ban, CheckCircle2, XCircle, Trash2, ArrowRight, Settings } from 'lucide-vue-next'
 
 const props = defineProps({
   pendingVerifications: Array,
@@ -105,6 +105,19 @@ const reject = () => {
     },
   })
 }
+
+import { router, usePage } from '@inertiajs/vue3'
+
+const toggleRekber = () => {
+  const page = usePage()
+  const isEnabled = page.props.settings?.rekber_enabled ?? false
+  
+  router.post(route('admin.settings.update'), {
+    rekber_enabled: !isEnabled
+  }, {
+    preserveScroll: true
+  })
+}
 </script>
 
 <template>
@@ -148,6 +161,13 @@ const reject = () => {
             class="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200 sm:flex-none"
           >
             <AlertCircle class="h-4 w-4" /> Komplain
+          </button>
+          <button
+            @click="tab = 'settings'"
+            :class="tab === 'settings' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+            class="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200 sm:flex-none"
+          >
+            <Settings class="h-4 w-4" /> Pengaturan
           </button>
         </div>
 
@@ -420,6 +440,38 @@ const reject = () => {
               </div>
               <div class="mt-6">
                 <Pagination :links="disputes.links" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 5: SETTINGS -->
+        <div v-show="tab === 'settings'" class="transition-all duration-300">
+          <div class="bg-card border border-border shadow sm:rounded-2xl overflow-hidden">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-foreground flex items-center gap-2">
+                  <Settings class="h-5 w-5 text-gray-500" />
+                  Pengaturan Sistem
+                </h3>
+              </div>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between rounded-xl border border-border p-4">
+                  <div>
+                    <h4 class="font-bold text-foreground">Fitur Rekber</h4>
+                    <p class="text-sm text-muted-foreground">Aktifkan atau nonaktifkan fitur pembayaran menggunakan Rekber. Saat ini dimatikan sementara karena payment gateway belum diapprove.</p>
+                  </div>
+                  <button
+                    @click="toggleRekber"
+                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                    :class="[ $page.props.settings?.rekber_enabled ? 'bg-primary' : 'bg-muted' ]"
+                  >
+                    <span
+                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                      :class="[ $page.props.settings?.rekber_enabled ? 'translate-x-5' : 'translate-x-0' ]"
+                    />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

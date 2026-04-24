@@ -66,25 +66,40 @@ class ProductController extends Controller
             ]);
 
             if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $index => $file) {
-                    $tmpName = $file?->getRealPath();
-                    if ($file->isValid() && $tmpName) {
-                        try {
-                            // Simpan file sementara ke disk 'local' secara manual
-                            // untuk menghindari kegagalan internal UploadedFile::store()
-                            $extension = $file->getClientOriginalExtension() ?: 'jpg';
-                            $fileName = Str::uuid()->toString().'.'.$extension;
-                            $tempPath = 'tmp/'.$fileName;
-                            $written = Storage::disk('local')->put($tempPath, file_get_contents($tmpName));
-                            if (! $written) {
-                                throw new \RuntimeException('Failed writing temp image to local disk');
-                            }
+                $images = $request->file('images');
+                if (!is_array($images)) {
+                    $images = [$images];
+                }
+                
+                $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver);
+                
+                foreach ($images as $file) {
+                    if (!$file->isValid()) continue;
+                    try {
+                        $extension = $file->getClientOriginalExtension() ?: 'jpg';
+                        $fileName  = Str::uuid()->toString() . '.' . $extension;
+                        $finalPath = "products/{$fileName}";
 
-                            // Proses sinkron agar foto langsung tersimpan meski worker queue tidak berjalan
-                            ProcessProductImage::dispatchSync($product, $tempPath, $fileName);
-                        } catch (\Throwable $e) {
-                            continue;
+                        // Use getContent() — works reliably in PHP 8.4 multipart uploads
+                        // where getRealPath() returns empty and UploadedFile object reading fails
+                        $imageContent = $file->getContent();
+                        $image = $manager->read($imageContent);
+
+                        $image->scale(width: 1200);
+                        $encoded = $image->toJpeg(80);
+
+                        if (!Storage::disk('public')->exists('products')) {
+                            Storage::disk('public')->makeDirectory('products');
                         }
+
+                        if (Storage::disk('public')->put($finalPath, $encoded->toString())) {
+                            ProductImage::create([
+                                'product_id' => $product->id,
+                                'image_path' => $finalPath,
+                            ]);
+                        }
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::error('Image store failed: ' . $e->getMessage());
                     }
                 }
             }
@@ -154,25 +169,41 @@ class ProductController extends Controller
                 }
             }
 
+            // 3. Handle Upload Foto Baru
             if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $index => $file) {
-                    $tmpName = $file?->getRealPath();
-                    if ($file->isValid() && $tmpName) {
+                $images = $request->file('images');
+                if (!is_array($images)) {
+                    $images = [$images];
+                }
+                
+                $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver);
+
+                foreach ($images as $file) {
+                    if (!$file->isValid()) continue;
+                    try {
                         $extension = $file->getClientOriginalExtension() ?: 'jpg';
-                        $fileName = Str::uuid()->toString().'.'.$extension;
-                        $tempPath = 'tmp/'.$fileName;
-                        
-                        try {
-                            $written = Storage::disk('local')->put($tempPath, file_get_contents($tmpName));
-                            if (! $written) {
-                                continue;
-                            }
-                            
-                            // Proses sinkron agar foto langsung tersimpan meski worker queue tidak berjalan
-                            ProcessProductImage::dispatchSync($product, $tempPath, $fileName);
-                        } catch (\Throwable $e) {
-                            continue;
+                        $fileName  = Str::uuid()->toString() . '.' . $extension;
+                        $finalPath = "products/{$fileName}";
+
+                        // Use getContent() — works reliably in PHP 8.4 multipart uploads
+                        $imageContent = $file->getContent();
+                        $image = $manager->read($imageContent);
+
+                        $image->scale(width: 1200);
+                        $encoded = $image->toJpeg(80);
+
+                        if (!Storage::disk('public')->exists('products')) {
+                            Storage::disk('public')->makeDirectory('products');
                         }
+
+                        if (Storage::disk('public')->put($finalPath, $encoded->toString())) {
+                            ProductImage::create([
+                                'product_id' => $product->id,
+                                'image_path' => $finalPath,
+                            ]);
+                        }
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::error('Image update failed: ' . $e->getMessage());
                     }
                 }
             }

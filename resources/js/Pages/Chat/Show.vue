@@ -488,14 +488,14 @@ onUnmounted(() => {
               <Gavel class="h-3.5 w-3.5" />
               Nego
             </button>
-            <button 
+            <Link 
               v-if="auth.user.id !== contextProduct.user_id" 
-              @click="startTransaction" 
+              :href="route('products.show', contextProduct.slug)" 
               class="context-btn context-btn-buy"
             >
               <ShoppingCart class="h-3.5 w-3.5" />
               Beli
-            </button>
+            </Link>
           </div>
         </div>
       </div>

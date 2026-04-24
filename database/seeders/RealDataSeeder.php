@@ -35,8 +35,8 @@ class RealDataSeeder extends Seeder
 
         // 2. Create Buyers
         $buyers = [
-            ['name' => 'Ahmad', 'email' => 'ahmad@example.com', 'avatar' => 'https://i.pravatar.cc/150?u=ahmad'],
-            ['name' => 'Mus', 'email' => 'mus@example.com', 'avatar' => 'https://i.pravatar.cc/150?u=mus'],
+            ['name' => 'Ahmad', 'email' => 'ahmadnrosyid@gmail.com', 'avatar' => 'https://i.pravatar.cc/150?u=ahmad'],
+            ['name' => 'Mus', 'email' => 'mmuslikhudin06@gmail.com', 'avatar' => 'https://i.pravatar.cc/150?u=mus'],
         ];
 
         foreach ($buyers as $buyerData) {
@@ -65,7 +65,7 @@ class RealDataSeeder extends Seeder
         $sellersData = [
             [
                 'name' => 'Gilang',
-                'email' => 'gilang@example.com',
+                'email' => 'gil414100@gmail.com',
                 'store_name' => 'Gilang Gadget Store',
                 'city' => 'Jakarta Selatan',
                 'avatar' => 'https://i.pravatar.cc/150?u=gilang',
@@ -114,7 +114,7 @@ class RealDataSeeder extends Seeder
             ],
             [
                 'name' => 'Vyno',
-                'email' => 'vyno@example.com',
+                'email' => 'rumahgtasamp@gmail.com',
                 'store_name' => 'Vyno Tech Hub',
                 'city' => 'Bandung',
                 'avatar' => 'https://i.pravatar.cc/150?u=vyno',

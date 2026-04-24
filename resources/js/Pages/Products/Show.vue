@@ -388,12 +388,17 @@ const checkoutRoute = computed(() => route('transactions.checkout', props.produc
                     <!-- Main Action Buttons -->
                     <div v-if="!hasActiveTransaction" class="flex flex-col gap-2">
                       <!-- Beli Rekber -->
-                      <button @click="showBuyModal = true"
+                      <button v-if="$page.props.settings?.rekber_enabled" @click="showBuyModal = true"
                         class="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-black text-primary-foreground shadow-xl transition hover:bg-primary/90 active:scale-95">
                         <Truck class="h-5 w-5" />
                         Beli via Rekber
                         <span v-if="myNegotiation?.status === 'accepted'" class="ml-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px]">Harga Nego</span>
                       </button>
+                      <div v-else class="rounded-2xl border-2 border-dashed border-muted p-4 text-center">
+                        <p class="text-xs font-bold text-muted-foreground flex items-center justify-center gap-1">
+                          <AlertTriangle class="h-4 w-4" /> Fitur Rekber sedang dalam pemeliharaan
+                        </p>
+                      </div>
 
                       <!-- Beli COD -->
                       <button v-if="product.is_cod" @click="showCodModal = true"

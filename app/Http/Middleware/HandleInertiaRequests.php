@@ -81,6 +81,9 @@ class HandleInertiaRequests extends Middleware
             ],
             'midtrans_client_key' => config('services.midtrans.client_key'),
             'app_env' => config('app.env'),
+            'settings' => [
+                'rekber_enabled' => \App\Models\Setting::where('key', 'rekber_enabled')->value('value') === '1',
+            ],
         ];
     }
 }

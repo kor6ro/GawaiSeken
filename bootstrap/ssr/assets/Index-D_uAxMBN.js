@@ -1,9 +1,9 @@
 import { ref, watch, onMounted, onUnmounted, computed, withCtx, unref, createTextVNode, createVNode, createBlock, createCommentVNode, openBlock, toDisplayString, Fragment, withDirectives, vModelText, renderList, useSSRContext } from "vue";
 import { ssrRenderComponent, ssrRenderAttr, ssrInterpolate, ssrRenderList, ssrRenderStyle, ssrRenderClass } from "vue/server-renderer";
 import { usePage, router, Head, Link } from "@inertiajs/vue3";
-import { _ as _sfc_main$1 } from "./AppLayout-BDlcmPtd.js";
+import { _ as _sfc_main$1 } from "./AppLayout-Ur8CIvPB.js";
 import { Search, X, MessageSquare, CheckCheck } from "lucide-vue-next";
-import { o as onlineUserIds } from "./onlineState-BAtS9nBF.js";
+import { o as onlineUserIds } from "./themeState-CpsLRyLx.js";
 import { _ as _export_sfc } from "./_plugin-vue_export-helper-1tPrXgE0.js";
 import "./ApplicationLogo-5BXBKbkR.js";
 import "lodash/debounce.js";
@@ -62,9 +62,12 @@ const _sfc_main = {
       return ((_a = opponent.profile) == null ? void 0 : _a.store_name) || opponent.name;
     };
     const getDisplayAvatar = (chat) => {
-      var _a;
+      var _a, _b;
       const opponent = getOpponent(chat);
-      return ((_a = opponent.profile) == null ? void 0 : _a.avatar) ? `/storage/${opponent.profile.avatar}` : null;
+      if (opponent.role === "seller" && ((_a = opponent.profile) == null ? void 0 : _a.store_logo)) {
+        return `/storage/${opponent.profile.store_logo}`;
+      }
+      return ((_b = opponent.profile) == null ? void 0 : _b.avatar) ? `/storage/${opponent.profile.avatar}` : null;
     };
     const getInitial = (chat) => {
       return getDisplayName(chat).charAt(0).toUpperCase();
@@ -130,7 +133,7 @@ const _sfc_main = {
       _push(ssrRenderComponent(_sfc_main$1, _attrs, {
         header: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
-            _push2(`<div class="flex items-center justify-between" data-v-bbc37838${_scopeId}><h2 class="text-2xl font-black leading-tight text-foreground" data-v-bbc37838${_scopeId}>Pesan</h2><div class="flex items-center gap-2" data-v-bbc37838${_scopeId}><span class="flex h-2 w-2 animate-pulse rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]" data-v-bbc37838${_scopeId}></span><span class="text-sm font-semibold text-muted-foreground" data-v-bbc37838${_scopeId}>${ssrInterpolate(props.chats.length)} Chat</span></div></div>`);
+            _push2(`<div class="flex items-center justify-between" data-v-6f1919a8${_scopeId}><h2 class="text-2xl font-black leading-tight text-foreground" data-v-6f1919a8${_scopeId}>Pesan</h2><div class="flex items-center gap-2" data-v-6f1919a8${_scopeId}><span class="flex h-2 w-2 animate-pulse rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]" data-v-6f1919a8${_scopeId}></span><span class="text-sm font-semibold text-muted-foreground" data-v-6f1919a8${_scopeId}>${ssrInterpolate(props.chats.length)} Chat</span></div></div>`);
           } else {
             return [
               createVNode("div", { class: "flex items-center justify-between" }, [
@@ -146,21 +149,21 @@ const _sfc_main = {
         default: withCtx((_, _push2, _parent2, _scopeId) => {
           if (_push2) {
             _push2(ssrRenderComponent(unref(Head), { title: "Pesan" }, null, _parent2, _scopeId));
-            _push2(`<div class="py-0 md:py-6" data-v-bbc37838${_scopeId}><div class="mx-auto max-w-2xl sm:px-4" data-v-bbc37838${_scopeId}><div class="chat-card" data-v-bbc37838${_scopeId}><div class="chat-search-bar" data-v-bbc37838${_scopeId}><div class="relative" data-v-bbc37838${_scopeId}>`);
+            _push2(`<div class="py-0 md:py-6" data-v-6f1919a8${_scopeId}><div class="mx-auto max-w-2xl sm:px-4" data-v-6f1919a8${_scopeId}><div class="chat-card" data-v-6f1919a8${_scopeId}><div class="chat-search-bar" data-v-6f1919a8${_scopeId}><div class="relative" data-v-6f1919a8${_scopeId}>`);
             _push2(ssrRenderComponent(unref(Search), { class: "absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground/60" }, null, _parent2, _scopeId));
-            _push2(`<input${ssrRenderAttr("value", searchQuery.value)} type="text" placeholder="Cari percakapan..." class="w-full rounded-lg border border-transparent bg-muted/60 py-2 pl-10 pr-10 text-sm text-foreground placeholder-muted-foreground/50 transition-all focus:border-primary/20 focus:bg-muted focus:outline-none focus:ring-1 focus:ring-primary/30" data-v-bbc37838${_scopeId}>`);
+            _push2(`<input${ssrRenderAttr("value", searchQuery.value)} type="text" placeholder="Cari percakapan..." class="w-full rounded-lg border border-transparent bg-muted/60 py-2 pl-10 pr-10 text-sm text-foreground placeholder-muted-foreground/50 transition-all focus:border-primary/20 focus:bg-muted focus:outline-none focus:ring-1 focus:ring-primary/30" data-v-6f1919a8${_scopeId}>`);
             if (searchQuery.value) {
-              _push2(`<button class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground" data-v-bbc37838${_scopeId}>`);
+              _push2(`<button class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground" data-v-6f1919a8${_scopeId}>`);
               _push2(ssrRenderComponent(unref(X), { class: "h-4 w-4" }, null, _parent2, _scopeId));
               _push2(`</button>`);
             } else {
               _push2(`<!---->`);
             }
-            _push2(`</div></div><div class="chat-list-container" data-v-bbc37838${_scopeId}>`);
+            _push2(`</div></div><div class="chat-list-container" data-v-6f1919a8${_scopeId}>`);
             if (filteredChats.value.length === 0) {
-              _push2(`<div class="flex flex-col items-center justify-center px-8 py-20 text-center" data-v-bbc37838${_scopeId}><div class="relative mb-6" data-v-bbc37838${_scopeId}><div class="absolute inset-0 scale-150 animate-pulse rounded-full bg-primary/20 opacity-50 blur-3xl" data-v-bbc37838${_scopeId}></div><div class="relative rounded-[2rem] border border-border bg-muted p-6 shadow-xl" data-v-bbc37838${_scopeId}>`);
+              _push2(`<div class="flex flex-col items-center justify-center px-8 py-20 text-center" data-v-6f1919a8${_scopeId}><div class="relative mb-6" data-v-6f1919a8${_scopeId}><div class="absolute inset-0 scale-150 animate-pulse rounded-full bg-primary/20 opacity-50 blur-3xl" data-v-6f1919a8${_scopeId}></div><div class="relative rounded-[2rem] border border-border bg-muted p-6 shadow-xl" data-v-6f1919a8${_scopeId}>`);
               _push2(ssrRenderComponent(unref(MessageSquare), { class: "h-12 w-12 text-primary" }, null, _parent2, _scopeId));
-              _push2(`</div></div><h3 class="mb-2 text-xl font-black text-foreground" data-v-bbc37838${_scopeId}>${ssrInterpolate(searchQuery.value ? "Tidak ditemukan" : "Belum ada percakapan")}</h3><p class="max-w-xs text-sm leading-relaxed text-muted-foreground" data-v-bbc37838${_scopeId}>${ssrInterpolate(searchQuery.value ? "Coba kata kunci lain." : "Temukan produk dan mulai mengobrol dengan penjual.")}</p>`);
+              _push2(`</div></div><h3 class="mb-2 text-xl font-black text-foreground" data-v-6f1919a8${_scopeId}>${ssrInterpolate(searchQuery.value ? "Tidak ditemukan" : "Belum ada percakapan")}</h3><p class="max-w-xs text-sm leading-relaxed text-muted-foreground" data-v-6f1919a8${_scopeId}>${ssrInterpolate(searchQuery.value ? "Coba kata kunci lain." : "Temukan produk dan mulai mengobrol dengan penjual.")}</p>`);
               if (!searchQuery.value) {
                 _push2(ssrRenderComponent(unref(Link), {
                   href: _ctx.route("home"),
@@ -186,7 +189,7 @@ const _sfc_main = {
             }
             _push2(`<!--[-->`);
             ssrRenderList(filteredChats.value, (chat) => {
-              _push2(`<div class="chat-list-item" data-v-bbc37838${_scopeId}>`);
+              _push2(`<div class="chat-list-item" data-v-6f1919a8${_scopeId}>`);
               _push2(ssrRenderComponent(unref(Link), {
                 href: _ctx.route("chat.show", chat.id),
                 class: "chat-list-link"
@@ -194,18 +197,18 @@ const _sfc_main = {
                 default: withCtx((_2, _push3, _parent3, _scopeId2) => {
                   var _a, _b;
                   if (_push3) {
-                    _push3(`<div class="chat-avatar-wrap" data-v-bbc37838${_scopeId2}>`);
+                    _push3(`<div class="chat-avatar-wrap" data-v-6f1919a8${_scopeId2}>`);
                     if (getDisplayAvatar(chat)) {
-                      _push3(`<img${ssrRenderAttr("src", getDisplayAvatar(chat))} loading="lazy" class="chat-avatar-img" data-v-bbc37838${_scopeId2}>`);
+                      _push3(`<img${ssrRenderAttr("src", getDisplayAvatar(chat))} loading="lazy" class="chat-avatar-img" data-v-6f1919a8${_scopeId2}>`);
                     } else {
-                      _push3(`<div class="chat-avatar-fallback" style="${ssrRenderStyle({ background: getAvatarGradient(chat) })}" data-v-bbc37838${_scopeId2}>${ssrInterpolate(getInitial(chat))}</div>`);
+                      _push3(`<div class="chat-avatar-fallback" style="${ssrRenderStyle({ background: getAvatarGradient(chat) })}" data-v-6f1919a8${_scopeId2}>${ssrInterpolate(getInitial(chat))}</div>`);
                     }
                     if (unref(onlineUserIds).includes(Number(getOpponent(chat).id))) {
-                      _push3(`<span class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-card bg-green-500 shadow-sm" data-v-bbc37838${_scopeId2}></span>`);
+                      _push3(`<span class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-card bg-green-500 shadow-sm" data-v-6f1919a8${_scopeId2}></span>`);
                     } else {
                       _push3(`<!---->`);
                     }
-                    _push3(`</div><div class="min-w-0 flex-1" data-v-bbc37838${_scopeId2}><div class="flex items-start justify-between gap-3" data-v-bbc37838${_scopeId2}><div class="min-w-0 flex-1" data-v-bbc37838${_scopeId2}><h3 class="${ssrRenderClass([chat.unread_count > 0 ? "font-bold" : "", "chat-item-name"])}" data-v-bbc37838${_scopeId2}>${ssrInterpolate(getDisplayName(chat))}</h3><div class="mt-0.5 flex min-w-0 items-center gap-1.5" data-v-bbc37838${_scopeId2}>`);
+                    _push3(`</div><div class="min-w-0 flex-1" data-v-6f1919a8${_scopeId2}><div class="flex items-start justify-between gap-3" data-v-6f1919a8${_scopeId2}><div class="min-w-0 flex-1" data-v-6f1919a8${_scopeId2}><h3 class="${ssrRenderClass([chat.unread_count > 0 ? "font-bold" : "", "chat-item-name"])}" data-v-6f1919a8${_scopeId2}>${ssrInterpolate(getDisplayName(chat))}</h3><div class="mt-0.5 flex min-w-0 items-center gap-1.5" data-v-6f1919a8${_scopeId2}>`);
                     if (isMine(chat)) {
                       _push3(`<!--[-->`);
                       if (isRead(chat)) {
@@ -220,18 +223,18 @@ const _sfc_main = {
                     _push3(`<p class="${ssrRenderClass([
                       chat.unread_count > 0 ? "font-medium text-foreground" : "text-muted-foreground",
                       "chat-item-preview"
-                    ])}" data-v-bbc37838${_scopeId2}>${ssrInterpolate(getPreviewContent(chat))}</p></div>`);
+                    ])}" data-v-6f1919a8${_scopeId2}>${ssrInterpolate(getPreviewContent(chat))}</p></div>`);
                     if ((_a = chat.product) == null ? void 0 : _a.title) {
-                      _push3(`<div class="mt-1" data-v-bbc37838${_scopeId2}><span class="chat-item-product" data-v-bbc37838${_scopeId2}> 📦 ${ssrInterpolate(chat.product.title)}</span></div>`);
+                      _push3(`<div class="mt-1" data-v-6f1919a8${_scopeId2}><span class="chat-item-product" data-v-6f1919a8${_scopeId2}> 📦 ${ssrInterpolate(chat.product.title)}</span></div>`);
                     } else {
                       _push3(`<!---->`);
                     }
-                    _push3(`</div><div class="flex flex-shrink-0 flex-col items-end gap-1.5" data-v-bbc37838${_scopeId2}><span class="${ssrRenderClass([
+                    _push3(`</div><div class="flex flex-shrink-0 flex-col items-end gap-1.5" data-v-6f1919a8${_scopeId2}><span class="${ssrRenderClass([
                       chat.unread_count > 0 ? "font-bold text-primary" : "text-muted-foreground",
                       "chat-item-time"
-                    ])}" data-v-bbc37838${_scopeId2}>${ssrInterpolate(formatTime(chat))}</span>`);
+                    ])}" data-v-6f1919a8${_scopeId2}>${ssrInterpolate(formatTime(chat))}</span>`);
                     if (chat.unread_count > 0) {
-                      _push3(`<span class="chat-unread-pill" data-v-bbc37838${_scopeId2}>${ssrInterpolate(chat.unread_count)}</span>`);
+                      _push3(`<span class="chat-unread-pill" data-v-6f1919a8${_scopeId2}>${ssrInterpolate(chat.unread_count)}</span>`);
                     } else {
                       _push3(`<!---->`);
                     }
@@ -452,7 +455,7 @@ _sfc_main.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("resources/js/Pages/Chat/Index.vue");
   return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
 };
-const Index = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-bbc37838"]]);
+const Index = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-6f1919a8"]]);
 export {
   Index as default
 };

@@ -42,6 +42,7 @@ class ProcessProductImage implements ShouldQueue
                 return;
             }
 
+            \Illuminate\Support\Facades\Log::info("Starting to process image: {$this->fileName} for product {$this->product->id}");
             $image = $manager->read($fullTempPath);
 
             // 3. Resize (Scaling) - Misalnya lebar maksimal 1200px, tinggi otomatis
@@ -49,11 +50,16 @@ class ProcessProductImage implements ShouldQueue
 
             // 4. Kompresi dan Simpan ke Disk Public
             $finalPath = "products/{$this->fileName}";
+            \Illuminate\Support\Facades\Log::info("Encoding image as JPEG: {$finalPath}");
             $output = $image->toJpeg(80); // Kompresi kualitas 80% (format JPEG)
 
-            Storage::disk('public')->put($finalPath, (string) $output);
+            $saved = Storage::disk('public')->put($finalPath, (string) $output);
+            if (!$saved) {
+                \Illuminate\Support\Facades\Log::error("Failed to save final image to public disk: {$finalPath}");
+            }
 
             // 5. Simpan ke Database
+            \Illuminate\Support\Facades\Log::info("Saving ProductImage record for {$finalPath}");
             ProductImage::create([
                 'product_id' => $this->product->id,
                 'image_path' => $finalPath,
@@ -61,6 +67,7 @@ class ProcessProductImage implements ShouldQueue
 
             // 6. Hapus file temporary
             Storage::disk('local')->delete($this->tempPath);
+            \Illuminate\Support\Facades\Log::info("Successfully processed and saved image: {$this->fileName}");
 
         } catch (\Exception $e) {
             Log::error('Failed to process product image: '.$e->getMessage());

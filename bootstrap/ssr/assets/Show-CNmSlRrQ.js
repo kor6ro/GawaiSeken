@@ -2,14 +2,14 @@ import { ref, computed, onMounted, onUnmounted, watch, withCtx, unref, createTex
 import { ssrRenderComponent, ssrRenderAttr, ssrInterpolate, ssrRenderClass, ssrRenderList } from "vue/server-renderer";
 import { usePage, Head, Link } from "@inertiajs/vue3";
 import axios from "axios";
-import { _ as _sfc_main$1 } from "./AppLayout-BDlcmPtd.js";
-import { P as ProductCard } from "./ProductCard-DuFFyYn9.js";
+import { _ as _sfc_main$1 } from "./AppLayout-Ur8CIvPB.js";
+import { P as ProductCard } from "./ProductCard-DSHJPsZ5.js";
 import { ShieldCheck, MapPin, MessageCircle, Star, Package } from "lucide-vue-next";
 import "./ApplicationLogo-5BXBKbkR.js";
 import "lodash/debounce.js";
 import "./Modal-C0YBTj_6.js";
 import "lodash/pickBy.js";
-import "./onlineState-BAtS9nBF.js";
+import "./themeState-CpsLRyLx.js";
 import "./_plugin-vue_export-helper-1tPrXgE0.js";
 const _sfc_main = {
   __name: "Show",
@@ -95,8 +95,8 @@ const _sfc_main = {
               title: ((_a = __props.seller.profile) == null ? void 0 : _a.store_name) || __props.seller.name
             }, null, _parent2, _scopeId));
             _push2(`<div class="h-48 bg-gradient-to-r from-primary to-primary/80 transition-all duration-500 dark:from-gray-800 dark:to-gray-900"${_scopeId}></div><div class="relative mx-auto -mt-24 max-w-7xl px-4 pb-12 sm:px-6 lg:px-8"${_scopeId}><div class="overflow-hidden rounded-[2.5rem] border border-border bg-card text-card-foreground shadow-2xl transition-all hover:shadow-primary/5"${_scopeId}><div class="md:flex"${_scopeId}><div class="border-b border-border bg-muted/30 p-8 text-center md:w-1/3 md:border-b-0 md:border-r md:text-left"${_scopeId}><div class="relative inline-block"${_scopeId}><div class="mx-auto h-32 w-32 overflow-hidden rounded-full bg-background p-1 shadow-lg ring-4 ring-primary/10 md:mx-0"${_scopeId}>`);
-            if ((_b = __props.seller.profile) == null ? void 0 : _b.avatar) {
-              _push2(`<img${ssrRenderAttr("src", "/storage/" + __props.seller.profile.avatar)}${ssrRenderAttr("alt", __props.seller.name)} loading="lazy" class="h-full w-full rounded-full object-cover"${_scopeId}>`);
+            if ((_b = __props.seller.profile) == null ? void 0 : _b.store_logo) {
+              _push2(`<img${ssrRenderAttr("src", "/storage/" + __props.seller.profile.store_logo)}${ssrRenderAttr("alt", __props.seller.name)} loading="lazy" class="h-full w-full rounded-full object-cover"${_scopeId}>`);
             } else {
               _push2(`<div class="flex h-full w-full items-center justify-center rounded-full bg-primary text-4xl font-black text-primary-foreground"${_scopeId}>${ssrInterpolate(sellerInitial.value)}</div>`);
             }
@@ -150,7 +150,7 @@ const _sfc_main = {
             }
             _push2(`</div></div><div class="flex flex-col justify-between p-8 md:w-2/3"${_scopeId}><div class="mb-10 grid grid-cols-3 gap-6 text-center"${_scopeId}><div class="rounded-3xl border border-border bg-muted/50 p-6 transition-colors hover:bg-muted"${_scopeId}><span class="block text-3xl font-black text-foreground"${_scopeId}>${ssrInterpolate(__props.products.total)}</span><span class="text-[10px] font-black uppercase tracking-widest text-muted-foreground"${_scopeId}>Produk Aktif</span></div><div class="rounded-3xl border border-border bg-muted/50 p-6 transition-colors hover:bg-muted"${_scopeId}><span class="block text-3xl font-black text-foreground"${_scopeId}>${ssrInterpolate(__props.stats.sold)}</span><span class="text-[10px] font-black uppercase tracking-widest text-muted-foreground"${_scopeId}>Terjual</span></div><div class="rounded-3xl border border-border bg-muted/50 p-6 transition-colors hover:bg-muted"${_scopeId}><div class="flex items-center justify-center gap-1"${_scopeId}><span class="text-3xl font-black text-foreground"${_scopeId}>${ssrInterpolate(__props.stats.rating.toFixed(1))}</span>`);
             _push2(ssrRenderComponent(unref(Star), { class: "h-6 w-6 fill-current text-yellow-500" }, null, _parent2, _scopeId));
-            _push2(`</div><span class="text-[10px] font-black uppercase tracking-widest text-muted-foreground"${_scopeId}>Rating Toko</span></div></div><div class="prose dark:prose-invert max-w-none"${_scopeId}><h3 class="mb-4 flex items-center gap-2 text-sm font-black uppercase tracking-wider text-foreground"${_scopeId}><div class="h-4 w-1.5 rounded-full bg-primary"${_scopeId}></div> Tentang Toko </h3><p class="text-sm leading-relaxed text-muted-foreground"${_scopeId}>${ssrInterpolate(((_e = __props.seller.profile) == null ? void 0 : _e.bio) || `Halo! Saya member GawaiSeken sejak ${formattedJoined.value}. Saya menjual barang elektronik bekas berkualitas. Silakan chat untuk bertanya detail kondisi barang.`)}</p></div></div></div><div class="flex border-t border-border bg-card/50 backdrop-blur"${_scopeId}><button class="${ssrRenderClass([
+            _push2(`</div><span class="text-[10px] font-black uppercase tracking-widest text-muted-foreground"${_scopeId}>Rating Toko</span></div></div><div class="prose dark:prose-invert max-w-none"${_scopeId}><h3 class="mb-4 flex items-center gap-2 text-sm font-black uppercase tracking-wider text-foreground"${_scopeId}><div class="h-4 w-1.5 rounded-full bg-primary"${_scopeId}></div> Tentang Toko </h3><p class="text-sm leading-relaxed text-muted-foreground"${_scopeId}>${ssrInterpolate(((_e = __props.seller.profile) == null ? void 0 : _e.store_bio) || `Halo! Saya member GawaiSeken sejak ${formattedJoined.value}. Saya menjual barang elektronik bekas berkualitas. Silakan chat untuk bertanya detail kondisi barang.`)}</p></div></div></div><div class="flex border-t border-border bg-card/50 backdrop-blur"${_scopeId}><button class="${ssrRenderClass([
               activeTab.value === "products" ? "border-primary bg-primary/5 text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
               "flex-1 border-b-2 py-5 text-sm font-black transition-all duration-300"
             ])}"${_scopeId}> Etalase (${ssrInterpolate(__props.products.total)}) </button><button class="${ssrRenderClass([
@@ -236,9 +236,9 @@ const _sfc_main = {
                     createVNode("div", { class: "border-b border-border bg-muted/30 p-8 text-center md:w-1/3 md:border-b-0 md:border-r md:text-left" }, [
                       createVNode("div", { class: "relative inline-block" }, [
                         createVNode("div", { class: "mx-auto h-32 w-32 overflow-hidden rounded-full bg-background p-1 shadow-lg ring-4 ring-primary/10 md:mx-0" }, [
-                          ((_h = __props.seller.profile) == null ? void 0 : _h.avatar) ? (openBlock(), createBlock("img", {
+                          ((_h = __props.seller.profile) == null ? void 0 : _h.store_logo) ? (openBlock(), createBlock("img", {
                             key: 0,
-                            src: "/storage/" + __props.seller.profile.avatar,
+                            src: "/storage/" + __props.seller.profile.store_logo,
                             alt: __props.seller.name,
                             loading: "lazy",
                             class: "h-full w-full rounded-full object-cover"
@@ -318,7 +318,7 @@ const _sfc_main = {
                           createVNode("div", { class: "h-4 w-1.5 rounded-full bg-primary" }),
                           createTextVNode(" Tentang Toko ")
                         ]),
-                        createVNode("p", { class: "text-sm leading-relaxed text-muted-foreground" }, toDisplayString(((_k = __props.seller.profile) == null ? void 0 : _k.bio) || `Halo! Saya member GawaiSeken sejak ${formattedJoined.value}. Saya menjual barang elektronik bekas berkualitas. Silakan chat untuk bertanya detail kondisi barang.`), 1)
+                        createVNode("p", { class: "text-sm leading-relaxed text-muted-foreground" }, toDisplayString(((_k = __props.seller.profile) == null ? void 0 : _k.store_bio) || `Halo! Saya member GawaiSeken sejak ${formattedJoined.value}. Saya menjual barang elektronik bekas berkualitas. Silakan chat untuk bertanya detail kondisi barang.`), 1)
                       ])
                     ])
                   ]),

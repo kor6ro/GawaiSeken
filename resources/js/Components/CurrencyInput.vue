@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: [String, Number],
@@ -24,9 +24,17 @@ const displayValue = ref('')
 // Helper to format number to Rupiah string
 const formatRupiah = (value) => {
   if (value === null || value === undefined || value === '') return ''
-  // Handle numeric values which may have decimals from DB
-  const cleanValue =
-    typeof value === 'number' ? Math.floor(value).toString() : String(value).replace(/[^0-9]/g, '')
+  
+  // Parse to number first to handle decimal strings like "7000000.00" from DB
+  const numericValue = Number(value);
+  let cleanValue = '';
+
+  if (!isNaN(numericValue)) {
+    cleanValue = Math.floor(numericValue).toString();
+  } else {
+    // Fallback if parsing fails
+    cleanValue = String(value).replace(/[^0-9]/g, '');
+  }
 
   if (!cleanValue) return ''
   return cleanValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
@@ -53,6 +61,8 @@ const handleInput = (event) => {
 watch(
   () => props.modelValue,
   (newVal) => {
+    // Only update display if not currently being edited
+    // Convert raw number (e.g. 7000000) to formatted string (e.g. "7.000.000")
     const formatted = formatRupiah(newVal)
     if (formatted !== displayValue.value) {
       displayValue.value = formatted
@@ -60,12 +70,6 @@ watch(
   },
   { immediate: true }
 )
-
-onMounted(() => {
-  if (props.modelValue) {
-    displayValue.value = formatRupiah(props.modelValue)
-  }
-})
 </script>
 
 <template>
@@ -76,7 +80,7 @@ onMounted(() => {
     <input
       :id="id"
       type="text"
-      v-model="displayValue"
+      :value="displayValue"
       @input="handleInput"
       class="block h-11 w-full rounded-xl border-border bg-background pl-10 text-foreground shadow-sm transition-all focus:border-primary focus:ring-primary"
       :class="props.class"

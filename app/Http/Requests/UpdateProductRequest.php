@@ -20,8 +20,15 @@ class UpdateProductRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         if ($this->has('price')) {
+            $price = $this->price;
+            // Jika price adalah string dan mengandung karakter non-digit (selain titik desimal)
+            if (is_string($price) && !is_numeric($price)) {
+                $price = preg_replace('/[^0-9]/', '', $price);
+            }
+            
+            // Konversi ke integer/float untuk memastikan tidak ada masalah desimal yang terbawa
             $this->merge([
-                'price' => preg_replace('/[^0-9]/', '', $this->price),
+                'price' => (int) $price,
             ]);
         }
     }

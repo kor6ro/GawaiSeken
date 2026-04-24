@@ -7,17 +7,10 @@ import InputLabel from '@/Components/InputLabel.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import TextInput from '@/Components/TextInput.vue'
 import CurrencyInput from '@/Components/CurrencyInput.vue'
-import { ExternalLink, ImagePlus, X, Info } from 'lucide-vue-next'
+import { ExternalLink, ImagePlus, X, ChevronRight, ChevronLeft, Check, Tag, Wrench, Package, Camera, CircleDollarSign } from 'lucide-vue-next'
 import ImageCropperModal from '@/Components/ImageCropperModal.vue'
 import {
-  PRODUCT_SCHEMA,
   PRODUCT_CONDITIONS,
-  RAM_OPTIONS,
-  STORAGE_OPTIONS,
-  CONNECTIVITY_OPTIONS,
-  POWER_SOURCE_OPTIONS,
-  SWITCH_TYPE_OPTIONS,
-  CFW_STATUS_OPTIONS,
   getCategoryById,
   getFieldsByCategory,
 } from '@/constants'
@@ -52,46 +45,92 @@ const form = useForm({
     is_battery_balanced: false,
     is_drift_free: false,
     has_original_lens: false,
-    kelengkapan: [], // Now an array for multi-select
+    kelengkapan: [],
     kelengkapan_note: '',
   },
   images: [],
 })
 
-// Auto-check Negotiable if condition is "Bekas"
-watch(
-  () => form.condition,
-  (newVal) => {
-    if (newVal && newVal !== 'new') {
-      form.is_negotiable = true
-    }
-  }
-)
+// ─── Stepper ───────────────────────────────────────────────────────────────
+const currentStep = ref(0)
 
-const currentCategory = computed(() => getCategoryById(form.category_id))
-const selectedCategoryName = computed(() => currentCategory.value?.label.toLowerCase() || '')
+const STEPS = [
+  { id: 'category',   label: 'Kategori',     icon: Tag },
+  { id: 'specs',      label: 'Spesifikasi',  icon: Wrench },
+  { id: 'sales',      label: 'Penjualan',    icon: CircleDollarSign },
+  { id: 'kelengkapan',label: 'Kelengkapan',  icon: Package },
+  { id: 'media',      label: 'Foto',         icon: Camera },
+]
 
-const formSections = computed(() => {
-  return getFieldsByCategory(form.category_id, form)
+const goNext = () => { if (currentStep.value < STEPS.length - 1) currentStep.value++ }
+const goPrev = () => { if (currentStep.value > 0) currentStep.value-- }
+const goTo   = (i) => { if (i <= maxReachedStep.value) currentStep.value = i }
+
+const maxReachedStep = ref(0)
+watch(currentStep, (v) => { if (v > maxReachedStep.value) maxReachedStep.value = v })
+
+const canProceedStep0 = computed(() => !!form.category_id)
+const canProceedStep1 = computed(() => {
+  const ok = !!form.brand && !!form.type
+  if (form.brand === 'Other') return ok && !!form.custom_brand
+  return ok
+})
+const canProceedStep2 = computed(() => !!form.price && !!form.description)
+const canProceedStep3 = computed(() => true) // kelengkapan optional
+
+const canGoNext = computed(() => {
+  if (currentStep.value === 0) return canProceedStep0.value
+  if (currentStep.value === 1) return canProceedStep1.value
+  if (currentStep.value === 2) return canProceedStep2.value
+  if (currentStep.value === 3) return canProceedStep3.value
+  return true
 })
 
-// Legacy helper for mixed categories
-const showField = (cats) => {
-  if (!selectedCategoryName.value) return false
-  const allowed = cats.split(',')
-  return allowed.some((cat) => selectedCategoryName.value.includes(cat))
+// ─── Category & Form Sections ──────────────────────────────────────────────
+const currentCategory = computed(() => getCategoryById(form.category_id))
+const selectedCategoryName = computed(() => currentCategory.value?.label.toLowerCase() || '')
+const formSections = computed(() => getFieldsByCategory(form.category_id, form))
+
+watch(() => form.category_id, () => {
+  form.brand = ''
+  form.custom_brand = ''
+  form.type = ''
+  form.specifications = {
+    sub_type: '', ram: '', custom_ram: '', storage: '', custom_storage: '',
+    battery_health: '', screen_size: '', connectivity: '', power_source: '',
+    switch_type: '', cfw_status: '', shutter_count: '',
+    is_battery_balanced: false, is_drift_free: false, has_original_lens: false,
+    kelengkapan: [], kelengkapan_note: '',
+  }
+})
+
+watch(() => form.condition, (v) => { if (v && v !== 'new') form.is_negotiable = true })
+
+// ─── Brand / Field helpers ─────────────────────────────────────────────────
+const filteredBrands = computed(() => {
+  if (!currentCategory.value) return []
+  const subTypeKey = form.specifications.sub_type
+  const subType = currentCategory.value.sub_types?.find(st => st.value === subTypeKey)
+  return subType?.brands || currentCategory.value.brands || []
+})
+
+const isTopLevel = (key) => ['brand', 'type'].includes(key)
+const getFieldModel   = (key) => isTopLevel(key) ? form[key] : form.specifications[key]
+const updateFieldModel = (key, value) => {
+  if (isTopLevel(key)) { form[key] = value; if (value !== 'Other') form['custom_' + key] = '' }
+  else { form.specifications[key] = value; if (value !== 'Other') form.specifications['custom_' + key] = '' }
+}
+const getCustomModel    = (key) => isTopLevel(key) ? form['custom_' + key] : form.specifications['custom_' + key]
+const updateCustomModel = (key, value) => {
+  if (isTopLevel(key)) form['custom_' + key] = value
+  else form.specifications['custom_' + key] = value
 }
 
+// ─── GSM Search ───────────────────────────────────────────────────────────
 const openGsmSearch = () => {
-  if (!form.brand || !form.type) {
-    alert('Pilih Merek dan isi Tipe terlebih dahulu.')
-    return
-  }
+  if (!form.brand || !form.type) { alert('Pilih Merek dan isi Tipe terlebih dahulu.'); return }
   const query = encodeURIComponent(form.brand + ' ' + form.type)
-  if (
-    selectedCategoryName.value.includes('smartphone') ||
-    selectedCategoryName.value.includes('tablet')
-  ) {
+  if (selectedCategoryName.value.includes('smartphone') || selectedCategoryName.value.includes('tablet')) {
     window.open(`https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=${query}`, '_blank')
   } else if (selectedCategoryName.value.includes('camera')) {
     window.open(`https://www.google.com/search?q=${query}+specs+dpreview`, '_blank')
@@ -101,127 +140,47 @@ const openGsmSearch = () => {
   }
 }
 
-const imagePreviews = ref([])
-const fileInput = ref(null)
-
-// Sequential Cropping Logic
-const showCropper = ref(false)
-const pendingFiles = ref([])
+// ─── Image Handling ───────────────────────────────────────────────────────
+const imagePreviews  = ref([])
+const fileInput      = ref(null)
+const showCropper    = ref(false)
+const pendingFiles   = ref([])
 
 const handleFiles = (event) => {
-  const files = Array.from(event.target.files)
-  const maxFiles = 10
-  const currentTotal = form.images.length
-  const remaining = maxFiles - currentTotal
-
-  if (remaining <= 0) {
-    alert(`Maksimal ${maxFiles} foto diperbolehkan.`)
-    if (fileInput.value) fileInput.value.value = ''
-    return
-  }
-
-  const filesToAdd = files.slice(0, remaining)
-  if (filesToAdd.length > 0) {
-    pendingFiles.value = filesToAdd
-    showCropper.value = true
-  }
+  const files     = Array.from(event.target.files)
+  const remaining = 10 - form.images.length
+  if (remaining <= 0) { alert('Maksimal 10 foto diperbolehkan.'); if (fileInput.value) fileInput.value.value = ''; return }
+  const toAdd = files.slice(0, remaining)
+  if (toAdd.length > 0) { pendingFiles.value = toAdd; showCropper.value = true }
 }
 
 const handleCropped = ({ blob, originalFile }) => {
   const fileName = originalFile.name.replace(/\.[^/.]+$/, '') + '.jpg'
   const file = new File([blob], fileName, { type: 'image/jpeg' })
-
   form.images.push(file)
-
   const reader = new FileReader()
-  reader.onload = (e) => {
-    imagePreviews.value.push({
-      url: e.target.result,
-      name: fileName,
-    })
-  }
+  reader.onload = (e) => imagePreviews.value.push({ url: e.target.result, name: fileName })
   reader.readAsDataURL(file)
 }
 
 const handleCropperFinished = () => {
-  showCropper.value = false
-  pendingFiles.value = []
+  showCropper.value = false; pendingFiles.value = []
   if (fileInput.value) fileInput.value.value = ''
 }
 
-const removeFile = (index) => {
-  form.images.splice(index, 1)
-  imagePreviews.value.splice(index, 1)
+const removeFile = (index) => { form.images.splice(index, 1); imagePreviews.value.splice(index, 1) }
+
+// ─── Cancel Confirmation ──────────────────────────────────────────────────
+const confirmCancel = () => {
+  if (confirm('Apakah Anda yakin ingin membatalkan? Data yang telah diisi akan hilang.')) {
+    window.location.href = route('dashboard')
+  }
 }
 
+// ─── Submit ───────────────────────────────────────────────────────────────
 const submit = () => {
-  form.post(route('products.store'), {
-    forceFormData: true,
-    onSuccess: () => {},
-  })
+  form.post(route('products.store'), { forceFormData: true, onSuccess: () => {} })
 }
-
-watch(
-  () => form.category_id,
-  () => {
-    form.brand = ''
-    form.custom_brand = ''
-    form.type = ''
-    form.specifications = {
-      sub_type: '',
-      ram: '',
-      custom_ram: '',
-      storage: '',
-      custom_storage: '',
-      battery_health: '',
-      screen_size: '',
-      connectivity: '',
-      power_source: '',
-      switch_type: '',
-      cfw_status: '',
-      shutter_count: '',
-      is_battery_balanced: false,
-      is_drift_free: false,
-      has_original_lens: false,
-      kelengkapan: [],
-    }
-  }
-)
-
-const isTopLevel = (key) => ['brand', 'type'].includes(key)
-
-const getFieldModel = (key) => {
-  return isTopLevel(key) ? form[key] : form.specifications[key]
-}
-
-const updateFieldModel = (key, value) => {
-  if (isTopLevel(key)) {
-    form[key] = value
-    if (value !== 'Other') form['custom_' + key] = ''
-  } else {
-    form.specifications[key] = value
-    if (value !== 'Other') form.specifications['custom_' + key] = ''
-  }
-}
-
-const getCustomModel = (key) => {
-  return isTopLevel(key) ? form['custom_' + key] : form.specifications['custom_' + key]
-}
-
-const updateCustomModel = (key, value) => {
-  if (isTopLevel(key)) {
-    form['custom_' + key] = value
-  } else {
-    form.specifications['custom_' + key] = value
-  }
-}
-
-const filteredBrands = computed(() => {
-  if (!currentCategory.value) return []
-  const subTypeKey = form.specifications.sub_type
-  const subType = currentCategory.value.sub_types?.find((st) => st.value === subTypeKey)
-  return subType?.brands || currentCategory.value.brands || []
-})
 </script>
 
 <template>
@@ -232,95 +191,112 @@ const filteredBrands = computed(() => {
       <h2 class="text-xl font-semibold leading-tight text-foreground">Jual Produk</h2>
     </template>
 
-    <div class="py-12">
-      <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div
-          class="border border-border bg-card p-4 text-card-foreground shadow sm:rounded-2xl sm:p-8"
-        >
-          <div class="mx-auto max-w-2xl">
-            <header>
-              <div
-                class="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center"
-              >
-                <div>
-                  <h2 class="text-2xl font-bold">Informasi Produk</h2>
-                  <p class="mt-1 text-sm text-muted-foreground">
-                    Lengkapi detail gawai yang ingin Anda jual.
-                  </p>
-                </div>
+    <div class="py-8">
+      <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
+
+        <!-- ── Stepper Header ── -->
+        <nav aria-label="Form steps" class="mb-8">
+          <ol class="flex items-center justify-between gap-1">
+            <li
+              v-for="(step, i) in STEPS"
+              :key="step.id"
+              class="flex flex-1 flex-col items-center gap-1.5"
+            >
+              <!-- connector line -->
+              <div class="flex w-full items-center">
+                <div class="flex-1 h-px" :class="i === 0 ? 'invisible' : (i <= currentStep ? 'bg-primary' : 'bg-border')" />
                 <button
                   type="button"
-                  @click="openGsmSearch"
-                  class="inline-flex items-center gap-2 rounded-xl border border-border bg-accent px-4 py-2 text-xs font-bold text-accent-foreground shadow-sm transition-all hover:bg-accent/80"
+                  @click="goTo(i)"
+                  :disabled="i > maxReachedStep"
+                  class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition-all"
+                  :class="[
+                    i === currentStep
+                      ? 'border-primary bg-primary text-primary-foreground shadow-md shadow-primary/30'
+                      : i < currentStep
+                        ? 'border-primary bg-primary/10 text-primary cursor-pointer hover:bg-primary/20'
+                        : 'border-border bg-muted text-muted-foreground cursor-not-allowed opacity-50'
+                  ]"
+                  :title="step.label"
                 >
-                  <ExternalLink class="h-4 w-4" />
-                  <span>{{
-                    selectedCategoryName.includes('smartphone') ||
-                    selectedCategoryName.includes('tablet')
-                      ? 'Cari di GSM Arena'
-                      : 'Cari Spesifikasi'
-                  }}</span>
+                  <Check v-if="i < currentStep" class="h-4 w-4" />
+                  <component v-else :is="step.icon" class="h-4 w-4" />
                 </button>
+                <div class="flex-1 h-px" :class="i === STEPS.length - 1 ? 'invisible' : (i < currentStep ? 'bg-primary' : 'bg-border')" />
               </div>
-            </header>
+              <span
+                class="text-[10px] font-semibold transition-colors"
+                :class="i === currentStep ? 'text-primary' : i < currentStep ? 'text-primary/70' : 'text-muted-foreground'"
+              >{{ step.label }}</span>
+            </li>
+          </ol>
+        </nav>
 
-            <form @submit.prevent="submit" class="space-y-8">
-              <!-- SECTION 0: KATEGORI (MUST BE VISIBLE) -->
-              <div class="rounded-3xl border border-border bg-muted/30 p-6 shadow-sm sm:p-8">
-                <h3 class="mb-6 flex items-center gap-2 border-b border-border pb-3 text-lg font-bold">
-                  <span class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs text-primary">0</span>
-                  Pilih Kategori
-                </h3>
-                <div>
-                  <InputLabel for="category_id" value="Kategori Produk" />
-                  <select
-                    id="category_id"
-                    v-model="form.category_id"
-                    class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-foreground shadow-sm focus:border-primary focus:ring-primary"
-                    required
-                  >
-                    <option value="">-- Pilih Kategori --</option>
-                    <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-                      {{ cat.name }}
-                    </option>
-                  </select>
-                  <InputError class="mt-2" :message="form.errors.category_id" />
-                </div>
-              </div>
+        <!-- ── Step Card ── -->
+        <div class="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
 
-              <!-- DYNAMIC SECTIONS & FIELDS -->
-              <div v-for="(section, sIndex) in formSections" :key="section.id"
-                class="rounded-3xl border border-border bg-muted/30 p-6 shadow-sm transition-all duration-300 sm:p-8"
+          <!-- STEP 0 — KATEGORI -->
+          <div v-show="currentStep === 0">
+            <h3 class="mb-1 text-lg font-bold">Pilih Kategori</h3>
+            <p class="mb-6 text-sm text-muted-foreground">Pilih kategori gawai yang ingin Anda jual.</p>
+
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <button
+                v-for="cat in categories"
+                :key="cat.id"
+                type="button"
+                @click="form.category_id = cat.id"
+                class="rounded-xl border-2 p-4 text-left text-sm font-semibold transition-all hover:border-primary/60"
+                :class="form.category_id === cat.id
+                  ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                  : 'border-border bg-muted/40 text-foreground'"
               >
-                <h3 class="mb-6 flex items-center gap-2 border-b border-border pb-3 text-lg font-bold">
-                  <span class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs text-primary">
-                    {{ sIndex + 1 }}
-                  </span>
-                  {{ section.label }}
-                </h3>
+                {{ cat.name }}
+              </button>
+            </div>
+            <InputError class="mt-3" :message="form.errors.category_id" />
+          </div>
 
-                <!-- Sub-Type Selection (If exists) -->
-                <div v-if="section.id === 'main' && currentCategory?.sub_types" class="mb-6">
-                  <InputLabel value="Tipe Spesifik" />
-                  <div class="mt-2 flex flex-wrap gap-2">
-                    <button
-                      v-for="st in currentCategory.sub_types"
-                      :key="st.value"
-                      type="button"
-                      @click="form.specifications.sub_type = st.value"
-                      class="rounded-xl border px-4 py-2 text-sm font-medium transition-all"
-                      :class="form.specifications.sub_type === st.value 
-                        ? 'bg-primary text-primary-foreground border-primary shadow-md' 
-                        : 'bg-background text-muted-foreground border-border hover:bg-muted'"
-                    >
-                      {{ st.label }}
-                    </button>
-                  </div>
-                </div>
+          <!-- STEP 1 — SPESIFIKASI -->
+          <div v-show="currentStep === 1">
+            <div class="mb-6 flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-bold">Spesifikasi Produk</h3>
+                <p class="text-sm text-muted-foreground">Isi detail teknis gawai Anda.</p>
+              </div>
+              <button type="button" @click="openGsmSearch"
+                class="inline-flex items-center gap-1.5 rounded-xl border border-border bg-accent px-3 py-2 text-xs font-bold text-accent-foreground shadow-sm transition-all hover:bg-accent/80"
+              >
+                <ExternalLink class="h-3.5 w-3.5" />
+                <span>{{ selectedCategoryName.includes('smartphone') || selectedCategoryName.includes('tablet') ? 'GSM Arena' : 'Cari Spek' }}</span>
+              </button>
+            </div>
 
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <!-- Sub-Type pill selector -->
+            <div v-if="currentCategory?.sub_types" class="mb-6">
+              <InputLabel value="Tipe Spesifik" />
+              <div class="mt-2 flex flex-wrap gap-2">
+                <button
+                  v-for="st in currentCategory.sub_types"
+                  :key="st.value"
+                  type="button"
+                  @click="form.specifications.sub_type = st.value"
+                  class="rounded-xl border px-4 py-2 text-sm font-medium transition-all"
+                  :class="form.specifications.sub_type === st.value
+                    ? 'bg-primary text-primary-foreground border-primary shadow-md'
+                    : 'bg-background text-muted-foreground border-border hover:bg-muted'"
+                >{{ st.label }}</button>
+              </div>
+            </div>
+
+            <!-- Dynamic Fields from all sections -->
+            <div class="space-y-8">
+              <div v-for="section in formSections" :key="section.id">
+                <p class="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">{{ section.label }}</p>
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <template v-for="field in section.fields" :key="field.key">
-                    <!-- Standard Select Renderer -->
+
+                    <!-- Select -->
                     <div v-if="field.type === 'select'">
                       <InputLabel :for="field.key" :value="field.label + (field.unit ? ` (${field.unit})` : '')" />
                       <select
@@ -332,33 +308,25 @@ const filteredBrands = computed(() => {
                       >
                         <option value="">{{ field.placeholder || 'Pilih...' }}</option>
                         <template v-if="field.key === 'brand'">
-                          <option v-for="brand in filteredBrands" :key="brand" :value="brand">
-                            {{ brand }}
-                          </option>
+                          <option v-for="brand in filteredBrands" :key="brand" :value="brand">{{ brand }}</option>
                         </template>
                         <template v-else>
-                          <option v-for="opt in field.options" :key="opt" :value="opt">
-                            {{ opt }}
-                          </option>
+                          <option v-for="opt in field.options" :key="opt" :value="opt">{{ opt }}</option>
                         </template>
                       </select>
-                      
-                      <!-- Auto-Other Text Input -->
-                      <div v-if="field.allowOther && getFieldModel(field.key) === 'Other'" 
-                        class="mt-2 animate-in fade-in slide-in-from-top-1"
-                      >
-                        <TextInput 
+                      <div v-if="field.allowOther && getFieldModel(field.key) === 'Other'" class="mt-2">
+                        <TextInput
                           :value="getCustomModel(field.key)"
                           @input="updateCustomModel(field.key, $event.target.value)"
-                          :placeholder="'Sebutkan ' + field.label" 
-                          class="h-10" 
+                          :placeholder="'Sebutkan ' + field.label"
+                          class="h-10"
                           required
                         />
                       </div>
-                      <InputError class="mt-2" :message="isTopLevel(field.key) ? form.errors[field.key] : form.errors['specifications.' + field.key]" />
+                      <InputError class="mt-1" :message="isTopLevel(field.key) ? form.errors[field.key] : form.errors['specifications.' + field.key]" />
                     </div>
 
-                    <!-- Standard Text/Number Renderer -->
+                    <!-- Text / Number -->
                     <div v-else-if="['number', 'text'].includes(field.type)">
                       <InputLabel :for="field.key" :value="field.label + (field.unit ? ` (${field.unit})` : '')" />
                       <TextInput
@@ -370,11 +338,11 @@ const filteredBrands = computed(() => {
                         :placeholder="field.placeholder"
                         :required="field.required"
                       />
-                      <InputError class="mt-2" :message="isTopLevel(field.key) ? form.errors[field.key] : form.errors['specifications.' + field.key]" />
+                      <InputError class="mt-1" :message="isTopLevel(field.key) ? form.errors[field.key] : form.errors['specifications.' + field.key]" />
                     </div>
 
-                    <!-- Boolean Renderer -->
-                    <div v-else-if="field.type === 'boolean'" class="flex items-center gap-3 pt-8">
+                    <!-- Boolean -->
+                    <div v-else-if="field.type === 'boolean'" class="flex items-center gap-3 sm:col-span-1 pt-6">
                       <input
                         type="checkbox"
                         :checked="getFieldModel(field.key)"
@@ -382,147 +350,213 @@ const filteredBrands = computed(() => {
                         :id="field.key"
                         class="h-5 w-5 rounded border-border text-primary focus:ring-primary"
                       />
-                      <label :for="field.key" class="text-sm font-medium leading-none cursor-pointer">
+                      <label :for="field.key" class="cursor-pointer text-sm font-medium leading-none">
                         {{ field.label }}
                         <span v-if="field.placeholder" class="block text-[10px] font-normal text-muted-foreground">{{ field.placeholder }}</span>
                       </label>
-                      <InputError class="mt-2" :message="form.errors['specifications.' + field.key]" />
+                      <InputError class="mt-1" :message="form.errors['specifications.' + field.key]" />
                     </div>
+
                   </template>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <!-- SECTION: KELENGKAPAN (SMART CHECKBOX) -->
-              <div v-if="currentCategory"
-                class="rounded-3xl border border-border bg-muted/30 p-6 shadow-sm transition-all duration-300 sm:p-8"
-              >
-                <h3 class="mb-6 flex items-center gap-2 border-b border-border pb-3 text-lg font-bold">
-                   <span class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs text-primary">
-                    {{ formSections.length + 1 }}
-                  </span>
-                  Kelengkapan Produk
-                </h3>
-                <p class="mb-6 text-xs text-muted-foreground">Centang semua item yang tersedia dalam paket penjualan.</p>
-                
-                <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                  <div v-for="item in currentCategory.checklists" :key="item"
-                    class="flex items-center gap-3 rounded-2xl border border-border bg-background p-4 transition-all hover:border-primary/50"
-                    :class="{'border-primary bg-primary/5': form.specifications.kelengkapan.includes(item)}"
-                  >
-                    <input
-                      type="checkbox"
-                      :id="item"
-                      :value="item"
-                      v-model="form.specifications.kelengkapan"
-                      class="h-5 w-5 rounded border-border text-primary focus:ring-primary"
-                    />
-                    <label :for="item" class="flex-1 cursor-pointer text-sm font-bold">{{ item }}</label>
-                  </div>
-                </div>
-                <div class="mt-4">
-                   <InputLabel value="Keterangan Lain (Opsional)" />
-                   <TextInput v-model="form.specifications.kelengkapan_note" placeholder="Misal: Dus ada penyok dikit" class="mt-1" />
-                   <InputError class="mt-2" :message="form.errors['specifications.kelengkapan_note']" />
-                </div>
-                <InputError class="mt-4" :message="form.errors['specifications.kelengkapan']" />
+          <!-- STEP 2 — PENJUALAN -->
+          <div v-show="currentStep === 2">
+            <h3 class="mb-1 text-lg font-bold">Informasi Penjualan</h3>
+            <p class="mb-6 text-sm text-muted-foreground">Tetapkan harga dan kondisi produk Anda.</p>
+
+            <div class="space-y-5">
+              <!-- Price -->
+              <div>
+                <InputLabel for="price" value="Harga Produk (Rp)" />
+                <CurrencyInput id="price" v-model="form.price" :required="true" placeholder="0" />
+                <InputError class="mt-1" :message="form.errors.price" />
               </div>
 
-              <!-- SECTION 4: MEDIA -->
+              <!-- Condition -->
+              <div>
+                <InputLabel for="condition" value="Kondisi Barang" />
+                <select id="condition" v-model="form.condition"
+                  class="mt-1 block h-11 w-full rounded-xl border-border bg-background text-sm text-foreground shadow-sm focus:border-primary focus:ring-primary"
+                  required
+                >
+                  <option v-for="item in PRODUCT_CONDITIONS" :key="item.value" :value="item.value">{{ item.label }}</option>
+                </select>
+                <InputError class="mt-1" :message="form.errors.condition" />
+              </div>
+
+              <!-- Toggles: COD & Negotiable -->
+              <div class="flex flex-wrap gap-3">
+                <label
+                  class="flex cursor-pointer items-center gap-3 rounded-xl border-2 p-4 transition-all flex-1 min-w-[140px]"
+                  :class="form.is_cod ? 'border-primary bg-primary/5' : 'border-border bg-muted/30'"
+                >
+                  <input type="checkbox" id="is_cod" v-model="form.is_cod" class="h-5 w-5 rounded border-border text-primary focus:ring-primary" />
+                  <div>
+                    <p class="text-sm font-bold">COD</p>
+                    <p class="text-[10px] text-muted-foreground">Cash On Delivery</p>
+                  </div>
+                </label>
+                <label
+                  class="flex cursor-pointer items-center gap-3 rounded-xl border-2 p-4 transition-all flex-1 min-w-[140px]"
+                  :class="form.is_negotiable ? 'border-primary bg-primary/5' : 'border-border bg-muted/30'"
+                >
+                  <input type="checkbox" id="is_negotiable" v-model="form.is_negotiable" class="h-5 w-5 rounded border-border text-primary focus:ring-primary" />
+                  <div>
+                    <p class="text-sm font-bold">Bisa Nego</p>
+                    <p class="text-[10px] text-muted-foreground">Harga dapat dinegosiasikan</p>
+                  </div>
+                </label>
+              </div>
+
+              <!-- Description -->
+              <div>
+                <InputLabel for="description" value="Deskripsi Produk" />
+                <textarea
+                  id="description"
+                  v-model="form.description"
+                  rows="5"
+                  class="mt-1 block w-full rounded-xl border-border bg-background p-3 text-sm text-foreground shadow-sm focus:border-primary focus:ring-primary"
+                  required
+                  :placeholder="form.condition === 'second_good' || form.condition === 'minus'
+                    ? 'WAJIB: Jelaskan semua minus secara jujur (LCD retak, baterai drop, dll)...'
+                    : 'Jelaskan kelengkapan, garansi, dan kondisi fisik secara detail...'"
+                />
+                <InputError class="mt-1" :message="form.errors.description" />
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 3 — KELENGKAPAN -->
+          <div v-show="currentStep === 3">
+            <h3 class="mb-1 text-lg font-bold">Kelengkapan Produk</h3>
+            <p class="mb-6 text-sm text-muted-foreground">Centang semua item yang tersedia dalam paket penjualan.</p>
+
+            <div v-if="currentCategory" class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <label
+                v-for="item in currentCategory.checklists"
+                :key="item"
+                class="flex cursor-pointer items-center gap-3 rounded-xl border-2 p-4 transition-all"
+                :class="form.specifications.kelengkapan.includes(item)
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-muted/30 hover:border-primary/40'"
+              >
+                <input
+                  type="checkbox"
+                  :value="item"
+                  v-model="form.specifications.kelengkapan"
+                  class="h-5 w-5 rounded border-border text-primary focus:ring-primary"
+                />
+                <span class="text-sm font-semibold">{{ item }}</span>
+              </label>
+            </div>
+            <p v-else class="text-sm italic text-muted-foreground">Pilih kategori terlebih dahulu.</p>
+
+            <div class="mt-5">
+              <InputLabel value="Keterangan Lain (Opsional)" />
+              <TextInput v-model="form.specifications.kelengkapan_note" placeholder="Misal: Dus ada penyok dikit" class="mt-1" />
+              <InputError class="mt-1" :message="form.errors['specifications.kelengkapan_note']" />
+            </div>
+            <InputError class="mt-3" :message="form.errors['specifications.kelengkapan']" />
+          </div>
+
+          <!-- STEP 4 — MEDIA -->
+          <div v-show="currentStep === 4">
+            <h3 class="mb-1 text-lg font-bold">Foto Produk</h3>
+            <p class="mb-6 text-sm text-muted-foreground">Upload minimal 1 foto. Foto pertama jadi cover.</p>
+
+            <label
+              for="images"
+              class="group flex h-36 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/20 transition-all hover:border-primary hover:bg-primary/5"
+            >
+              <ImagePlus class="mb-2 h-8 w-8 text-muted-foreground transition-colors group-hover:text-primary" />
+              <p class="text-sm font-semibold text-muted-foreground group-hover:text-primary">Klik untuk tambah foto</p>
+              <p class="mt-1 text-[10px] text-muted-foreground">JPG, PNG – Maks 10 foto</p>
+              <input
+                id="images"
+                ref="fileInput"
+                type="file"
+                @change="handleFiles"
+                class="hidden"
+                multiple
+                accept="image/jpeg,image/png,image/jpg"
+                :required="form.images.length === 0"
+              />
+            </label>
+
+            <!-- Preview -->
+            <div v-if="imagePreviews.length > 0" class="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
               <div
-                class="rounded-3xl border border-border bg-muted/30 p-6 shadow-sm transition-all duration-300 sm:p-8"
+                v-for="(preview, index) in imagePreviews"
+                :key="index"
+                class="group relative aspect-square overflow-hidden rounded-xl border border-border bg-card shadow-sm"
               >
-                <h3
-                  class="mb-6 flex items-center gap-2 border-b border-border pb-3 text-lg font-bold"
+                <img :src="preview.url" loading="lazy" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                <button
+                  type="button"
+                  @click="removeFile(index)"
+                  class="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-white shadow-lg transition-transform hover:scale-110"
                 >
-                  <span
-                    class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs text-primary"
-                    >4</span
-                  >
-                  4. Media Foto
-                </h3>
-
-                <div>
-                  <InputLabel for="images" value="Upload Foto Produk (Min 1)" />
-                  <div class="mt-2 flex w-full items-center justify-center">
-                    <label
-                      for="images"
-                      class="group flex h-40 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-background transition-all hover:bg-muted/50"
-                    >
-                      <div class="flex flex-col items-center justify-center pb-6 pt-5">
-                        <ImagePlus
-                          class="mb-3 h-10 w-10 text-muted-foreground transition-all group-hover:scale-110 group-hover:text-primary"
-                        />
-                        <p class="text-sm text-muted-foreground">
-                          <span class="font-bold text-primary">Klik untuk tambah</span> atau seret
-                          ke sini
-                        </p>
-                        <p class="mt-1 text-[10px] text-muted-foreground">
-                          JPG, PNG up to 2MB. Maksimal 10 foto.
-                        </p>
-                      </div>
-                      <input
-                        id="images"
-                        ref="fileInput"
-                        type="file"
-                        @change="handleFiles"
-                        class="hidden"
-                        multiple
-                        accept="image/jpeg,image/png,image/jpg"
-                        :required="form.images.length === 0"
-                      />
-                    </label>
-                  </div>
-
-                  <!-- Preview Gallery -->
-                  <template v-if="imagePreviews.length > 0">
-                    <div
-                      class="animate-fade-in mt-6 grid grid-cols-3 gap-4 rounded-2xl border border-border bg-muted/50 p-4 sm:grid-cols-4 md:grid-cols-5"
-                    >
-                      <div
-                        v-for="(preview, index) in imagePreviews"
-                        :key="index"
-                        class="group relative aspect-square overflow-hidden rounded-xl border border-border bg-card shadow-sm"
-                      >
-                        <img
-                          :src="preview.url"
-                          loading="lazy"
-                          class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
-                        <button
-                          type="button"
-                          @click="removeFile(index)"
-                          class="absolute right-2 top-2 z-10 flex items-center justify-center rounded-full border border-border bg-background/90 p-1.5 text-foreground shadow-lg transition-all hover:bg-destructive hover:text-white"
-                        >
-                          <X class="h-3 w-3" />
-                        </button>
-                      </div>
-                    </div>
-                  </template>
-
-                  <InputError class="mt-2" :message="form.errors.images" />
-                  <div v-for="(error, index) in form.errors" :key="index">
-                    <InputError v-if="index.startsWith('images.')" class="mt-1" :message="error" />
-                  </div>
-                </div>
+                  <X class="h-3 w-3" />
+                </button>
+                <div v-if="index === 0" class="absolute bottom-0 left-0 right-0 bg-primary/80 py-0.5 text-center text-[9px] font-bold text-white">COVER</div>
               </div>
+            </div>
 
-              <div class="mt-10 flex items-center gap-6 border-t border-border pt-4">
-                <PrimaryButton :disabled="form.processing" class="h-12 px-8 text-sm">
-                  {{ form.processing ? 'Sedang Memproses...' : 'Tayangkan Produk' }}
-                </PrimaryButton>
-                <Link
-                  :href="route('dashboard')"
-                  class="text-sm font-bold text-muted-foreground transition-colors hover:text-foreground"
-                  >Batal</Link
-                >
-              </div>
-            </form>
+            <InputError class="mt-2" :message="form.errors.images" />
+            <div v-for="(error, index) in form.errors" :key="index">
+              <InputError v-if="String(index).startsWith('images.')" class="mt-1" :message="error" />
+            </div>
+          </div>
+
+          <!-- ── Navigation ── -->
+          <div class="mt-8 flex items-center justify-between border-t border-border pt-5">
+            <button
+              v-if="currentStep > 0"
+              type="button"
+              @click="goPrev"
+              class="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/50 px-5 py-2.5 text-sm font-semibold transition-all hover:bg-muted"
+            >
+              <ChevronLeft class="h-4 w-4" />
+              Sebelumnya
+            </button>
+            <button
+              v-else
+              type="button"
+              @click="confirmCancel"
+              class="text-sm font-bold text-muted-foreground transition-colors hover:text-destructive"
+            >Batal</button>
+
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-muted-foreground">{{ currentStep + 1 }} / {{ STEPS.length }}</span>
+              <button
+                v-if="currentStep < STEPS.length - 1"
+                type="button"
+                @click="goNext"
+                :disabled="!canGoNext"
+                class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/30 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Selanjutnya
+                <ChevronRight class="h-4 w-4" />
+              </button>
+              <PrimaryButton
+                v-else
+                :disabled="form.processing || form.images.length === 0"
+                @click="submit"
+                class="h-11 px-6 text-sm"
+              >
+                {{ form.processing ? 'Memproses...' : 'Tayangkan Produk' }}
+              </PrimaryButton>
+            </div>
           </div>
         </div>
+
       </div>
     </div>
 
-    <!-- Cropper Modal -->
     <ImageCropperModal
       :show="showCropper"
       :files="pendingFiles"
