@@ -2,6 +2,7 @@
 import { ref, onMounted, nextTick, onUnmounted, computed, watch } from 'vue'
 import { Head, Link, usePage } from '@inertiajs/vue3'
 import axios from 'axios'
+import BackButton from '@/Components/BackButton.vue'
 const props = defineProps({
   chat: Object,
   isNewChat: Boolean,
@@ -54,9 +55,6 @@ const negoPrice = ref(props.contextProduct?.price || 0)
 const negoMessage = ref('')
 const isSubmittingNego = ref(false)
 
-// Purchase Modal State
-const showBuyModal = ref(false)
-const isSubmittingBuy = ref(false)
 
 // Notification State
 const notification = ref(null)
@@ -105,31 +103,7 @@ const submitNego = async () => {
   }
 }
 
-const startTransaction = () => {
-  if (!props.contextProduct) return
-  showBuyModal.value = true
-}
 
-const confirmTransaction = () => {
-  if (isSubmittingBuy.value) return
-  isSubmittingBuy.value = true
-  
-  const form = document.createElement('form')
-  form.method = 'POST'
-  form.action = route('transactions.checkout', props.contextProduct.slug)
-  
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-  if (csrfToken) {
-    const input = document.createElement('input')
-    input.type = 'hidden'
-    input.name = '_token'
-    input.value = csrfToken
-    form.appendChild(input)
-  }
-  
-  document.body.appendChild(form)
-  form.submit()
-}
 
 
 const chatContainer = ref(null)
@@ -409,9 +383,7 @@ onUnmounted(() => {
     <!-- ===================== HEADER ===================== -->
     <header class="chat-header">
       <!-- Back button -->
-      <Link :href="route('chat.index')" class="chat-header-back">
-        <ChevronLeft class="h-5 w-5" />
-      </Link>
+      <BackButton fallbackRoute="chat.index" class="mr-2 bg-transparent hover:bg-muted" />
 
       <!-- Opponent info -->
       <component 
@@ -761,63 +733,7 @@ onUnmounted(() => {
       </transition>
     </Teleport>
 
-    <!-- ===================== BUY MODAL ===================== -->
-    <Teleport to="body">
-      <transition name="modal-fade">
-        <div v-if="showBuyModal" class="modal-overlay" @click.self="showBuyModal = false">
-          <div class="modal-card">
-            <div class="modal-header">
-              <h3 class="modal-title">Konfirmasi Pembelian</h3>
-              <button @click="showBuyModal = false" class="modal-close">
-                <X class="h-5 w-5" />
-              </button>
-            </div>
-            <div class="modal-body">
-              <div class="text-center mb-6">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
-                  <ShoppingCart class="h-8 w-8" />
-                </div>
-                <h4 class="text-lg font-bold">Lanjutkan ke Pembayaran?</h4>
-                <p class="text-sm text-muted-foreground">Anda akan diarahkan ke halaman pembayaran untuk menyelesaikan transaksi ini.</p>
-              </div>
 
-              <div class="p-4 bg-muted/30 rounded-2xl border border-border/50">
-                <div class="flex gap-4 items-center">
-                  <img :src="'/storage/' + contextProduct.images[0].image_path" class="h-16 w-16 rounded-xl object-cover" />
-                  <div class="min-w-0">
-                    <h5 class="font-semibold text-sm truncate">{{ contextProduct.title }}</h5>
-                    <p class="text-primary font-black">Rp {{ formatNumber(contextProduct.price) }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="mt-6 flex items-start gap-3 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                <Info class="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                <p class="text-[11px] text-blue-700 dark:text-blue-400">
-                  Pembayaran Anda akan ditahan oleh sistem GawaiSeken sampai Anda menerima barang dengan aman.
-                </p>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button @click="showBuyModal = false" class="modal-btn-secondary">Batal</button>
-              <button 
-                @click="confirmTransaction" 
-                :disabled="isSubmittingBuy" 
-                class="modal-btn-primary"
-              >
-                <template v-if="isSubmittingBuy">
-                  <div class="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Memproses...
-                </template>
-                <template v-else>
-                  Beli Sekarang
-                </template>
-              </button>
-            </div>
-          </div>
-        </div>
-      </transition>
-    </Teleport>
 
     <!-- ===================== TOAST NOTIFICATION ===================== -->
     <Teleport to="body">

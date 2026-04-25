@@ -4,7 +4,9 @@ import { Head, Link, useForm, usePage } from '@inertiajs/vue3'
 import axios from 'axios'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { useIntersectionObserver } from '@vueuse/core'
+import BackButton from '@/Components/BackButton.vue'
 import {
+  ChevronLeft,
   LayoutDashboard,
   Settings,
   Package,
@@ -339,37 +341,16 @@ const openDisputeDetail = (transaction) => {
 
 const getStatusLabel = (status) => {
   const labels = {
-    pending:       'Menunggu Pembayaran',
-    paid:          'Dibayar — Dalam Escrow',
-    processing:    'Diproses Seller',
-    shipped:       'Dikirim',
-    delivered:     'Diterima Buyer',
-    completed:     'Selesai ✓',
-    disputed:      'Sengketa',
-    canceled:      'Dibatalkan',
-    cod_requested: 'COD — Tunggu Konfirmasi',
-    cod_confirmed: 'COD — Jadwal Dikonfirmasi',
+    completed:        'Selesai ✓',
+    disputed:         'Sengketa',
+    canceled:         'Dibatalkan',
+    cod_requested:    'COD — Tunggu Konfirmasi',
+    cod_confirmed:    'COD — Jadwal Dikonfirmasi',
+    cod_meetup_done:  'COD — Menunggu Konfirmasi Buyer',
   }
   return labels[status] ?? status
 }
 
-// ─── Modal Resi ─────────────────────────────────────────────────────────────
-const shipModal = ref(false)
-const selectedShipTransaction = ref(null)
-const shipForm = useForm({ tracking_number: '', courier_name: '', seller_notes: '' })
-
-const openShipModal = (item) => {
-  selectedShipTransaction.value = item
-  shipForm.reset()
-  shipModal.value = true
-}
-
-const submitShipment = () => {
-  shipForm.post(route('transactions.ship', selectedShipTransaction.value.id), {
-    preserveScroll: true,
-    onSuccess: () => { shipModal.value = false },
-  })
-}
 
 // ─── Aksi COD ────────────────────────────────────────────────────────────────
 const codModal = ref(false)
@@ -418,7 +399,10 @@ const transactionHeaders = [
     <Head title="Seller Dashboard" />
 
     <template #header>
-      <h2 class="text-xl font-semibold leading-tight text-foreground">Seller Dashboard</h2>
+      <div class="flex items-center gap-3">
+        <BackButton fallbackRoute="home" />
+        <h2 class="text-xl font-semibold leading-tight text-foreground">Seller Dashboard</h2>
+      </div>
     </template>
 
     <div class="py-12">
@@ -786,11 +770,9 @@ const transactionHeaders = [
                       <span
                         class="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full border"
                         :class="{
-                          'border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400': ['pending','cod_requested'].includes(status),
-                          'border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400': status === 'paid',
-                          'border-indigo-200 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400': status === 'processing',
-                          'border-purple-200 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400': status === 'shipped',
-                          'border-teal-200 bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-400': ['delivered','cod_confirmed'].includes(status),
+                          'border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400': status === 'cod_requested',
+                          'border-teal-200 bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-400': status === 'cod_confirmed',
+                          'border-orange-200 bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400': status === 'cod_meetup_done',
                           'border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400': status === 'completed',
                           'border-red-200 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400': status === 'disputed',
                           'border-slate-200 bg-slate-50 text-slate-700 dark:bg-slate-800 dark:text-slate-400': status === 'canceled',
@@ -798,44 +780,23 @@ const transactionHeaders = [
                       >
                         {{ getStatusLabel(status) }}
                       </span>
-                      <span v-if="payment_method === 'cod'" class="inline-flex items-center gap-0.5 text-[8px] font-black uppercase text-orange-500">
+                      <span class="inline-flex items-center gap-0.5 text-[8px] font-black uppercase text-orange-500">
                         <Users class="h-2.5 w-2.5" /> COD
-                      </span>
-                      <span v-else class="inline-flex items-center gap-0.5 text-[8px] font-black uppercase text-blue-500">
-                        <CreditCard class="h-2.5 w-2.5" /> Rekber
                       </span>
                     </div>
                   </template>
 
                   <template #item-actions="item">
                     <div class="flex flex-wrap items-center justify-end gap-1.5 py-2">
-                      <!-- REKBER FLOW -->
-                      <template v-if="item.payment_method === 'rekber' || !item.payment_method">
-                        <button
-                          v-if="item.status === 'paid'"
-                          @click="openShipModal(item)"
-                          class="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white text-[10px] font-bold rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                          <Truck class="h-3 w-3" /> Input Resi
-                        </button>
-                        <button
-                          v-if="item.status === 'pending' || item.status === 'paid'"
-                          @click="router.post(route('transactions.update-status', item.id), { status: 'processing' })"
-                          v-show="item.status === 'paid'"
-                          class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-500 text-white text-[10px] font-bold rounded-lg hover:bg-indigo-600 transition-colors"
-                        >
-                          Tandai Diproses
-                        </button>
-                      </template>
-
                       <!-- COD FLOW -->
-                      <template v-if="item.payment_method === 'cod'">
+                      <template>
+                        <!-- Step 1: Seller konfirmasi jadwal meetup -->
                         <button
                           v-if="item.status === 'cod_requested'"
                           @click="openCodModal(item)"
                           class="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-[10px] font-bold rounded-lg hover:bg-teal-700 transition-colors"
                         >
-                          <Users class="h-3 w-3" /> Konfirmasi COD
+                          <Users class="h-3 w-3" /> Konfirmasi Jadwal
                         </button>
                         <button
                           v-if="item.status === 'cod_requested'"
@@ -844,13 +805,23 @@ const transactionHeaders = [
                         >
                           Tolak COD
                         </button>
+
+                        <!-- Step 2: Seller tandai meetup sudah terjadi & uang diterima -->
                         <button
                           v-if="item.status === 'cod_confirmed'"
-                          @click="router.post(route('transactions.cod-complete', item.id))"
+                          @click="confirm('Konfirmasi bahwa meetup sudah terjadi dan Anda sudah menerima uang dari buyer?') && router.post(route('transactions.cod-seller-done', item.id))"
                           class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white text-[10px] font-bold rounded-lg hover:bg-orange-600 transition-colors"
                         >
-                          COD Selesai
+                          <CheckCircle2 class="h-3 w-3" /> Tandai Meetup Selesai
                         </button>
+
+                        <!-- Step 3: Menunggu konfirmasi buyer (seller tidak perlu aksi) -->
+                        <div
+                          v-if="item.status === 'cod_meetup_done'"
+                          class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-50 border border-orange-200 text-orange-600 text-[10px] font-bold rounded-lg"
+                        >
+                          <Clock class="h-3 w-3" /> Menunggu Konfirmasi Buyer
+                        </div>
                       </template>
 
                       <!-- Dispute -->

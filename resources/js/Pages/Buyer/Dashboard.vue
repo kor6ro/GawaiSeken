@@ -3,8 +3,9 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { Head, Link, usePage, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import axios from 'axios'
+import BackButton from '@/Components/BackButton.vue'
 import {
-    ShoppingCart, Gavel, ShoppingBag, Heart, Package, Clock, 
+    ChevronLeft, ShoppingCart, Gavel, ShoppingBag, Heart, Package, Clock, 
     CheckCircle2, XCircle, RefreshCw, MessageSquare, Tag, 
     ChevronDown, ChevronUp, Info, Calendar, Store, ArrowRight,
     Search, SlidersHorizontal, CreditCard, Truck, MapPin, AlertCircle,
@@ -90,33 +91,7 @@ const showDisputeModal = ref(false)
 const selectedTransaction = ref(null)
 
 onMounted(() => {
-    const midtransScriptUrl = 'https://app.sandbox.midtrans.com/snap/snap.js'
-    const clientKey = usePage().props.midtrans_client_key
-    if (!document.querySelector(`script[src="${midtransScriptUrl}"]`)) {
-        const script = document.createElement('script')
-        script.src = midtransScriptUrl
-        script.setAttribute('data-client-key', clientKey)
-        document.head.appendChild(script)
-    }
 })
-
-const payNow = async (order) => {
-    if (order.snap_token) openSnap(order.snap_token)
-    else {
-        try {
-            const res = await axios.post(route('transactions.repay', order.id))
-            if (res.data.snap_token) openSnap(res.data.snap_token)
-        } catch { alert('Gagal memperbarui sesi pembayaran.') }
-    }
-}
-
-const openSnap = (token) => {
-    window.snap.pay(token, {
-        onSuccess: () => window.location.reload(),
-        onPending: () => window.location.reload(),
-        onError:   (r) => console.error(r),
-    })
-}
 
 const confirmDelivery = (order) => {
     if (confirm('Konfirmasi barang sudah diterima?')) router.post(route('transactions.deliver', order.id))
@@ -127,11 +102,6 @@ const completeCod = (order) => {
 }
 
 const orderStatusConfig = {
-    pending:       { label: 'Menunggu Bayar', color: 'amber',  icon: Clock },
-    paid:          { label: 'Escrow', color: 'blue', icon: CheckCircle2 },
-    processing:    { label: 'Diproses', color: 'indigo', icon: RefreshCw },
-    shipped:       { label: 'Dikirim', color: 'purple', icon: Truck },
-    delivered:     { label: 'Diterima', color: 'teal', icon: CheckCircle2 },
     completed:     { label: 'Selesai ✓', color: 'green', icon: CheckCircle2 },
     canceled:      { label: 'Batal', color: 'slate', icon: XCircle },
     disputed:      { label: 'Sengketa', color: 'red', icon: AlertCircle },
@@ -166,7 +136,10 @@ const openDisputeModal = (order) => {
         <Head title="Aktivitas Saya" />
 
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-foreground">Aktivitas Saya</h2>
+            <div class="flex items-center gap-3">
+              <BackButton fallbackRoute="home" />
+              <h2 class="text-xl font-semibold leading-tight text-foreground">Aktivitas Saya</h2>
+            </div>
         </template>
 
         <div class="py-12">
@@ -364,8 +337,7 @@ const openDisputeModal = (order) => {
                                         <div class="flex items-center gap-3">
                                             <span class="font-mono text-[10px] font-bold text-muted-foreground tracking-tighter">#{{ order.reference_number }}</span>
                                             <span class="text-[10px] text-muted-foreground">{{ formatDate(order.created_at) }}</span>
-                                            <span v-if="order.payment_method === 'cod'" class="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-900/20 px-2 py-0.5 text-[8px] font-black uppercase text-orange-600">COD</span>
-                                            <span v-else class="inline-flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-900/20 px-2 py-0.5 text-[8px] font-black uppercase text-blue-600">Rekber</span>
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-900/20 px-2 py-0.5 text-[8px] font-black uppercase text-orange-600">COD</span>
                                         </div>
                                         <span class="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider"
                                               :class="badgeClass(getOrderStatus(order.status).color)">
@@ -386,24 +358,17 @@ const openDisputeModal = (order) => {
                                                     </div>
                                                     <div class="text-right">
                                                         <div class="text-[10px] font-black text-muted-foreground uppercase mb-0.5">Total Bayar</div>
-                                                        <div class="text-lg font-black text-primary">{{ formatRp(order.total_amount) }}</div>
+                                                        <div class="text-lg font-black text-primary">{{ formatRp(order.price) }}</div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div class="mt-6 flex items-center gap-3">
-                                            <!-- ACTIONS -->
-                                            <button v-if="order.status === 'pending' && order.payment_method === 'rekber'" @click="payNow(order)" class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:scale-105 transition-all">
-                                                <CreditCard class="h-4 w-4" /> Bayar Sekarang
-                                            </button>
-                                            <button v-if="order.status === 'shipped'" @click="confirmDelivery(order)" class="inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-green-600/20 hover:scale-105 transition-all">
-                                                <CheckCircle2 class="h-4 w-4" /> Konfirmasi Terima
-                                            </button>
                                             <button v-if="order.status === 'cod_confirmed'" @click="completeCod(order)" class="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-orange-700 transition-colors">
                                                 Konfirmasi COD Selesai
                                             </button>
-                                            <button v-if="['shipped', 'paid', 'cod_confirmed'].includes(order.status)" @click="openDisputeModal(order)" class="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors">
+                                            <button v-if="['cod_confirmed'].includes(order.status)" @click="openDisputeModal(order)" class="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors">
                                                 <AlertCircle class="h-4 w-4" /> Komplain
                                             </button>
 
@@ -422,24 +387,9 @@ const openDisputeModal = (order) => {
                                                         <span>Harga Produk</span>
                                                         <span class="font-bold">{{ formatRp(order.price) }}</span>
                                                     </div>
-                                                    <div v-if="order.service_fee > 0" class="flex justify-between text-sm">
-                                                        <span>Biaya Layanan</span>
-                                                        <span class="font-bold text-amber-600">+ {{ formatRp(order.service_fee) }}</span>
-                                                    </div>
                                                     <div class="flex justify-between text-base font-black border-t border-border pt-2 text-primary">
                                                         <span>Total</span>
-                                                        <span>{{ formatRp(order.total_amount) }}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div v-if="order.tracking_number" class="rounded-xl bg-purple-50 dark:bg-purple-900/10 p-4 border border-purple-100 dark:border-purple-900/30">
-                                                    <p class="text-[10px] font-black uppercase text-purple-600 mb-2">Informasi Pengiriman</p>
-                                                    <div class="flex items-center gap-2 text-sm font-bold">
-                                                        <Truck class="h-4 w-4" /> {{ order.courier_name }}
-                                                    </div>
-                                                    <div class="mt-2 text-sm">
-                                                        <span class="text-muted-foreground">Resi:</span> 
-                                                        <span class="font-mono ml-2 tracking-widest font-bold">{{ order.tracking_number }}</span>
+                                                        <span>{{ formatRp(order.price) }}</span>
                                                     </div>
                                                 </div>
                                             </div>

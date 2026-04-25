@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
-use App\Jobs\ProcessProductImage;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductImage;
@@ -31,7 +30,7 @@ class ProductController extends Controller
     // Menyimpan produk ke database
     public function store(StoreProductRequest $request)
     {
-        DB::transaction(function () use ($request) {
+        $product = DB::transaction(function () use ($request) {
             $category = Category::find($request->category_id);
             $reference_url = null;
             if ($category) {
@@ -47,7 +46,7 @@ class ProductController extends Controller
             $title = trim($request->brand.' '.$request->type);
 
             // 1. Simpan Data Produk
-            $product = Product::create([
+            return Product::create([
                 'user_id' => Auth::id(),
                 'category_id' => $request->category_id,
                 'title' => $title,
@@ -64,47 +63,47 @@ class ProductController extends Controller
                 'status' => 'pending',
                 'specifications' => $request->specifications,
             ]);
-
-            if ($request->hasFile('images')) {
-                $images = $request->file('images');
-                if (!is_array($images)) {
-                    $images = [$images];
-                }
-                
-                $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver);
-                
-                foreach ($images as $file) {
-                    if (!$file->isValid()) continue;
-                    try {
-                        $extension = $file->getClientOriginalExtension() ?: 'jpg';
-                        $fileName  = Str::uuid()->toString() . '.' . $extension;
-                        $finalPath = "products/{$fileName}";
-
-                        // Use getContent() — works reliably in PHP 8.4 multipart uploads
-                        // where getRealPath() returns empty and UploadedFile object reading fails
-                        $imageContent = $file->getContent();
-                        $image = $manager->read($imageContent);
-
-                        $image->scale(width: 1200);
-                        $encoded = $image->toJpeg(80);
-
-                        if (!Storage::disk('public')->exists('products')) {
-                            Storage::disk('public')->makeDirectory('products');
-                        }
-
-                        if (Storage::disk('public')->put($finalPath, $encoded->toString())) {
-                            ProductImage::create([
-                                'product_id' => $product->id,
-                                'image_path' => $finalPath,
-                            ]);
-                        }
-                    } catch (\Throwable $e) {
-                        \Illuminate\Support\Facades\Log::error('Image store failed: ' . $e->getMessage());
-                    }
-                }
-            }
         });
 
+        // 2. Handle Upload Foto (Langsung Proses)
+        \Illuminate\Support\Facades\Log::info('Store: hasFile(images)=' . ($request->hasFile('images') ? 'YES' : 'NO') . ' | allFiles=' . json_encode(array_keys($request->allFiles())));
+        if ($request->hasFile('images')) {
+            $images = $request->file('images');
+            if (!is_array($images)) {
+                $images = [$images];
+            }
+            
+            \Illuminate\Support\Facades\Log::info('Store: images count=' . count($images));
+            $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+            
+            foreach ($images as $file) {
+                if (!$file->isValid()) {
+                    \Illuminate\Support\Facades\Log::warning('Store: invalid file skipped: ' . $file->getErrorMessage());
+                    continue;
+                }
+
+                try {
+                    $extension = $file->getClientOriginalExtension() ?: 'jpg';
+                    $fileName  = Str::uuid()->toString() . '.' . $extension;
+                    
+                    $image = $manager->read($file->get());
+                    $image->scale(width: 1200);
+                    
+                    $finalPath = "products/{$fileName}";
+                    $output = $image->toJpeg(80);
+                    
+                    Storage::disk('public')->put($finalPath, (string) $output);
+
+                    ProductImage::create([
+                        'product_id' => $product->id,
+                        'image_path' => $finalPath,
+                    ]);
+                    \Illuminate\Support\Facades\Log::info('Store: saved image ' . $finalPath);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('Product image upload failed: ' . $e->getMessage() . ' | ' . $e->getFile() . ':' . $e->getLine());
+                }
+            }
+        }
         return redirect()->route('dashboard')->with('status', 'Produk berhasil ditambahkan!');
     }
 
@@ -168,46 +167,47 @@ class ProductController extends Controller
                     $img->delete();
                 }
             }
+        });
 
-            // 3. Handle Upload Foto Baru
-            if ($request->hasFile('images')) {
-                $images = $request->file('images');
-                if (!is_array($images)) {
-                    $images = [$images];
+        // 3. Handle Upload Foto Baru (Langsung Proses)
+        \Illuminate\Support\Facades\Log::info('Update: hasFile(images)=' . ($request->hasFile('images') ? 'YES' : 'NO') . ' | allFiles=' . json_encode(array_keys($request->allFiles())));
+        if ($request->hasFile('images')) {
+            $images = $request->file('images');
+            if (!is_array($images)) {
+                $images = [$images];
+            }
+            
+            \Illuminate\Support\Facades\Log::info('Update: images count=' . count($images));
+            $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+            
+            foreach ($images as $file) {
+                if (!$file->isValid()) {
+                    \Illuminate\Support\Facades\Log::warning('Update: invalid file skipped: ' . $file->getErrorMessage());
+                    continue;
                 }
-                
-                $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver);
 
-                foreach ($images as $file) {
-                    if (!$file->isValid()) continue;
-                    try {
-                        $extension = $file->getClientOriginalExtension() ?: 'jpg';
-                        $fileName  = Str::uuid()->toString() . '.' . $extension;
-                        $finalPath = "products/{$fileName}";
+                try {
+                    $extension = $file->getClientOriginalExtension() ?: 'jpg';
+                    $fileName  = Str::uuid()->toString() . '.' . $extension;
+                    
+                    $image = $manager->read($file->get());
+                    $image->scale(width: 1200);
+                    
+                    $finalPath = "products/{$fileName}";
+                    $output = $image->toJpeg(80);
+                    
+                    Storage::disk('public')->put($finalPath, (string) $output);
 
-                        // Use getContent() — works reliably in PHP 8.4 multipart uploads
-                        $imageContent = $file->getContent();
-                        $image = $manager->read($imageContent);
-
-                        $image->scale(width: 1200);
-                        $encoded = $image->toJpeg(80);
-
-                        if (!Storage::disk('public')->exists('products')) {
-                            Storage::disk('public')->makeDirectory('products');
-                        }
-
-                        if (Storage::disk('public')->put($finalPath, $encoded->toString())) {
-                            ProductImage::create([
-                                'product_id' => $product->id,
-                                'image_path' => $finalPath,
-                            ]);
-                        }
-                    } catch (\Throwable $e) {
-                        \Illuminate\Support\Facades\Log::error('Image update failed: ' . $e->getMessage());
-                    }
+                    ProductImage::create([
+                        'product_id' => $product->id,
+                        'image_path' => $finalPath,
+                    ]);
+                    \Illuminate\Support\Facades\Log::info('Update: saved image ' . $finalPath);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('Product image update failed: ' . $e->getMessage() . ' | ' . $e->getFile() . ':' . $e->getLine());
                 }
             }
-        });
+        }
 
         return redirect()->route('dashboard')->with('status', 'Produk berhasil diperbarui!');
     }

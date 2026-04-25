@@ -9,7 +9,6 @@ use App\Models\Product;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Midtrans\Transaction as MidtransTransaction;
 
 class DashboardController extends Controller
 {
@@ -48,11 +47,12 @@ class DashboardController extends Controller
             ->where('status', TransactionStatusEnum::COMPLETED)
             ->sum('price');
 
-        // Data 5: Pesanan Perlu Diproses (Pending, Paid, COD Requested)
+        // Data 5: Pesanan Perlu Diproses (COD Requested, COD Confirmed, COD Meetup Done)
         $pendingOrders = Transaction::where('seller_id', $user->id)
             ->whereIn('status', [
-                TransactionStatusEnum::PAID, 
-                TransactionStatusEnum::COD_REQUESTED
+                TransactionStatusEnum::COD_REQUESTED,
+                TransactionStatusEnum::COD_CONFIRMED,
+                TransactionStatusEnum::COD_MEETUP_DONE
             ])
             ->count();
 
@@ -63,26 +63,6 @@ class DashboardController extends Controller
             ->with(['category', 'images', 'store'])
             ->latest()
             ->paginate($perPage, ['*'], 'products');
-
-        $transactions = Transaction::where('seller_id', $user->id)
-            ->with(['product.images', 'buyer.profile', 'dispute'])
-            ->latest()
-            ->get();
-
-        // Sync status for pending transactions
-        $transactionController = new TransactionController();
-        foreach ($transactions as $transaction) {
-            if ($transaction->status === TransactionStatusEnum::PENDING) {
-                try {
-                    $status = (object) MidtransTransaction::status($transaction->reference_number);
-                    if ($status && isset($status->transaction_status)) {
-                        $transactionController->syncStatus($transaction, $status->transaction_status);
-                    }
-                } catch (\Exception $e) {
-                    // Skip if not found in Midtrans
-                }
-            }
-        }
 
         $transactions = Transaction::where('seller_id', $user->id)
             ->with(['product.images', 'buyer.profile', 'dispute'])

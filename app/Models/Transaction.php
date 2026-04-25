@@ -16,30 +16,20 @@ class Transaction extends Model
         'reference_number',
         'negotiation_id',
         'product_id',
-        'buyer_id',
-        'seller_id',
         'price',
-        'service_fee',
-        'total_amount',
-        'status',
-        'snap_token',
-        'payment_method',
-        'tracking_number',
-        'courier_name',
-        'shipping_address',
         'cod_location',
         'cod_scheduled_at',
         'buyer_confirmed_at',
+        'seller_confirmed_at',
         'seller_notes',
     ];
 
     protected $casts = [
-        'status'             => TransactionStatusEnum::class,
-        'cod_scheduled_at'   => 'datetime',
-        'buyer_confirmed_at' => 'datetime',
-        'price'              => 'decimal:2',
-        'service_fee'        => 'decimal:2',
-        'total_amount'       => 'decimal:2',
+        'status'              => TransactionStatusEnum::class,
+        'cod_scheduled_at'    => 'datetime',
+        'buyer_confirmed_at'  => 'datetime',
+        'seller_confirmed_at' => 'datetime',
+        'price'               => 'decimal:2',
     ];
 
     public function product(): BelongsTo
@@ -79,15 +69,4 @@ class Transaction extends Model
         return $this->hasOne(TransactionDispute::class);
     }
 
-    /** Apakah transaksi ini dibayar via Rekber */
-    public function isRekber(): bool
-    {
-        return $this->payment_method === 'rekber';
-    }
-
-    /** Apakah transaksi ini COD */
-    public function isCod(): bool
-    {
-        return $this->payment_method === 'cod';
-    }
 }

@@ -16,9 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
             \App\Http\Middleware\CheckSuspended::class,
         ]);
-        $middleware->validateCsrfTokens(except: [
-            '/midtrans/callback',
-        ]);
         $middleware->alias([
             'seller' => \App\Http\Middleware\EnsureIsSeller::class,
             'admin' => \App\Http\Middleware\EnsureIsAdmin::class,

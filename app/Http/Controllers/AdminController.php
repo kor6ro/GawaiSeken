@@ -275,20 +275,4 @@ class AdminController extends Controller
         return back()->with('success', 'Suspensi user berhasil dicabut.');
     }
 
-    /**
-     * Update global settings
-     */
-    public function updateSettings(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'rekber_enabled' => ['required', 'boolean'],
-        ]);
-
-        \App\Models\Setting::updateOrCreate(
-            ['key' => 'rekber_enabled'],
-            ['value' => $request->boolean('rekber_enabled') ? '1' : '0']
-        );
-
-        return back()->with('success', 'Pengaturan berhasil diperbarui.');
-    }
 }

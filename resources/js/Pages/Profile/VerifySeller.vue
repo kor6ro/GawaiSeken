@@ -5,8 +5,10 @@ import InputError from '@/Components/InputError.vue'
 import InputLabel from '@/Components/InputLabel.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import Modal from '@/Components/Modal.vue'
+import BackButton from '@/Components/BackButton.vue'
 import { ref, computed, onBeforeUnmount } from 'vue'
 import {
+  ChevronLeft,
   ShieldCheck,
   Clock,
   XCircle,
@@ -194,7 +196,10 @@ onBeforeUnmount(() => {
 
   <AuthenticatedLayout>
     <template #header>
-      <h2 class="text-xl font-semibold leading-tight text-foreground">Daftar Jadi Penjual</h2>
+      <div class="flex items-center gap-3">
+        <BackButton fallbackRoute="buyer.dashboard" />
+        <h2 class="text-xl font-semibold leading-tight text-foreground">Daftar Jadi Penjual</h2>
+      </div>
     </template>
 
     <div class="py-6 sm:py-12">

@@ -258,7 +258,7 @@ export const getFieldsByCategory = (categoryId, currentForm = {}) => {
   if (!category) return [];
 
   const specs = category.dynamic_specs;
-  const subTypeKey = currentForm.specifications?.sub_type;
+  const subTypeKey = currentForm.specifications?.sub_type || '';
   const subType = category.sub_types?.find(st => st.value === subTypeKey);
 
   // Combine category features and sub-type features
@@ -300,8 +300,8 @@ export const getFieldsByCategory = (categoryId, currentForm = {}) => {
   if (features.has_switch_type) specFields.push({ key: 'switch_type', ...specs.switch_type });
   if (features.has_power_source) specFields.push({ key: 'power_source', ...specs.power_source });
 
-  // Conditional Logic (e.g. Wireless -> Power Source) - still useful
-  const connectivity = currentForm.specifications?.connectivity;
+  // Conditional Logic
+  const connectivity = currentForm.specifications?.connectivity || '';
   if ((connectivity === 'Wireless' || connectivity === 'Bluetooth') && !features.has_power_source) {
     if (!specFields.find(f => f.key === 'power_source')) {
       specFields.push({ key: 'power_source', ...BASE_SPECS.power_source });
@@ -313,7 +313,6 @@ export const getFieldsByCategory = (categoryId, currentForm = {}) => {
 };
 
 export const PRODUCT_CONDITIONS = [
-  { value: 'new', label: 'Baru / BNIB' },
   { value: 'second_like_new', label: 'Bekas Mulus (Like New)' },
   { value: 'second_good', label: 'Bekas Normal (Lecet Pemakaian)' },
   { value: 'minus', label: 'Minus (Ada fungsi rusak)' },

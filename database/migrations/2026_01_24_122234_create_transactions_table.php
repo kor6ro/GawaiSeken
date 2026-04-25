@@ -19,10 +19,7 @@ return new class extends Migration
             $table->foreignId('buyer_id')->constrained('users');
             $table->foreignId('seller_id')->constrained('users');
             $table->decimal('price', 15, 2);
-            $table->decimal('service_fee', 15, 2)->default(0);
-            $table->decimal('total_amount', 15, 2)->default(0);
-            $table->string('status')->default(TransactionStatusEnum::PENDING->value);
-            $table->string('snap_token')->nullable();
+            $table->string('status')->default('cod_requested');
 
             $table->softDeletes();
             $table->timestamps();

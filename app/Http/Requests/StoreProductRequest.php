@@ -60,7 +60,7 @@ class StoreProductRequest extends FormRequest
             'specifications.kelengkapan' => 'required|array',
             'specifications.kelengkapan_note' => 'nullable|string',
             'images' => 'required|array|min:1|max:10',
-            'images.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+            'images.*' => 'image|mimes:jpeg,png,jpg|max:10240',
         ];
 
         // Dynamic Specification Rules

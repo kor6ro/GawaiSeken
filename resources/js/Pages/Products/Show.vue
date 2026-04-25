@@ -2,8 +2,9 @@
 import { ref, computed, reactive } from 'vue'
 import { Head, Link, usePage, router, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import BackButton from '@/Components/BackButton.vue'
 import {
-  Home, ChevronRight, ExternalLink, Globe, ArrowRight,
+  ChevronLeft, Home, ChevronRight, ExternalLink, Globe, ArrowRight,
   MapPin, Store, MessageCircle, Edit3, ShieldCheck,
   ShoppingCart, X, Flag, AlertTriangle, Heart,
   HandCoins, Truck, Users, CheckCircle, Clock, ArrowRightLeft,
@@ -26,21 +27,11 @@ const activeImage = ref(
 
 // ── Modals
 const showRemoveModal = ref(false)
-const showBuyModal = ref(false)
-const showNegoModal = ref(false)
 const showCodModal = ref(false)
 
 // ── Forms
-const rekberForm = useForm({ payment_method: 'rekber', shipping_address: '', negotiation_id: null })
 const codForm = useForm({ payment_method: 'cod', cod_location: '', cod_scheduled_at: '', negotiation_id: null })
 const negoForm = useForm({ proposed_price: Math.floor(Number(props.product.price)), message: '' })
-
-const submitRekber = () => {
-  if (props.myNegotiation?.status === 'accepted') rekberForm.negotiation_id = props.myNegotiation.id
-  rekberForm.post(route('transactions.checkout', props.product.slug), {
-    onSuccess: () => { showBuyModal.value = false },
-  })
-}
 
 const submitCod = () => {
   if (props.myNegotiation?.status === 'accepted') codForm.negotiation_id = props.myNegotiation.id
@@ -111,29 +102,15 @@ const checkoutRoute = computed(() => route('transactions.checkout', props.produc
   <AppLayout>
     <Head :title="product.title" />
 
+    <template #header>
+      <div class="flex items-center gap-3">
+        <BackButton fallbackRoute="home" />
+        <h2 class="text-xl font-semibold leading-tight text-foreground">Detail Produk</h2>
+      </div>
+    </template>
+
     <div class="min-h-screen bg-background py-12">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <!-- Breadcrumbs -->
-        <nav class="mb-8 flex text-sm font-medium" aria-label="Breadcrumb">
-          <ol class="inline-flex items-center space-x-1 md:space-x-3">
-            <li class="inline-flex items-center">
-              <Link
-                :href="route('home')"
-                class="flex items-center text-muted-foreground transition-colors hover:text-primary"
-              >
-                <Home class="mr-2 h-4 w-4" />
-                Beranda
-              </Link>
-            </li>
-            <li>
-              <div class="flex items-center">
-                <ChevronRight class="h-4 w-4 text-muted-foreground" />
-                <span class="ml-1 text-muted-foreground md:ml-2">{{ product.category?.name }}</span>
-              </div>
-            </li>
-          </ol>
-        </nav>
-
         <div class="grid grid-cols-1 gap-12 lg:grid-cols-12">
           <!-- Left: Image Gallery -->
           <div class="space-y-6 lg:col-span-7">
@@ -387,19 +364,6 @@ const checkoutRoute = computed(() => route('transactions.checkout', props.produc
 
                     <!-- Main Action Buttons -->
                     <div v-if="!hasActiveTransaction" class="flex flex-col gap-2">
-                      <!-- Beli Rekber -->
-                      <button v-if="$page.props.settings?.rekber_enabled" @click="showBuyModal = true"
-                        class="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-black text-primary-foreground shadow-xl transition hover:bg-primary/90 active:scale-95">
-                        <Truck class="h-5 w-5" />
-                        Beli via Rekber
-                        <span v-if="myNegotiation?.status === 'accepted'" class="ml-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px]">Harga Nego</span>
-                      </button>
-                      <div v-else class="rounded-2xl border-2 border-dashed border-muted p-4 text-center">
-                        <p class="text-xs font-bold text-muted-foreground flex items-center justify-center gap-1">
-                          <AlertTriangle class="h-4 w-4" /> Fitur Rekber sedang dalam pemeliharaan
-                        </p>
-                      </div>
-
                       <!-- Beli COD -->
                       <button v-if="product.is_cod" @click="showCodModal = true"
                         class="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-blue-500 bg-blue-500/10 py-4 text-sm font-black text-blue-600 dark:text-blue-400 transition hover:bg-blue-500/20 active:scale-95">
@@ -458,58 +422,73 @@ const checkoutRoute = computed(() => route('transactions.checkout', props.produc
       </div>
     </Modal>
 
-    <!-- Modal: Beli via Rekber -->
-    <Modal :show="showBuyModal" @close="showBuyModal = false" maxWidth="md">
+
+
+    <!-- Modal: Beli via COD -->
+    <Modal :show="showCodModal" @close="showCodModal = false" maxWidth="md">
       <div class="bg-card text-card-foreground rounded-2xl p-6">
-        <h3 class="text-xl font-black mb-1">Beli via Rekening Bersama</h3>
-        <p class="text-sm text-muted-foreground mb-5">Dana Anda ditahan hingga barang diterima.</p>
-        <div class="rounded-2xl bg-muted/50 border border-border p-4 mb-5 space-y-1 text-sm">
+        <!-- Header -->
+        <div class="flex items-center gap-3 mb-4">
+          <div class="rounded-2xl bg-blue-500/10 p-3">
+            <Users class="h-6 w-6 text-blue-500" />
+          </div>
+          <div>
+            <h3 class="text-xl font-black">Beli via COD</h3>
+            <p class="text-xs text-muted-foreground">Ketemu langsung, bayar langsung ke penjual</p>
+          </div>
+        </div>
+
+        <!-- Highlight: Tanpa Biaya Admin -->
+        <div class="mb-5 rounded-2xl border-2 border-green-400/40 bg-green-50 dark:bg-green-900/10 px-4 py-3 flex items-center gap-3">
+          <CheckCircle class="h-5 w-5 shrink-0 text-green-500" />
+          <div>
+            <p class="text-sm font-black text-green-700 dark:text-green-400">Tanpa Biaya Admin Platform!</p>
+            <p class="text-xs text-green-600 dark:text-green-500">COD adalah transaksi langsung antara Anda dan penjual. Tidak ada potongan dari platform.</p>
+          </div>
+        </div>
+
+        <!-- Price box -->
+        <div class="rounded-2xl bg-muted/50 border border-border p-4 mb-5 space-y-2 text-sm">
           <div class="flex justify-between">
             <span class="text-muted-foreground">Harga Produk</span>
             <span class="font-bold">Rp {{ fmt(myNegotiation?.status === 'accepted' ? myNegotiation.agreed_price : product.price) }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-muted-foreground">Biaya Layanan</span>
-            <span class="text-xs text-muted-foreground">Rp 5.000 + 1% (maks Rp 25.000)</span>
+            <span class="text-muted-foreground">Biaya Admin Platform</span>
+            <span class="font-black text-green-600">GRATIS ✓</span>
+          </div>
+          <div class="flex justify-between border-t border-border pt-2">
+            <span class="font-bold">Bayar ke Seller Saat Meetup</span>
+            <span class="font-black text-orange-600">Rp {{ fmt(myNegotiation?.status === 'accepted' ? myNegotiation.agreed_price : product.price) }}</span>
           </div>
         </div>
-        <form @submit.prevent="submitRekber" class="space-y-4">
-          <div>
-            <label class="block text-xs font-black uppercase tracking-wider mb-1.5">Alamat Pengiriman <span class="text-red-500">*</span></label>
-            <textarea v-model="rekberForm.shipping_address" rows="3" required placeholder="Alamat lengkap pengiriman..."
-              class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:ring-2 focus:ring-primary/30 resize-none"></textarea>
-            <p v-if="rekberForm.errors.shipping_address" class="text-xs text-red-500 mt-1">{{ rekberForm.errors.shipping_address }}</p>
-          </div>
-          <div class="flex gap-3">
-            <button type="button" @click="showBuyModal = false" class="flex-1 rounded-xl bg-muted py-3 font-bold text-sm transition hover:bg-muted/80">Batal</button>
-            <button type="submit" :disabled="rekberForm.processing"
-              class="flex-1 rounded-xl bg-primary py-3 text-sm font-black text-primary-foreground shadow-lg shadow-primary/20 transition hover:bg-primary/90 disabled:opacity-60">
-              {{ rekberForm.processing ? 'Memproses...' : 'Konfirmasi Beli' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </Modal>
 
-    <!-- Modal: Beli via COD -->
-    <Modal :show="showCodModal" @close="showCodModal = false" maxWidth="md">
-      <div class="bg-card text-card-foreground rounded-2xl p-6">
-        <h3 class="text-xl font-black mb-1">Beli via COD</h3>
-        <p class="text-sm text-muted-foreground mb-5">Tentukan lokasi dan waktu bertemu dengan penjual.</p>
+        <!-- Alur COD -->
+        <div class="mb-5 rounded-xl border border-blue-200 bg-blue-50/50 dark:bg-blue-900/10 dark:border-blue-800 p-4">
+          <p class="mb-2 text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Alur COD (4 Langkah)</p>
+          <ol class="space-y-1 text-xs text-muted-foreground">
+            <li class="flex items-center gap-2"><span class="text-blue-400 font-bold">①</span> Anda kirim permintaan COD + usul lokasi &amp; jadwal</li>
+            <li class="flex items-center gap-2"><span class="text-blue-400 font-bold">②</span> Penjual setujui atau ubah lokasi &amp; jadwal meetup</li>
+            <li class="flex items-center gap-2"><span class="text-blue-400 font-bold">③</span> Meetup terjadi &rarr; penjual tandai selesai setelah menerima uang</li>
+            <li class="flex items-center gap-2"><span class="text-blue-400 font-bold">④</span> Anda konfirmasi &rarr; transaksi selesai, produk dikunci sebagai <strong>Terjual</strong></li>
+          </ol>
+        </div>
+
         <form @submit.prevent="submitCod" class="space-y-4">
           <div>
-            <label class="block text-xs font-black uppercase tracking-wider mb-1.5">Lokasi Pertemuan <span class="text-red-500">*</span></label>
-            <input v-model="codForm.cod_location" type="text" required placeholder="Contoh: Alfamart Jl. Sudirman No. 12"
-              class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:ring-2 focus:ring-primary/30" />
+            <label class="block text-xs font-black uppercase tracking-wider mb-1.5">Usul Lokasi Pertemuan <span class="text-red-500">*</span></label>
+            <input v-model="codForm.cod_location" type="text" required placeholder="Contoh: Alfamart Jl. Sudirman No. 12, Minimarket terdekat..."
+              class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/30" />
             <p v-if="codForm.errors.cod_location" class="text-xs text-red-500 mt-1">{{ codForm.errors.cod_location }}</p>
+            <p class="text-[10px] text-muted-foreground mt-1">Penjual dapat mengkonfirmasi atau menyesuaikan lokasi ini.</p>
           </div>
           <div>
-            <label class="block text-xs font-black uppercase tracking-wider mb-1.5">Jadwal Pertemuan <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-black uppercase tracking-wider mb-1.5">Usul Jadwal Pertemuan <span class="text-red-500">*</span></label>
             <input v-model="codForm.cod_scheduled_at" type="datetime-local" required
-              class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:ring-2 focus:ring-primary/30" />
+              class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/30" />
             <p v-if="codForm.errors.cod_scheduled_at" class="text-xs text-red-500 mt-1">{{ codForm.errors.cod_scheduled_at }}</p>
           </div>
-          <div class="flex gap-3">
+          <div class="flex gap-3 pt-1">
             <button type="button" @click="showCodModal = false" class="flex-1 rounded-xl bg-muted py-3 font-bold text-sm transition hover:bg-muted/80">Batal</button>
             <button type="submit" :disabled="codForm.processing"
               class="flex-1 rounded-xl bg-blue-500 py-3 text-sm font-black text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600 disabled:opacity-60">

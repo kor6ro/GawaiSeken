@@ -4,6 +4,7 @@ import InputError from '@/Components/InputError.vue'
 import InputLabel from '@/Components/InputLabel.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import TextInput from '@/Components/TextInput.vue'
+import BackButton from '@/Components/BackButton.vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
 
 
@@ -25,6 +26,11 @@ const submit = () => {
 <template>
   <GuestLayout>
     <Head title="Forgot Password" />
+
+    <div class="mb-6 flex items-center gap-4">
+      <BackButton />
+      <h1 class="text-xl font-black text-foreground">Lupa Password</h1>
+    </div>
 
     <div class="mb-4 text-sm text-muted-foreground">
       Lupa password? Tidak masalah. Beri tahu kami alamat email Anda dan kami akan mengirimkan

@@ -2,7 +2,8 @@
 import AuthenticatedLayout from '@/Layouts/AppLayout.vue'
 import { Head, Link } from '@inertiajs/vue3'
 import Pagination from '@/Components/Pagination.vue'
-import { AlertCircle, ChevronRight, MessageSquare, Clock } from 'lucide-vue-next'
+import BackButton from '@/Components/BackButton.vue'
+import { ChevronLeft, AlertCircle, ChevronRight, MessageSquare, Clock } from 'lucide-vue-next'
 
 const props = defineProps({
     disputes: Object
@@ -43,7 +44,10 @@ const getStatusLabel = (status) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-foreground">Pusat Resolusi & Komplain</h2>
+            <div class="flex items-center gap-3">
+              <BackButton fallbackRoute="admin.dashboard" />
+              <h2 class="text-xl font-semibold leading-tight text-foreground">Pusat Resolusi & Komplain</h2>
+            </div>
         </template>
 
         <div class="py-12">

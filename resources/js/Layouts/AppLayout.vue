@@ -728,5 +728,24 @@ onBeforeUnmount(() => {
     <main>
       <slot />
     </main>
+
+    <!-- Footer -->
+    <footer class="mt-20 border-t border-border bg-card py-12 shadow-sm">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col items-center justify-between gap-6 md:flex-row">
+          <div class="flex items-center gap-4">
+            <ApplicationLogo class="h-8 w-auto opacity-70 grayscale hover:grayscale-0 transition-all" />
+            <div class="h-6 w-px bg-border"></div>
+            <p class="text-xs font-bold tracking-widest uppercase text-muted-foreground">&copy; {{ new Date().getFullYear() }} GawaiSeken.</p>
+          </div>
+          <div class="flex flex-wrap justify-center gap-x-8 gap-y-4 text-xs font-black uppercase tracking-widest text-muted-foreground">
+            <Link :href="route('about')" class="hover:text-primary transition-colors">Tentang Kami</Link>
+            <Link :href="route('contact')" class="hover:text-primary transition-colors">Hubungi Kami</Link>
+            <Link :href="route('privacy')" class="hover:text-primary transition-colors">Kebijakan Privasi</Link>
+            <Link :href="route('terms')" class="hover:text-primary transition-colors">Syarat & Ketentuan</Link>
+          </div>
+        </div>
+      </div>
+    </footer>
   </div>
 </template>

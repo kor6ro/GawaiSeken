@@ -3,12 +3,13 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import { ref } from 'vue'
 import {
-    Tag, CheckCircle2, XCircle, RotateCcw, MessageSquare,
+    ChevronLeft, Tag, CheckCircle2, XCircle, RotateCcw, MessageSquare,
     Package, Clock, ChevronDown, ChevronUp, Truck, MapPin, Calendar,
     Users, CreditCard, AlertCircle, RefreshCw,
     LayoutDashboard, ShoppingBag, Settings
 } from 'lucide-vue-next'
 import Pagination from '@/Components/Pagination.vue'
+import BackButton from '@/Components/BackButton.vue'
 
 const props = defineProps({ negotiations: Object })
 
@@ -75,7 +76,10 @@ const badgeClass = (status) => {
     <Head title="Penawaran Masuk" />
     <AppLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-foreground">Penawaran Masuk (NEGO)</h2>
+            <div class="flex items-center gap-3">
+              <BackButton fallbackRoute="dashboard" />
+              <h2 class="text-xl font-semibold leading-tight text-foreground">Penawaran Masuk (NEGO)</h2>
+            </div>
         </template>
 
         <div class="py-12">

@@ -15,7 +15,11 @@ class UserProfile extends Model
         'avatar',
         'phone',
         'address',
+        'landmark',
+        'province',
         'city',
+        'district',
+        'village',
         'bio',
         'date_of_birth',
         'gender',
@@ -23,6 +27,11 @@ class UserProfile extends Model
         'store_logo',
         'store_bio',
         'store_address',
+        'store_landmark',
+        'store_province',
+        'store_city',
+        'store_district',
+        'store_village',
         'is_ktp_verified',
     ];
 

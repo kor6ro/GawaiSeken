@@ -12,7 +12,6 @@ use App\Http\Controllers\TransactionController;
 use App\Models\Product;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/midtrans/callback', [\App\Http\Controllers\TransactionController::class, 'callback'])->name('midtrans.callback');
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
@@ -43,6 +42,12 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified', 'seller'])
     ->name('dashboard');
+
+// --- STATIC PAGES ---
+Route::inertia('/about', 'Static/About')->name('about');
+Route::inertia('/contact', 'Static/Contact')->name('contact');
+Route::inertia('/privacy', 'Static/Privacy')->name('privacy');
+Route::inertia('/terms', 'Static/Terms')->name('terms');
 
 Route::middleware('auth')->group(function () {
     // --- FITUR AKUN (User Personal) ---
@@ -82,18 +87,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/products/{product}/checkout', [TransactionController::class, 'checkout'])->name('transactions.checkout');
     Route::get('/profile/orders', [TransactionController::class, 'orders'])->name('profile.orders');
     Route::post('/transactions/{transaction}/status', [TransactionController::class, 'updateStatus'])->name('transactions.update-status');
-    Route::post('/transactions/{transaction}/repay', [TransactionController::class, 'repay'])->name('transactions.repay');
-    Route::post('/transactions/{transaction}/simulate-payment', [TransactionController::class, 'simulatePayment'])->name('transactions.simulate-payment');
     Route::post('/transactions/{transaction}/dispute', [TransactionController::class, 'storeDispute'])->name('transactions.dispute');
-
-    // Rekber flow
-    Route::post('/transactions/{transaction}/ship', [TransactionController::class, 'confirmShipment'])->name('transactions.ship');
-    Route::post('/transactions/{transaction}/deliver', [TransactionController::class, 'confirmDelivery'])->name('transactions.deliver');
 
     // COD flow
     Route::post('/transactions/{transaction}/cod-confirm', [TransactionController::class, 'confirmCod'])->name('transactions.cod-confirm');
     Route::post('/transactions/{transaction}/cod-reject', [TransactionController::class, 'rejectCod'])->name('transactions.cod-reject');
-    Route::post('/transactions/{transaction}/cod-complete', [TransactionController::class, 'completeCod'])->name('transactions.cod-complete');
+    Route::post('/transactions/{transaction}/cod-seller-done', [TransactionController::class, 'sellerCompleteCod'])->name('transactions.cod-seller-done'); // Seller: tandai meetup selesai
+    Route::post('/transactions/{transaction}/cod-complete', [TransactionController::class, 'completeCod'])->name('transactions.cod-complete');             // Buyer: konfirmasi final
 
     // --- NEGO ---
     Route::get('/profile/negotiations', [NegotiationController::class, 'index'])->name('profile.negotiations');

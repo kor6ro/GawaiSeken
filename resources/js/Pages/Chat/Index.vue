@@ -2,7 +2,8 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { Head, Link, usePage, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import { MessageSquare, Search, X, CheckCheck, Check } from 'lucide-vue-next'
+import BackButton from '@/Components/BackButton.vue'
+import { ChevronLeft, MessageSquare, Search, X, CheckCheck, Check } from 'lucide-vue-next'
 import { onlineUserIds } from '@/onlineState'
 
 const props = defineProps({
@@ -147,7 +148,10 @@ const filteredChats = computed(() => {
 
     <template #header>
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-black leading-tight text-foreground">Pesan</h2>
+        <div class="flex items-center gap-3">
+          <BackButton fallbackRoute="home" />
+          <h2 class="text-2xl font-black leading-tight text-foreground">Pesan</h2>
+        </div>
         <div class="flex items-center gap-2">
           <span
             class="flex h-2 w-2 animate-pulse rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]"

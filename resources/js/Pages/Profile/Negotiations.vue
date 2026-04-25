@@ -3,11 +3,12 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import { ref } from 'vue'
 import {
-    Gavel, Package, Clock, CheckCircle2, XCircle, RefreshCw, 
+    ChevronLeft, Gavel, Package, Clock, CheckCircle2, XCircle, RefreshCw, 
     MessageSquare, ShoppingCart, Tag, ChevronDown, ChevronUp,
     Info, Calendar, Store, ArrowRight
 } from 'lucide-vue-next'
 import Pagination from '@/Components/Pagination.vue'
+import BackButton from '@/Components/BackButton.vue'
 
 const props = defineProps({ negotiations: Object })
 
@@ -59,7 +60,10 @@ const acceptCounter = (id) => {
     <Head title="Penawaran Saya" />
     <AppLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-foreground">Penawaran Saya</h2>
+            <div class="flex items-center gap-3">
+              <BackButton fallbackRoute="buyer.dashboard" />
+              <h2 class="text-xl font-semibold leading-tight text-foreground">Penawaran Saya</h2>
+            </div>
         </template>
 
         <div class="py-10">

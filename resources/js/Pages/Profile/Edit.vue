@@ -3,9 +3,10 @@ import AuthenticatedLayout from '@/Layouts/AppLayout.vue'
 import DeleteUserForm from './Partials/DeleteUserForm.vue'
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue'
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue'
-import { Head } from '@inertiajs/vue3'
+import BackButton from '@/Components/BackButton.vue'
+import { Head, Link } from '@inertiajs/vue3'
 import { ref } from 'vue'
-import { User, Lock, Trash2, ShieldCheck, Mail, MapPin } from 'lucide-vue-next'
+import { ChevronLeft, User, Lock, Trash2, ShieldCheck, Mail, MapPin } from 'lucide-vue-next'
 
 const props = defineProps({
   mustVerifyEmail: {
@@ -27,7 +28,10 @@ const activeTab = ref('profile')
 
   <AuthenticatedLayout>
     <template #header>
-      <h2 class="text-xl font-semibold leading-tight text-foreground">Pengaturan Akun</h2>
+      <div class="flex items-center gap-3">
+        <BackButton fallbackRoute="buyer.dashboard" />
+        <h2 class="text-xl font-semibold leading-tight text-foreground">Pengaturan Akun</h2>
+      </div>
     </template>
 
     <div class="py-6 sm:py-12">

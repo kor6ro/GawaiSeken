@@ -4,7 +4,8 @@ import { Head, Link, usePage } from '@inertiajs/vue3'
 import axios from 'axios'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import ProductCard from '@/Components/ProductCard.vue'
-import { MessageCircle, MapPin, Store, Package, Star, ShieldCheck } from 'lucide-vue-next'
+import BackButton from '@/Components/BackButton.vue'
+import { ChevronLeft, MessageCircle, MapPin, Store, Package, Star, ShieldCheck } from 'lucide-vue-next'
 
 const props = defineProps({
   seller: Object,
@@ -92,6 +93,13 @@ const formattedJoined = computed(() => props.stats.joined)
 <template>
   <AppLayout>
     <Head :title="seller.profile?.store_name || seller.name" />
+
+    <template #header>
+      <div class="flex items-center gap-3">
+        <BackButton fallbackRoute="home" />
+        <h2 class="text-xl font-semibold leading-tight text-foreground">Profil Toko</h2>
+      </div>
+    </template>
 
     <!-- Header Background -->
     <div

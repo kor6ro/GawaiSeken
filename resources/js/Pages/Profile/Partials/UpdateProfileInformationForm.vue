@@ -54,10 +54,15 @@ const updatePhotoPreview = () => {
 }
 
 const submit = () => {
-  form.post(route('profile.update'), {
-    preserveScroll: true,
-    forceFormData: true,
-  })
+  form
+    .transform((data) => ({
+      ...data,
+      _method: 'PATCH',
+    }))
+    .post(route('profile.update'), {
+      preserveScroll: true,
+      forceFormData: true,
+    })
 }
 </script>
 

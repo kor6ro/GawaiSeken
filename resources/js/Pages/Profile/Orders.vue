@@ -3,74 +3,28 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import { Head, Link, usePage, router } from '@inertiajs/vue3'
 import { ref, computed } from 'vue'
 import {
-    ShoppingBag, Package, AlertCircle, CheckCircle2, Clock, CreditCard,
+    ChevronLeft, ShoppingBag, Package, AlertCircle, CheckCircle2, Clock, CreditCard,
     Truck, MapPin, Calendar, ExternalLink, ChevronDown, ChevronUp,
     MessageSquare, Tag, Users, RefreshCw, XCircle, Info
 } from 'lucide-vue-next'
 import { onMounted } from 'vue'
 import Pagination from '@/Components/Pagination.vue'
+import BackButton from '@/Components/BackButton.vue'
 import DisputeForm from './DisputeForm.vue'
 import axios from 'axios'
 
 const props = defineProps({ orders: Object })
 
-onMounted(() => {
-    const midtransScriptUrl = 'https://app.sandbox.midtrans.com/snap/snap.js'
-    const clientKey = usePage().props.midtrans_client_key
-    if (!document.querySelector(`script[src="${midtransScriptUrl}"]`)) {
-        const script = document.createElement('script')
-        script.src = midtransScriptUrl
-        script.setAttribute('data-client-key', clientKey)
-        document.head.appendChild(script)
-    }
-})
-
 // ─── State ────────────────────────────────────────────────────────────────────
 const showDisputeModal = ref(false)
 const selectedTransaction = ref(null)
 const expandedOrders = ref({})
-const shipForm = ref({}) // per order ID
 
 const toggleExpand = (id) => {
     expandedOrders.value[id] = !expandedOrders.value[id]
 }
 
-// ─── Midtrans Payment ─────────────────────────────────────────────────────────
-const payNow = async (order) => {
-    if (order.snap_token) {
-        openSnap(order.snap_token)
-    } else {
-        refreshPayment(order)
-    }
-}
-
-const openSnap = (token) => {
-    window.snap.pay(token, {
-        onSuccess: () => window.location.reload(),
-        onPending: () => window.location.reload(),
-        onError:   (r) => console.error(r),
-    })
-}
-
-const refreshPayment = async (order) => {
-    try {
-        const res = await axios.post(route('transactions.repay', order.id))
-        if (res.data.snap_token) openSnap(res.data.snap_token)
-    } catch {
-        alert('Gagal memperbarui sesi pembayaran. Silakan coba lagi.')
-    }
-}
-
-const simulatePayment = (order) => {
-    if (confirm('Simulasi pembayaran sukses? (ONLY LOCAL)'))
-        router.post(route('transactions.simulate-payment', order.id))
-}
-
 // ─── Buyer Actions ────────────────────────────────────────────────────────────
-const confirmDelivery = (order) => {
-    if (confirm('Konfirmasi bahwa barang sudah Anda terima dengan baik?'))
-        router.post(route('transactions.deliver', order.id))
-}
 
 const completeCod = (order) => {
     if (confirm('Konfirmasi bahwa pertemuan COD telah selesai?'))
@@ -89,16 +43,12 @@ const openDisputeModal = (transaction) => {
 
 // ─── Status Helpers ───────────────────────────────────────────────────────────
 const statusConfig = {
-    pending:       { label: 'Menunggu Pembayaran', color: 'amber',  icon: Clock },
-    paid:          { label: 'Dibayar — Dalam Escrow', color: 'blue', icon: CheckCircle2 },
-    processing:    { label: 'Diproses Seller', color: 'indigo', icon: RefreshCw },
-    shipped:       { label: 'Dikirim', color: 'purple', icon: Truck },
-    delivered:     { label: 'Terima Dikonfirmasi', color: 'teal', icon: CheckCircle2 },
-    completed:     { label: 'Selesai ✓', color: 'green', icon: CheckCircle2 },
-    canceled:      { label: 'Dibatalkan', color: 'slate', icon: XCircle },
-    disputed:      { label: 'Sengketa', color: 'red', icon: AlertCircle },
-    cod_requested: { label: 'COD — Menunggu Seller', color: 'amber', icon: Users },
-    cod_confirmed: { label: 'COD — Jadwal Terkonfirmasi', color: 'teal', icon: MapPin },
+    completed:        { label: 'Selesai ✓', color: 'green', icon: CheckCircle2 },
+    canceled:         { label: 'Dibatalkan', color: 'slate', icon: XCircle },
+    disputed:         { label: 'Sengketa', color: 'red', icon: AlertCircle },
+    cod_requested:    { label: 'COD — Menunggu Konfirmasi Seller', color: 'amber', icon: Users },
+    cod_confirmed:    { label: 'COD — Jadwal Dikonfirmasi ✓', color: 'teal', icon: MapPin },
+    cod_meetup_done:  { label: 'COD — Meetup Selesai, Konfirmasi Anda!', color: 'orange', icon: CheckCircle2 },
 }
 
 const getStatusConfig = (status) => statusConfig[status] || { label: status, color: 'slate', icon: Info }
@@ -111,6 +61,7 @@ const statusBadgeClass = (status) => {
         purple: 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800',
         teal:   'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800',
         green:  'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800',
+        orange: 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800 animate-pulse',
         red:    'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800',
         slate:  'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700',
     }
@@ -125,7 +76,10 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day:'num
     <Head title="Pesanan Saya" />
     <AppLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-foreground">Pesanan Saya</h2>
+            <div class="flex items-center gap-3">
+              <BackButton fallbackRoute="buyer.dashboard" />
+              <h2 class="text-xl font-semibold leading-tight text-foreground">Pesanan Saya</h2>
+            </div>
         </template>
 
         <div class="py-10">
@@ -163,12 +117,8 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day:'num
                                 <span class="font-mono text-[11px] font-bold text-muted-foreground tracking-widest">#{{ order.reference_number }}</span>
                                 <span class="text-xs text-muted-foreground">{{ formatDate(order.created_at) }}</span>
                                 <!-- Method badge -->
-                                <span v-if="order.payment_method === 'cod'"
-                                      class="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-orange-600 dark:bg-orange-900/20 dark:text-orange-400">
+                                <span class="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-orange-600 dark:bg-orange-900/20 dark:text-orange-400">
                                     <Users class="h-2.5 w-2.5" /> COD
-                                </span>
-                                <span v-else class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
-                                    <CreditCard class="h-2.5 w-2.5" /> Rekber
                                 </span>
                                 <!-- Nego badge -->
                                 <span v-if="order.negotiation_id"
@@ -212,16 +162,22 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day:'num
 
                                 <!-- Price Summary -->
                                 <div class="hidden sm:flex flex-col items-end justify-center shrink-0">
-                                    <div class="text-xs text-muted-foreground">Total Dibayar</div>
-                                    <div class="text-xl font-black text-primary">{{ formatRp(order.total_amount) }}</div>
-                                    <div v-if="order.service_fee > 0" class="text-[10px] text-muted-foreground/70">(incl. biaya layanan {{ formatRp(order.service_fee) }})</div>
+                                    <div class="text-xs text-muted-foreground">
+                                        Bayar Langsung ke Seller
+                                    </div>
+                                    <div class="text-xl font-black text-orange-600">
+                                        {{ formatRp(order.price) }}
+                                    </div>
+                                    <div class="text-[10px] text-orange-500 font-bold">
+                                        Tanpa biaya admin
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Price (mobile) -->
                             <div class="mt-3 flex items-center justify-between sm:hidden border-t border-border pt-3">
                                 <span class="text-sm font-bold text-muted-foreground">Total Dibayar</span>
-                                <span class="text-lg font-black text-primary">{{ formatRp(order.total_amount) }}</span>
+                                <span class="text-lg font-black text-primary">{{ formatRp(order.price) }}</span>
                             </div>
 
                             <!-- Toggle Detail -->
@@ -242,18 +198,44 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day:'num
                                             <span class="text-muted-foreground">Harga Produk{{ order.negotiation_id ? ' (Nego)' : '' }}</span>
                                             <span class="font-bold">{{ formatRp(order.price) }}</span>
                                         </div>
-                                        <div v-if="order.service_fee > 0" class="flex justify-between">
-                                            <span class="text-muted-foreground">Biaya Layanan</span>
-                                            <span class="font-bold text-amber-600">{{ formatRp(order.service_fee) }}</span>
+                                        <!-- COD: info tanpa biaya platform -->
+                                        <div class="flex items-center justify-between rounded-lg bg-orange-50 dark:bg-orange-900/10 px-3 py-2">
+                                            <span class="text-orange-600 dark:text-orange-400 font-bold">Biaya Admin Platform</span>
+                                            <span class="font-black text-orange-600 dark:text-orange-400">GRATIS ✓</span>
                                         </div>
                                         <div class="flex justify-between border-t border-border pt-2">
-                                            <span class="font-bold">Total</span>
-                                            <span class="text-lg font-black text-primary">{{ formatRp(order.total_amount) }}</span>
+                                            <span class="font-bold">
+                                                Bayar ke Seller Saat Meetup
+                                            </span>
+                                            <span class="text-lg font-black text-orange-600">{{ formatRp(order.price) }}</span>
                                         </div>
                                     </div>
 
+                                    <!-- COD Alur Info -->
+                                    <div class="rounded-xl border border-orange-200 bg-orange-50/60 dark:bg-orange-900/10 dark:border-orange-800 p-4">
+                                        <p class="mb-2 text-xs font-black uppercase tracking-widest text-orange-600 dark:text-orange-400">Alur COD (User to User)</p>
+                                        <ol class="space-y-1.5 text-xs text-muted-foreground">
+                                            <li class="flex items-center gap-2">
+                                                <span :class="['cod_requested','cod_confirmed','cod_meetup_done','completed'].includes(order.status) ? 'text-green-500' : 'text-muted-foreground/40'" class="text-base leading-none">①</span>
+                                                <span :class="['cod_requested','cod_confirmed','cod_meetup_done','completed'].includes(order.status) ? 'text-foreground font-medium' : ''">Buyer kirim permintaan COD</span>
+                                            </li>
+                                            <li class="flex items-center gap-2">
+                                                <span :class="['cod_confirmed','cod_meetup_done','completed'].includes(order.status) ? 'text-green-500' : 'text-muted-foreground/40'" class="text-base leading-none">②</span>
+                                                <span :class="['cod_confirmed','cod_meetup_done','completed'].includes(order.status) ? 'text-foreground font-medium' : ''">Seller konfirmasi jadwal & lokasi meetup</span>
+                                            </li>
+                                            <li class="flex items-center gap-2">
+                                                <span :class="['cod_meetup_done','completed'].includes(order.status) ? 'text-green-500' : 'text-muted-foreground/40'" class="text-base leading-none">③</span>
+                                                <span :class="['cod_meetup_done','completed'].includes(order.status) ? 'text-foreground font-medium' : ''">Seller tandai meetup selesai & uang diterima</span>
+                                            </li>
+                                            <li class="flex items-center gap-2">
+                                                <span :class="order.status === 'completed' ? 'text-green-500' : 'text-muted-foreground/40'" class="text-base leading-none">④</span>
+                                                <span :class="order.status === 'completed' ? 'text-foreground font-bold' : ''">Buyer konfirmasi — transaksi selesai ✓</span>
+                                            </li>
+                                        </ol>
+                                    </div>
+
                                     <!-- Info COD -->
-                                    <div v-if="order.payment_method === 'cod' && (order.cod_location || order.cod_scheduled_at)"
+                                    <div v-if="order.cod_location || order.cod_scheduled_at"
                                          class="rounded-xl border border-orange-200 bg-orange-50/50 p-4 dark:border-orange-800 dark:bg-orange-900/10">
                                         <p class="mb-2 text-xs font-black uppercase tracking-widest text-orange-600 dark:text-orange-400">Detail Meetup COD</p>
                                         <div v-if="order.cod_location" class="flex items-start gap-2 text-sm">
@@ -266,19 +248,7 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day:'num
                                         </div>
                                     </div>
 
-                                    <!-- Info Pengiriman (Rekber) -->
-                                    <div v-if="order.tracking_number"
-                                         class="rounded-xl border border-purple-200 bg-purple-50/50 p-4 dark:border-purple-800 dark:bg-purple-900/10">
-                                        <p class="mb-2 text-xs font-black uppercase tracking-widest text-purple-600 dark:text-purple-400">Info Pengiriman</p>
-                                        <div class="flex items-center gap-2 text-sm">
-                                            <Truck class="h-4 w-4 text-purple-500" />
-                                            <span class="font-bold">{{ order.courier_name }}</span>
-                                        </div>
-                                        <div class="mt-1 flex items-center gap-2">
-                                            <span class="text-xs text-muted-foreground">No. Resi:</span>
-                                            <span class="font-mono text-sm font-bold tracking-wider">{{ order.tracking_number }}</span>
-                                        </div>
-                                    </div>
+
 
                                     <!-- Catatan Seller -->
                                     <div v-if="order.seller_notes" class="rounded-xl border border-border bg-muted/30 p-4 text-sm">
@@ -301,32 +271,20 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day:'num
 
                                     <!-- Action Buttons -->
                                     <div class="flex flex-wrap gap-2">
-                                        <!-- Rekber: Bayar -->
-                                        <template v-if="order.payment_method === 'rekber'">
-                                            <button v-if="order.status === 'pending'" @click="payNow(order)"
-                                                    class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors">
-                                                <CreditCard class="h-4 w-4" /> Bayar Sekarang
-                                            </button>
-                                            <button v-if="order.status === 'pending' && $page.props.app_env === 'local'"
-                                                    @click="simulatePayment(order)"
-                                                    class="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-colors">
-                                                ⚡ Simulasi Bayar
-                                            </button>
-                                            <!-- Konfirmasi Terima Barang -->
-                                            <button v-if="order.status === 'shipped'" @click="confirmDelivery(order)"
-                                                    class="inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-green-600/20 hover:bg-green-700 transition-colors">
-                                                <CheckCircle2 class="h-4 w-4" /> Konfirmasi Terima Barang
-                                            </button>
-                                        </template>
 
-                                        <!-- COD: Konfirmasi Selesai -->
-                                        <button v-if="order.status === 'cod_confirmed'" @click="completeCod(order)"
-                                                class="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-600/20 hover:bg-orange-700 transition-colors">
-                                            <Users class="h-4 w-4" /> Konfirmasi COD Selesai
-                                        </button>
+                                        <!-- COD: Konfirmasi Selesai oleh BUYER (hanya setelah seller tandai meetup done) -->
+                                        <div v-if="order.status === 'cod_meetup_done'" class="w-full">
+                                            <div class="mb-2 rounded-lg bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 px-4 py-2.5 text-xs text-orange-700 dark:text-orange-400">
+                                                <strong>Seller sudah menandai meetup selesai.</strong> Pastikan Anda sudah menerima barang dan melakukan pembayaran, lalu klik konfirmasi.
+                                            </div>
+                                            <button @click="completeCod(order)"
+                                                    class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-green-600/20 hover:bg-green-700 transition-colors">
+                                                <CheckCircle2 class="h-4 w-4" /> Konfirmasi Saya Sudah Bayar & Terima Barang
+                                            </button>
+                                        </div>
 
                                         <!-- Ajukan Dispute -->
-                                        <button v-if="['shipped', 'paid', 'cod_confirmed'].includes(order.status)" @click="openDisputeModal(order)"
+                                        <button v-if="['shipped', 'paid', 'cod_confirmed', 'cod_meetup_done'].includes(order.status)" @click="openDisputeModal(order)"
                                                 class="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-100 transition-colors dark:bg-red-900/10 dark:border-red-800">
                                             <AlertCircle class="h-4 w-4" /> Ajukan Komplain
                                         </button>

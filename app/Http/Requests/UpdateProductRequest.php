@@ -61,7 +61,7 @@ class UpdateProductRequest extends FormRequest
             'specifications.kelengkapan' => 'required|array',
             'specifications.kelengkapan_note' => 'nullable|string',
             'images' => 'nullable|array|max:10',
-            'images.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+            'images.*' => 'image|mimes:jpeg,png,jpg|max:10240',
             'delete_images' => 'nullable|array',
             'delete_images.*' => 'exists:product_images,id',
         ];

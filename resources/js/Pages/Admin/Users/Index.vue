@@ -9,7 +9,8 @@ import PrimaryButton from '@/Components/PrimaryButton.vue'
 import TextInput from '@/Components/TextInput.vue'
 import InputLabel from '@/Components/InputLabel.vue'
 import InputError from '@/Components/InputError.vue'
-import { Search, UserX, ShieldCheck, Mail, MapPin, ArrowUp, ArrowDown } from 'lucide-vue-next'
+import BackButton from '@/Components/BackButton.vue'
+import { ChevronLeft, Search, UserX, ShieldCheck, Mail, MapPin, ArrowUp, ArrowDown } from 'lucide-vue-next'
 import debounce from 'lodash/debounce'
 
 const props = defineProps({
@@ -96,9 +97,12 @@ const unsuspend = (user) => {
   <AuthenticatedLayout>
     <template #header>
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h2 class="text-xl font-semibold leading-tight text-foreground">
-          Manajemen Pengguna
-        </h2>
+        <div class="flex items-center gap-3">
+          <BackButton fallbackRoute="admin.dashboard" />
+          <h2 class="text-xl font-semibold leading-tight text-foreground">
+            Manajemen Pengguna
+          </h2>
+        </div>
         <div class="flex flex-wrap items-center gap-3">
           <div class="relative">
             <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

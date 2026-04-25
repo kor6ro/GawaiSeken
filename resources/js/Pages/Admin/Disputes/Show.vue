@@ -20,6 +20,7 @@ import DangerButton from '@/Components/DangerButton.vue'
 import Modal from '@/Components/Modal.vue'
 import InputLabel from '@/Components/InputLabel.vue'
 import InputError from '@/Components/InputError.vue'
+import BackButton from '@/Components/BackButton.vue'
 
 const props = defineProps({
     dispute: Object
@@ -53,10 +54,8 @@ const submitResolution = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center gap-4">
-                <Link :href="route('admin.disputes.index')" class="p-2 rounded-xl border border-border hover:bg-muted transition-colors">
-                    <ChevronLeft class="h-5 w-5" />
-                </Link>
+            <div class="flex items-center gap-3">
+                <BackButton fallbackRoute="admin.disputes.index" />
                 <h2 class="text-xl font-semibold leading-tight text-foreground">Detail Komplain #{{ dispute.transaction.reference_number }}</h2>
             </div>
         </template>
